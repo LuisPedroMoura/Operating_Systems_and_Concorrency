@@ -27,11 +27,20 @@ namespace sofs18
      * \brief computes the structural division of the disk
      * \details The following rules should be observed:
      *     \li if \c itotal is zero, the value <code>ntotal / 8</code>
-     *          should be used as a start value;
+     *          should be used as a start value,
+     *          where / stands for the integer division;
      *     \li \c itotal must be always lower than or equal to <code>ntotal / 4</code>;
      *     \li \c rdsize represents the number of blocks used by the root dir for formatting;
      *          it is normally \c 1, but can be \c 2 if a block can not be assigned to any other 
      *          purpose.
+     *          The procedure should be the following: if a remaining block can not be assigned to
+     *          the data zone because the last block of the FBLT is already full, 
+     *          it should be assigned to the inode table, tentatively;
+     *          but, if the FILT is also full, the remaining block should be assigned to the 
+     *          root directory.
+     *          Note that, when the number of blocks of the root directory is 2,
+     *          the number of blocks in the data zone exceeds in one unity the number of
+     *          references in the FBLT.
      * \param [in] ntotal Total number of blocks of the disk
      * \param [in, out] itotal Total number of inodes
      * \param [out] btotal Total number of data blocks
