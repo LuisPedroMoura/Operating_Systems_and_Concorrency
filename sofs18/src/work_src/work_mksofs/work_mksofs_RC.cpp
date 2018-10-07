@@ -25,7 +25,7 @@ namespace sofs18
             for (int i = 0; i < sizeof(reset); i++){
                 reset[i] = NullReference;
             }
-            soWriteRawBlock(first_block, &reset)
+            soWriteRawBlock(first_block, &reset);
         }
 
     };
