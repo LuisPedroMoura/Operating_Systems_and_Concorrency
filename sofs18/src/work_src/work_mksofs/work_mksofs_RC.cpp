@@ -21,11 +21,13 @@ namespace sofs18
 
             // solution by Luis Moura, student 83808 DETI - UA
             
-            uint32_t reset [cnt*(512/32)];
-            for (int i = 0; i < sizeof(reset); i++){
-                reset[i] = NullReference;
+            uint32_t size = cnt*(512/32);
+            uint32_t reset [size];
+            for (int i = 0; i < size; i++){
+                reset[i] = 0;
+                printf("%d: %u \n", i, reset[i]);
             }
-            soWriteRawBlock(first_block, &reset)
+            soWriteRawBlock(first_block, reset);
         }
 
     };

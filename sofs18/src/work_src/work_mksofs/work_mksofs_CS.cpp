@@ -21,6 +21,8 @@ namespace sofs18
             /* change the following line by your code */
             //bin::computeStructure(ntotal, itotal, btotal, rdsize);
 
+            // solution by Luis Moura, student 83808 DETI - UA
+
             uint32_t block = 1; // size of a block
             uint32_t sp = 1;    // super block size
             uint32_t filt;      // free inode list table size
@@ -42,7 +44,9 @@ namespace sofs18
             // and for the free inode list table (filt) 
             it = itotal / InodesPerBlock;
             it = itotal % InodesPerBlock > 0 ? it + 1 : it;
-            filt = it / ReferencesPerBlock + 1;
+			itotal = it * InodesPerBlock;
+            filt = itotal / ReferencesPerBlock;
+			filt = itotal % ReferencesPerBlock > 0 ? filt + 1 : filt;
             // number of free reference slots to reference inodes 
             uint32_t emptyFILTrefs = filt * ReferencesPerBlock - it * InodesPerBlock;
 
@@ -70,8 +74,6 @@ namespace sofs18
                 btotal += (remBlocks - 1);
             }
         }
-
-    };
-
-};
+    }
+}
 
