@@ -27,7 +27,7 @@ namespace sofs18
                 reset[i] = 0;
                 printf("%d: %u \n", i, reset[i]);
             }
-            soWriteRawBlock(first_block, reset);
+            soWriteRawBlock(first_block, &reset);
         }
 
     };
