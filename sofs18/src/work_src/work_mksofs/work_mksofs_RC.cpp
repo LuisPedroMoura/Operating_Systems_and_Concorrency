@@ -19,17 +19,12 @@ namespace sofs18
             /* change the following line by your code */
             //bin::resetBlocks(first_block, cnt);
 
-            printf("My version!!!");
-
             // solution by Luis Moura, student 83808 DETI - UA
             uint32_t size = BlockSize/sizeof(uint32_t);
             uint32_t reset [size];
             for (uint32_t i = 0; i < size; i++){
                 reset[i] = 0;
             }
-            // for (uint32_t i = 0; i < size; i++){
-            //     printf("%d - %d \n", i, reset[i]);
-            // }
             for (; first_block < cnt; first_block++) {
                 soWriteRawBlock(first_block, &reset);
             }
