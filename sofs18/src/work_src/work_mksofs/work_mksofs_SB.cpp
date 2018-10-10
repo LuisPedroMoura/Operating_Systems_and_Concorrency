@@ -24,8 +24,9 @@ namespace sofs18
         void fillInSuperBlock(const char *name, uint32_t ntotal, uint32_t itotal, uint32_t rdsize)
         {
             soProbe(602, "%s(%s, %u, %u, %u)\n", __FUNCTION__, name, ntotal, itotal, rdsize);
-            
 
+            // solution by Maria João Lavoura, student 84681 DETI - UA
+            
             SOSuperBlock sb;
 
             /* Header */
@@ -58,10 +59,8 @@ namespace sofs18
 
             uint32_t remBlocks = data%(ReferencesPerBlock + 1);
             if(remBlocks==1){
-            	if(rdsize==2) // review!!! ex de 276 it deve aumentar e nao aumenta!!!
+               	if(rdsize==2)
             		sb.dz_total += 1;
-
-
             }
             else if(remBlocks > 1){
             	sb.fblt_size += 1;
@@ -73,7 +72,7 @@ namespace sofs18
             sb.fblt_tail = sb.dz_total - 1; 			//first empty FBLT position
 
             sb.dz_start = sb.fblt_start + sb.fblt_size; //physical number of the block where the data zone starts
-            sb.dz_free =  sb.dz_total-1; 				//number of free blocks in data zone review??
+            sb.dz_free =  sb.dz_total-1; 				//number of free blocks in data zone
 
 
 
