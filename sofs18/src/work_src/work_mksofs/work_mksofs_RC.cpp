@@ -20,12 +20,13 @@ namespace sofs18
             //bin::resetBlocks(first_block, cnt);
 
             // solution by Luis Moura, student 83808 DETI - UA
+            uint8_t reset [BlockSize];
+            memset(reset, 0, BlockSize);
             
-            uint32_t reset [cnt*(512/32)];
-            for (int i = 0; i < sizeof(reset); i++){
-                reset[i] = NullReference;
+            for (; first_block < cnt; first_block++) {
+                soWriteRawBlock(first_block, &reset);
             }
-            soWriteRawBlock(first_block, &reset);
+            
         }
 
     };
