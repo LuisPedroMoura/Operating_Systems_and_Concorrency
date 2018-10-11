@@ -55,9 +55,10 @@ namespace sofs18
 				uint32_t *blockPointer = soFBLTOpenBlock(block);
 				uint32_t nRefAvailable = ReferencesPerBlock - ref;
 
+				uint32_t *source = blockPointer + ref;
+
 				if(nRefAvailable >= BLOCK_REFERENCE_CACHE_SIZE){
 
-					uint32_t *source = blockPointer + ref*sizeof(uint32_t);
 					memcpy(&retrievalCache, source, BLOCK_REFERENCE_CACHE_SIZE);
 
 					//update idx
@@ -69,7 +70,6 @@ namespace sofs18
 				}
 				else{
 
-					uint32_t *source = blockPointer + ref*sizeof(uint32_t);
 					uint32_t destStart = BLOCK_REFERENCE_CACHE_SIZE - nRefAvailable;
 					memcpy(&retrievalCache.ref[destStart], source, nRefAvailable);
 
@@ -81,8 +81,9 @@ namespace sofs18
 				}
             }
 
-            //soSBClose();
-            //soSBSave();
+            soFBLTSaveBlock();
+            soFBLTCloseBlock();
+            soSBSave();
 
             /* change the following line by your code */
             //bin::soReplenishBRCache();
