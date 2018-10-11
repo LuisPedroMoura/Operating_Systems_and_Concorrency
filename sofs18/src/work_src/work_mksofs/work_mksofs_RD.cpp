@@ -31,7 +31,7 @@ namespace sofs18
 				dir[i].in = NullReference;
 			}
 
-			memcpy(dir[0].name, ".", 1);
+			memcpy(dir[0].name, ".", 2);
 			memcpy(dir[1].name, "..", 2);
 
 			soWriteRawBlock(first_block,dir);
