@@ -73,7 +73,7 @@ namespace sofs18
 
             sb.dz_start = sb.fblt_start + sb.fblt_size; //physical number of the block where the data zone starts
             sb.dz_free =  sb.dz_total-1; 				//number of free blocks in data zone
-
+            if(rdsize==2) sb.dz_free -= 1;
 
 
             /* caches of free inodes and free blocks */
