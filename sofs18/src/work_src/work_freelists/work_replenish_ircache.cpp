@@ -28,8 +28,6 @@ namespace sofs18
             /* change the following line by your code */
             //bin::soReplenishIRCache();
 
-            printf("ESTOU NA MINHA FUNÇÃO - WEEEEEEEEEE!");
-
             SOSuperBlock *sb = soSBGetPointer();
 
             SOInodeReferenceCache cache = sb->ircache;
@@ -58,13 +56,14 @@ namespace sofs18
 				uint32_t block = sb->filt_head / ReferencesPerBlock;
 				uint32_t ref = sb->filt_head % ReferencesPerBlock;
 
+
 				uint32_t *blockPointer = soFILTOpenBlock(block);
 				uint32_t refsAvailable = ReferencesPerBlock - ref;
+				uint32_t *source = &blockPointer[ref];
 
 				if ((refsAvailable) >= INODE_REFERENCE_CACHE_SIZE) {
 
 					// copy cache size chunk from filt to ircache
-					uint32_t *source = blockPointer += ref * sizeof(uint32_t);
 					memcpy(&cache, source, INODE_REFERENCE_CACHE_SIZE);
 
 					// update idx
@@ -76,8 +75,7 @@ namespace sofs18
 
 				else {
 
-					// copy
-					uint32_t *source = blockPointer + ref * sizeof(uint32_t);
+					// copy chunk the size of remaining references in block
 					uint32_t destStart = INODE_REFERENCE_CACHE_SIZE - refsAvailable;
 					memcpy(&cache.ref[destStart], source, refsAvailable);
 
@@ -89,8 +87,9 @@ namespace sofs18
 				}
             }
 
-            //soSBClose();
-            //soSBSave();
+            soFILTSaveBlock();
+            soFILTCloseBlock();
+            soSBSave();
 
         }
 
