@@ -13,6 +13,8 @@
 #include <stdio.h>
 #include <errno.h>
 #include <iostream>
+#include <string.h>
+
 using namespace std;
 
 namespace sofs18
@@ -29,34 +31,36 @@ namespace sofs18
             /* change the following line by your code */
             
 	    SOSuperBlock *sb = soSBGetPointer();	
-	    SOBlockReferenceCache InsertionCache = sb -> iicache;
+	    SOInodeReferenceCache InsertionCache = sb -> iicache;
 	
 	    uint32_t block = sb-> filt_tail / ReferencesPerBlock ;
 	    uint32_t block_used_refs = sb-> filt_tail % ReferencesPerBlock;
 	    uint32_t block_free_refs = ReferencesPerBlock - block_used_refs;
 	    uint32_t *block_pointer = soFILTOpenBlock(block);
-	    uint32_t *ref_pointer = &block_pointer[ref];	    
+	    uint32_t *ref_pointer = &block_pointer[block_used_refs];	    
 	   
 
 
-		if( insertionCache.idx > block_free_refs ){
+		if( InsertionCache.idx > block_free_refs ){
 		
 			memcpy(ref_pointer,&InsertionCache,block_free_refs);
 
                         sb->filt_tail += block_free_refs;
 
-                        insertionCache.idx -= block_free_refs ;
+				
+
+                        InsertionCache.idx -= block_free_refs ;
 
 		}
 
 		
 		else{
 		
-			memcpy(ref_pointer,&InsertionCache,insertionCache.idx);
+			memcpy(ref_pointer,&InsertionCache,InsertionCache.idx);
 	
-        		sb->filt_tail += insertionCache.idx;
+        		sb->filt_tail += InsertionCache.idx;
 			
-			insertionCache.idx = 0;	
+			InsertionCache.idx = 0;	
 		
 		}
 
