@@ -31,12 +31,15 @@ namespace sofs18
             soProbe(401, "%s(%x)\n", __FUNCTION__, type);
 
             /* change the following line by your code */
-            //return bin::soAllocInode(type);
-		
+            //return bin::soAllocInode(type);		
+
 		SOSuperBlock *sb = soSBGetPointer();
 		
+		if(sb -> ifree == 0)
+			throw SOException(ENOSPC,_FUNCTION_);
+
 		if(sb -> ircache.idx==INODE_REFERENCE_CACHE_SIZE){
-			sofs18::soReplenishIRCache(); 
+			soReplenishIRCache(); 
 		}
 				
 		SOInodeReferenceCache RetrivialCache = sb -> ircache;
@@ -56,6 +59,7 @@ namespace sofs18
 		in -> group = getgid();
 
 		soITSaveInode(inode_Handler);
+		soITCloseInode(inode_Handler);
 
 		sb -> ircache.ref[RetrivialCache.idx] = NullReference;
 		sb -> ircache.idx += 1;
