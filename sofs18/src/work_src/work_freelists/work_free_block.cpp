@@ -27,7 +27,27 @@ namespace sofs18
             soProbe(442, "%s(%u)\n", __FUNCTION__, bn);
 
             /* change the following line by your code */
-            bin::soFreeDataBlock(bn);
+            // code developed by Fernando Marques 80238
+            
+            // pt to superblock structure
+            SOSuperBlock *sb = soSBGetPointer();
+
+            // verify if cache is full
+            if(sb->bicache.idx == BLOCK_REFERENCE_CACHE_SIZE-1)
+            {
+            	sofs18::soDepleteBICache();
+            }
+
+            // add new value to insertion cache
+            sb->bicache.ref[sb->bicache.idx] = bn;
+            // idx value refresh
+            sb->bicache.idx++;
+            // number of free blocks in data zone refresh
+            sb->dz_free++;
+            //bin::soFreeDataBlock(bn);
+
+            // save the superblock
+            soSBSave();
         }
 
     };
