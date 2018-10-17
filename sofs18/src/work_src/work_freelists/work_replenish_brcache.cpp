@@ -41,12 +41,13 @@ namespace sofs18
             	//insertion cache is empty
             	if(insertionIDX==0){
             		// all the disk is ocuppied
-            		// TODO verificar com prof o que fazer nesta situação
-            		return ;
+            		throw SOException(ENOSPC,__FUNCTION__);
             	}
 
             	uint32_t destStart = BLOCK_REFERENCE_CACHE_SIZE - insertionIDX;
             	memcpy(&(sb->brcache.ref[destStart]), sb->bicache.ref, insertionIDX*sizeof(uint32_t));
+            	memset(&(sb->bicache.ref), 0xFF, insertionIDX * sizeof(uint32_t));
+
 
             }
             //get references from fblt
@@ -65,6 +66,7 @@ namespace sofs18
 				if(nRefAvailable >= BLOCK_REFERENCE_CACHE_SIZE){
 
 					memcpy(&(sb->brcache), &blockPointer[ref], BLOCK_REFERENCE_CACHE_SIZE*sizeof(uint32_t));
+					memset(&(blockPointer[ref]), 0xFF, BLOCK_REFERENCE_CACHE_SIZE * sizeof(uint32_t));
 
 					//update idx
 					sb->brcache.idx = 0;
@@ -77,6 +79,7 @@ namespace sofs18
 
 					uint32_t destStart = BLOCK_REFERENCE_CACHE_SIZE - nRefAvailable;
 					memcpy(&(sb->brcache).ref[destStart], &blockPointer[ref], nRefAvailable*sizeof(uint32_t));
+					memset(&(blockPointer[ref]), 0xFF, nRefAvailable * sizeof(uint32_t));
 
 					//update idx
 					sb->brcache.idx = destStart;
