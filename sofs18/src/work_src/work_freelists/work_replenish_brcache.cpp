@@ -27,42 +27,47 @@ namespace sofs18
 
             SOSuperBlock *sb = soSBGetPointer();
 
-            SOBlockReferenceCache retrievalCache = sb->brcache;
+            //SOBlockReferenceCache retrievalCache = sb->brcache;
 
-            if(retrievalCache.idx != BLOCK_REFERENCE_CACHE_SIZE ){
+            if(sb->brcache.idx != BLOCK_REFERENCE_CACHE_SIZE ){
             	return;
             }
 
             //get references from insertion cache
             if(sb->fblt_head == sb->fblt_tail){
-            	SOBlockReferenceCache insertionCache = sb->bicache;
-            	uint32_t insertionIDX = insertionCache.idx;
+            	//SOBlockReferenceCache insertionCache = sb->bicache;
+            	uint32_t insertionIDX = sb->bicache.idx;
 
             	//insertion cache is empty
             	if(insertionIDX==0){
+            		// all the disk is ocuppied
+            		// TODO verificar com prof o que fazer nesta situação
             		return ;
             	}
 
             	uint32_t destStart = BLOCK_REFERENCE_CACHE_SIZE - insertionIDX;
-            	memcpy(&(retrievalCache.ref[destStart]), insertionCache.ref, insertionIDX);
+            	memcpy(&(sb->brcache.ref[destStart]), sb->bicache.ref, insertionIDX*sizeof(uint32_t));
 
             }
+            //get references from fblt
             else{
-				//get references from fblt
+
 				uint32_t block = sb->fblt_head / ReferencesPerBlock;
 				uint32_t ref = sb->fblt_head % ReferencesPerBlock;
 
 				uint32_t *blockPointer = soFBLTOpenBlock(block);
-				uint32_t nRefAvailable = ReferencesPerBlock - ref;
 
-				uint32_t *source = blockPointer + ref;
+				uint32_t nRefAvailable = ReferencesPerBlock - ref;
+				if((sb->fblt_tail - sb->fblt_head) < nRefAvailable)
+					nRefAvailable = sb->fblt_tail - sb->fblt_head;
+
 
 				if(nRefAvailable >= BLOCK_REFERENCE_CACHE_SIZE){
 
-					memcpy(&retrievalCache, source, BLOCK_REFERENCE_CACHE_SIZE);
+					memcpy(&(sb->brcache), &blockPointer[ref], BLOCK_REFERENCE_CACHE_SIZE*sizeof(uint32_t));
 
 					//update idx
-					retrievalCache.idx = 0;
+					sb->brcache.idx = 0;
 
 					//update fblt head
 					sb->fblt_head += BLOCK_REFERENCE_CACHE_SIZE;
@@ -71,10 +76,10 @@ namespace sofs18
 				else{
 
 					uint32_t destStart = BLOCK_REFERENCE_CACHE_SIZE - nRefAvailable;
-					memcpy(&retrievalCache.ref[destStart], source, nRefAvailable);
+					memcpy(&(sb->brcache).ref[destStart], &blockPointer[ref], nRefAvailable*sizeof(uint32_t));
 
 					//update idx
-					retrievalCache.idx = destStart;
+					sb->brcache.idx = destStart;
 					//update fblt head
 					sb->fblt_head += nRefAvailable;
 
