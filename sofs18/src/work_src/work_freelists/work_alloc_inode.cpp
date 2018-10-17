@@ -36,7 +36,7 @@ namespace sofs18
 		SOSuperBlock *sb = soSBGetPointer();
 		
 		if(sb -> ifree == 0)
-			throw SOException(ENOSPC,_FUNCTION_);
+			throw SOException(ENOSPC,__FUNCTION__);
 
 		if(sb -> ircache.idx==INODE_REFERENCE_CACHE_SIZE){
 			soReplenishIRCache(); 
