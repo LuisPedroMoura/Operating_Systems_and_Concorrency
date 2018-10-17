@@ -36,7 +36,7 @@ namespace sofs18
 		SOSuperBlock *sb = soSBGetPointer();
 		
 		if(sb -> ircache.idx==INODE_REFERENCE_CACHE_SIZE){
-			work::soReplenishIRCache(); 
+			sofs18::soReplenishIRCache(); 
 		}
 				
 		SOInodeReferenceCache RetrivialCache = sb -> ircache;
