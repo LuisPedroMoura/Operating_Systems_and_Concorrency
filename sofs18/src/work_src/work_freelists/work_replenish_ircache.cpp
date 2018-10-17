@@ -28,11 +28,11 @@ namespace sofs18
             /* change the following line by your code */
             //bin::soReplenishIRCache();
 
+            // solution by Luis Moura, student 83808 DETI - UA
+
             SOSuperBlock *sb = soSBGetPointer();
 
-            SOInodeReferenceCache cache = sb->ircache;
-
-            if (cache.idx != INODE_REFERENCE_CACHE_SIZE) {
+            if (sb->ircache.idx != INODE_REFERENCE_CACHE_SIZE) {
             	return;
             }
 
@@ -48,26 +48,30 @@ namespace sofs18
             	}
 
             	uint32_t destStart = INODE_REFERENCE_CACHE_SIZE - insertionIDX;
-            	memcpy(&(cache.ref[destStart]) , insertionCache.ref, insertionIDX);
+            	memcpy(&((sb->ircache).ref[destStart]) , insertionCache.ref, insertionIDX);
             	return;
             }
 
             else {
+
 				uint32_t block = sb->filt_head / ReferencesPerBlock;
 				uint32_t ref = sb->filt_head % ReferencesPerBlock;
-
+				uint32_t refsAvailable = ReferencesPerBlock - ref;
+				uint32_t totalRefs = sb->filt_tail - sb->filt_head;
+				if (totalRefs < refsAvailable ) {
+					refsAvailable = totalRefs;
+				}
 
 				uint32_t *blockPointer = soFILTOpenBlock(block);
-				uint32_t refsAvailable = ReferencesPerBlock - ref;
-				uint32_t *source = &blockPointer[ref];
 
 				if ((refsAvailable) >= INODE_REFERENCE_CACHE_SIZE) {
 
 					// copy cache size chunk from filt to ircache
-					memcpy(&cache, source, INODE_REFERENCE_CACHE_SIZE);
+					memcpy(&(sb->ircache), &blockPointer[ref], INODE_REFERENCE_CACHE_SIZE*sizeof (uint32_t));
+					memset(&blockPointer[ref], 0, INODE_REFERENCE_CACHE_SIZE*sizeof (uint32_t));
 
 					// update idx
-					cache.idx = 0;
+					sb->ircache.idx = 0;
 
 					// update filt head
 					sb->filt_head += INODE_REFERENCE_CACHE_SIZE;
@@ -77,10 +81,11 @@ namespace sofs18
 
 					// copy chunk the size of remaining references in block
 					uint32_t destStart = INODE_REFERENCE_CACHE_SIZE - refsAvailable;
-					memcpy(&cache.ref[destStart], source, refsAvailable);
+					memcpy(&((sb->ircache).ref[destStart]), &blockPointer[ref], refsAvailable*sizeof (uint32_t));
+					memset(&blockPointer[ref], 0, refsAvailable*sizeof (uint32_t));
 
 					// update idx
-					cache.idx = destStart;
+					sb->ircache.idx = destStart;
 
 					// update filt head
 					sb->filt_head += refsAvailable;
