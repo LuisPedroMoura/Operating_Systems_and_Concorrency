@@ -42,13 +42,13 @@ namespace sofs18
             	uint32_t insertionIDX = insertionCache.idx;
 
             	if (insertionIDX == 0){
-            		// all the disk is ocuppied
-            		// TODO verificar com prof o que fazer nesta situação
+            		throw SOException(ENOSPC,__FUNCTION__);
             		return;
             	}
 
             	uint32_t destStart = INODE_REFERENCE_CACHE_SIZE - insertionIDX;
-            	memcpy(&((sb->ircache).ref[destStart]) , insertionCache.ref, insertionIDX);
+            	memcpy(&((sb->ircache).ref[destStart]), sb->iicache.ref, insertionIDX * sizeof(uint32_t));
+            	memset(sb->iicache.ref, 0xFF, insertionIDX * sizeof(uint32_t));
             	return;
             }
 
@@ -67,8 +67,8 @@ namespace sofs18
 				if ((refsAvailable) >= INODE_REFERENCE_CACHE_SIZE) {
 
 					// copy cache size chunk from filt to ircache
-					memcpy(&(sb->ircache), &blockPointer[ref], INODE_REFERENCE_CACHE_SIZE*sizeof (uint32_t));
-					memset(&blockPointer[ref], 0, INODE_REFERENCE_CACHE_SIZE*sizeof (uint32_t));
+					memcpy(&(sb->ircache), &blockPointer[ref], INODE_REFERENCE_CACHE_SIZE * sizeof(uint32_t));
+					memset(&blockPointer[ref], 0xFF, INODE_REFERENCE_CACHE_SIZE * sizeof(uint32_t));
 
 					// update idx
 					sb->ircache.idx = 0;
@@ -81,8 +81,8 @@ namespace sofs18
 
 					// copy chunk the size of remaining references in block
 					uint32_t destStart = INODE_REFERENCE_CACHE_SIZE - refsAvailable;
-					memcpy(&((sb->ircache).ref[destStart]), &blockPointer[ref], refsAvailable*sizeof (uint32_t));
-					memset(&blockPointer[ref], 0, refsAvailable*sizeof (uint32_t));
+					memcpy(&((sb->ircache).ref[destStart]), &blockPointer[ref], refsAvailable * sizeof(uint32_t));
+					memset(&blockPointer[ref], 0xFF, refsAvailable * sizeof(uint32_t));
 
 					// update idx
 					sb->ircache.idx = destStart;
