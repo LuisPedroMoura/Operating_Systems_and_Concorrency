@@ -32,7 +32,7 @@ namespace sofs18
 		SOSuperBlock *sb = soSBGetPointer();
 		
 		if(sb -> brcache.idx==BLOCK_REFERENCE_CACHE_SIZE){
-			soReplenishBRCache(); 
+			work::soReplenishBRCache(); 
 		}
 				
 		SOBlockReferenceCache RetrivialCache = sb -> brcache;
