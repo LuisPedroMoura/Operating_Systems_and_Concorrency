@@ -56,14 +56,10 @@ namespace sofs18
 
 				uint32_t block = sb->filt_head / ReferencesPerBlock;
 				uint32_t ref = sb->filt_head % ReferencesPerBlock;
-				uint32_t tailblock = sb->filt_tail / ReferencesPerBlock;
-				uint32_t tailRef = sb->filt_tail % ReferencesPerBlock;
-				uint32_t refsAvailable;
-				if (block == tailblock) {
-					refsAvailable = tailRef - ref;
-				}
-				else {
-					refsAvailable = ReferencesPerBlock - ref;
+				uint32_t refsAvailable = ReferencesPerBlock - ref;
+				uint32_t totalRefs = sb->filt_tail - sb->filt_head;
+				if (totalRefs < refsAvailable ) {
+					refsAvailable = totalRefs;
 				}
 
 				uint32_t *blockPointer = soFILTOpenBlock(block);
