@@ -25,6 +25,8 @@ namespace sofs18
         {
             soProbe(443, "%s()\n", __FUNCTION__);
 
+            // solution by Maria João Lavoura, student 84681 DETI - UA
+
             SOSuperBlock *sb = soSBGetPointer();
 
             //SOBlockReferenceCache retrievalCache = sb->brcache;
