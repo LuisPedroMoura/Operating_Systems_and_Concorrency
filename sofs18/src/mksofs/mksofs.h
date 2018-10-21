@@ -30,6 +30,7 @@ namespace sofs18
      *          should be used as a start value,
      *          where / stands for the integer division;
      *     \li \c itotal must be always lower than or equal to <code>ntotal / 4</code>;
+     *     \li \c itotal must be rounded up to be multiple of \c InodesPerBlock;
      *     \li \c rdsize represents the number of blocks used by the root dir for formatting;
      *          it is normally \c 1, but can be \c 2 if a block can not be assigned to any other 
      *          purpose.
