@@ -13,10 +13,9 @@ namespace sofs18
 
         /* ********************************************************* */
 
-#if false
+
         static uint32_t soGetIndirectFileBlock(SOInode * ip, uint32_t fbn);
         static uint32_t soGetDoubleIndirectFileBlock(SOInode * ip, uint32_t fbn);
-#endif
 
         /* ********************************************************* */
 
@@ -25,34 +24,72 @@ namespace sofs18
             soProbe(301, "%s(%d, %u)\n", __FUNCTION__, ih, fbn);
 
             /* change the following line by your code */
-            return bin::soGetFileBlock(ih, fbn);
+
+			SOInode* ip = soITGetInodePointer(ih);
+			uint32_t IndirectBegin = N_DIRECT;
+			uint32_t DoubleIndirectBegin = (N_INDIRECT * ReferencesPerBlock) + IndirectBegin;
+			uint32_t DoubleIndirectEnd = (ReferencesPerBlock * ReferencesPerBlock * N_DOUBLE_INDIRECT) + DoubleIndirectBegin -1;
+
+			if(fbn >= 0 && fbn <= DoubleIndirectEnd){
+
+				if(fbn < IndirectBegin){
+					return ip->d[fbn];
+				}
+				else if(fbn < DoubleIndirectBegin){
+					return soGetIndirectFileBlock(ip,fbn-IndirectBegin);
+				}
+				else {
+					return soGetDoubleIndirectFileBlock(ip,fbn-DoubleIndirectBegin);
+				}
+
+			}
+			else{
+				throw SOException(EINVAL, __FUNCTION__);
+			}
+
         }
 
         /* ********************************************************* */
 
-#if false
+
         static uint32_t soGetIndirectFileBlock(SOInode * ip, uint32_t afbn)
         {
             soProbe(301, "%s(%d, ...)\n", __FUNCTION__, afbn);
 
             /* change the following two lines by your code */
-            throw SOException(ENOSYS, __FUNCTION__); 
-            return 0;
+            //:w
+            //throw SOException(ENOSYS, __FUNCTION__);
+
+            uint32_t db[ReferencesPerBlock];
+            uint32_t pos1=afbn / ReferencesPerBlock;
+            uint32_t pos2= afbn % ReferencesPerBlock;
+
+            soReadDataBlock(ip->i1[pos1],&db);
+
+            return db[pos2];
         }
-#endif
+
 
         /* ********************************************************* */
 
-#if false
+
         static uint32_t soGetDoubleIndirectFileBlock(SOInode * ip, uint32_t afbn)
         {
             soProbe(301, "%s(%d, ...)\n", __FUNCTION__, afbn);
 
             /* change the following two lines by your code */
-            throw SOException(ENOSYS, __FUNCTION__); 
-            return 0;
+            //  throw SOException(ENOSYS, __FUNCTION__);
+            uint32_t db[ReferencesPerBlock];
+            uint32_t pos1 = afbn / (ReferencesPerBlock*ReferencesPerBlock);
+            uint32_t pos2 = afbn / ReferencesPerBlock;
+            uint32_t pos3 = afbn  % ReferencesPerBlock;
+
+            soReadDataBlock(ip->i2[pos1],&db);
+            soReadDataBlock(db[pos2],&db);
+
+            return db[pos3];
         }
-#endif
+
 
     };
 
