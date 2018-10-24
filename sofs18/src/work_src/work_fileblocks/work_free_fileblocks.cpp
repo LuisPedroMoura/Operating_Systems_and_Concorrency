@@ -28,8 +28,6 @@ namespace sofs18
          */
         static void soFreeDoubleIndirectFileBlocks(uint32_t * bl, uint32_t ffbn);
 
-        static void free(SOInode * ip, uint32_t ffbn, uint32_t function);
-
         /* ********************************************************* */
 
         void soFreeFileBlocks(int ih, uint32_t ffbn)
