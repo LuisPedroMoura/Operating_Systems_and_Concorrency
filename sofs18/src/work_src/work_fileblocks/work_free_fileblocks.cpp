@@ -28,6 +28,7 @@ namespace sofs18
          */
         static void soFreeDoubleIndirectFileBlocks(uint32_t * bl, uint32_t ffbn);
 
+        static void free(SOInode * ip, uint32_t ffbn, uint32_t function);
 
         /* ********************************************************* */
 
@@ -49,9 +50,7 @@ namespace sofs18
 
             // exit condition - invalid ffbn
             if (ffbn < 0 || ffbn >= doubleIndirectEnd) {
-				// TODO ERRO
-            	//EFAULT - Bad address
-				//EINVAL - Invalid argument
+				throw SOException(EINVAL, __FUNCTION__);
 
 			}
 

@@ -18,7 +18,18 @@ namespace sofs18
             soProbe(332, "%s(%d, %u, %p)\n", __FUNCTION__, ih, fbn, buf);
 
             /* change the following line by your code */
-            bin::soWriteFileBlock(ih, fbn, buf);
+            //bin::soWriteFileBlock(ih, fbn, buf);
+            // code developed by Fernando Marques 80238
+
+            // get the block number of the file
+            uint32_t nBlock = sofs18::soGetFileBlock(ih, fbn);
+            
+            // if the block is not allocated, alloc data
+            if(nBlock == NULL)
+            {
+            	nBlock = sofs18::soAllocFileBlock(ih, fbn);
+            }
+			soWriteDataBlock(nBlock, buf);
         }
 
     };
