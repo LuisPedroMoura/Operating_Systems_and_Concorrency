@@ -28,6 +28,8 @@ namespace sofs18
          */
         static void soFreeDoubleIndirectFileBlocks(uint32_t * bl, uint32_t ffbn);
 
+        static void free(SOInode * ip, uint32_t ffbn, uint32_t function);
+
         /* ********************************************************* */
 
         void soFreeFileBlocks(int ih, uint32_t ffbn)
@@ -44,7 +46,7 @@ namespace sofs18
             uint32_t RPB = ReferencesPerBlock;
             uint32_t RPBSQR = RPB * RPB;
             uint32_t doubleIndirectStart = N_INDIRECT * RPB + N_DIRECT;
-            uint32_t doubleIndirectEnd = (RPBSQR + N_INDIRECT * RPB) + N_DIRECT;
+            uint32_t doubleIndirectEnd = RPBSQR * N_DOUBLE_INDIRECT + N_INDIRECT * RPB + N_DIRECT;
 
             // exit condition - invalid ffbn
             if (ffbn < 0 || ffbn >= doubleIndirectEnd) {
@@ -97,9 +99,9 @@ namespace sofs18
 
             // free file blocks from ref to end of indirect list
             uint32_t db[ReferencesPerBlock];
-            for (int i = i1index; i < size; i++) {
+            for (uint32_t i = i1index; i < size; i++) {
 
-            	soReadDataBlock(bl[i], db);
+            	soReadDataBlock(bl[i], &db);
 
             	// free direct list
             	for (uint32_t j = ref; j < ReferencesPerBlock; j++) {
@@ -109,12 +111,13 @@ namespace sofs18
             	// verify direct list is completely empty
             	bool del = true;
             	for (uint32_t j = 0; j < ref; j++) {
+
 					if (db[j] != NullReference) {
 						del = false;
 					}
 				}
 
-            	soWriteDataBlock(bl[i], db);
+            	soWriteDataBlock(bl[i], &db);
 
             	// if empty, free indirect list entry
             	if (del) {
@@ -141,9 +144,9 @@ namespace sofs18
             uint32_t i2block = (ffabn / ReferencesPerBlock) % ReferencesPerBlock; // indirect index
 
             uint32_t db[ReferencesPerBlock];
-			for (int i = i2index; i < N_DOUBLE_INDIRECT; i++) {
+			for (uint32_t i = i2index; i < N_DOUBLE_INDIRECT; i++) {
 
-				soReadDataBlock(bl[i], db);
+				soReadDataBlock(bl[i], &db);
 
 				// free indirect list
 				soFreeIndirectFileBlocks(db, ffabn, ReferencesPerBlock);
@@ -156,7 +159,7 @@ namespace sofs18
 					}
 				}
 
-				soWriteDataBlock(bl[i], db);
+				soWriteDataBlock(bl[i], &db);
 
 				// if empty, free indirect list entry
 				if (del) {

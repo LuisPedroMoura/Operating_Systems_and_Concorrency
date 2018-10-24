@@ -1,6 +1,6 @@
 /**
  * \file
- * \brief Functions to manage the list of free inodes and the list of free blocks
+ * \brief Functions to manage the list of free inodes and the list of free data blocks
  * 
  *  \author Artur Pereira 2008-2009, 2016-2018
  *  \author Miguel Oliveira e Silva 2009, 2017
@@ -33,12 +33,14 @@ namespace sofs18
     /**
      *  \brief Allocate a free inode.
      *
-     *  An inode reference is retrieved from inode retrieval cache and the inode is initialized.
-     *  If the cache is empty, it has to be replenished before the retrieval takes place.
+     *  An inode reference is retrieved from inode retrieval cache and the inode is initialized:
+     *  \li if the cache is empty, it has to be replenished before the retrieval takes place;
+     *  \li if there are no free inodes, error ENOSPC should be thrown;
+     *  \li when calling a function of any layer, use the main version (sofs18::«func»(...)).
      *
-     *  \param [in] type the inode type (it must represent either a file, 
-     *          or a directory, or a symbolic link)
-     *  \return the number (reference) of the inode allocated
+     *  \param [in] type the inode type; it must represent either a file (\c S_IFREG), 
+     *          a directory (\c S_IFDIR), or a symbolic link (\c S_IFLNK)
+     *  \return the reference (number) of the inode allocated
      */
     uint32_t soAllocInode(uint32_t type);
 
@@ -48,8 +50,9 @@ namespace sofs18
      *  \brief Free the referenced inode.
      *
      * \details
-     *  The inode reference is inserted into the inode insertion cache.
-     *  If the cache is full, it has to be depleted before the insertion takes place.
+     *  The inode reference is inserted into the inode insertion cache:
+     *  \li if the cache is full, it has to be depleted before the insertion takes place;
+     *  \li when calling a function of any layer, use the main version (sofs18::«func»(...)).
      *
      *  \param [in] in number (reference) of the inode to be freed
      */
@@ -61,8 +64,10 @@ namespace sofs18
      *  \brief Allocate a free data block.
      *
      *  \details 
-     *  The block reference is retrieved from the data block retrieval cache. 
-     *  If the cache is empty, it has to be replenished before the retrieval takes place.
+     *  A data block reference is retrieved from the data block retrieval cache: 
+     *  \li if the cache is empty, it has to be replenished before the retrieval takes place;
+     *  \li if there are no free data blocks, error ENOSPC should be thrown;
+     *  \li when calling a function of any layer, use the main version (sofs18::«func»(...)).
      *
      *  \return the number (reference) of the data block allocated
      */
@@ -74,8 +79,9 @@ namespace sofs18
      *  \brief Free the referenced data block.
      *
      * \details
-     *  The data block reference is inserted into the data block insertion cache.
-     *  If the cache is full, it has to be depleted before the insertion takes place.
+     *  The data block reference is inserted into the data block insertion cache:
+     *  \li if the cache is full, it has to be depleted before the insertion takes place;
+     *  \li when calling a function of any layer, use the main version (sofs18::«func»(...)).
      *
      *  \param bn the number (reference) of the data block to be freed
      */
@@ -86,14 +92,14 @@ namespace sofs18
     /**
      * \brief Replenish the inode retrieval cache
      * \details References to free inode should be transferred from the free inode list table
-     *      or from the inode insertion cache to the inode retrieval cache.
-     *  \remarks
-     *      \li Nothing should be done if the retrieval cache is not empty.
-     *      \li The insertion cache should only be used if the free inode list table is empty.
-     *      \li Only a single block should be processed, 
-     *      even if it is not enough to fulfill the retrieval cache.
-     *      \li The block to be processes is the one pointed to by the \c filt_head field 
-     *      of the superblock.
+     *      or from the inode insertion cache to the inode retrieval cache:
+     *  \li nothing should be done if the retrieval cache is not empty;
+     *  \li the insertion cache should only be used if the free inode list table is empty;
+     *  \li only a single block should be processed, 
+     *      even if it is not enough to fulfill the retrieval cache;
+     *  \li the block to be processes is the one pointed to by the \c filt_head field 
+     *      of the superblock;
+     *  \li when calling a function of any layer, use the main version (sofs18::«func»(...)).
      */
     void soReplenishIRCache();
 
@@ -102,14 +108,14 @@ namespace sofs18
     /**
      * \brief Replenish the data block retrieval cache
      * \details References to free data blocks should be transferred from the free data block list table
-     *      or from the data block insertion cache to the data block retrieval cache.
-     * \remarks
-     *      \li Nothing should be done if the retrieval cache is not empty.
-     *      \li The insertion cache should only be used if the free data block list table is empty.
-     *      \li Only a single block should be processed, 
-     *          even if it is not enough to fulfill the retrieval cache.
-     *      \li The block to be processed is the one pointed to by the \c fblt_head field 
-     *      of the superblock.
+     *      or from the data block insertion cache to the data block retrieval cache:
+     *  \li nothing should be done if the retrieval cache is not empty;
+     *  \li the insertion cache should only be used if the free data block list table is empty;
+     *  \li only a single block should be processed, 
+     *          even if it is not enough to fulfill the retrieval cache;
+     *  \li the block to be processed is the one pointed to by the \c fblt_head field 
+     *      of the superblock;
+     *  \li when calling a function of any layer, use the main version (sofs18::«func»(...)).
      */
     void soReplenishBRCache();
 
@@ -118,12 +124,12 @@ namespace sofs18
     /**
      * \brief Deplete the inode insertion cache
      * \details References to free inodes should be transferred from the inode insertion cache
-     *      to the free inode list table.
-     *  \remarks
-     *      \li Only a single block should be processed, 
-     *          even if it is not enough to empty the insertion cache.
-     *      \li The block to be processed is the one pointed to by the \c filt_tail field 
-     *      of the superblock.
+     *      to the free inode list table:
+     *  \li only a single block should be processed, 
+     *          even if it is not enough to empty the insertion cache;
+     *  \li the block to be processed is the one pointed to by the \c filt_tail field 
+     *      of the superblock;
+     *  \li when calling a function of any layer, use the main version (sofs18::«func»(...)).
      */
     void soDepleteIICache();
 
@@ -132,12 +138,12 @@ namespace sofs18
     /**
      * \brief Deplete the data block insertion cache
      * \details References to free data blocks should be transferred from the data block insertion cache
-     *      to the free data block list table.
-     *  \remarks
-     *      \li Only a single block should be processed, 
-     *          even if it is not enough to empty the insertion cache.
-     *      \li The block to be processed is the one pointed to by the \c fblt_tail field 
-     *      of the superblock.
+     *      to the free data block list table:
+     *  \li only a single block should be processed, 
+     *          even if it is not enough to empty the insertion cache;
+     *  \li the block to be processed is the one pointed to by the \c fblt_tail field 
+     *      of the superblock;
+     *  \li when calling a function of any layer, use the main version (sofs18::«func»(...)).
      */
     void soDepleteBICache();
 
