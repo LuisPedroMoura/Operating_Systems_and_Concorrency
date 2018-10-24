@@ -19,16 +19,15 @@ namespace sofs18
          * Return true if, after the operation, all references become NullReference.
          * It assumes i1 is valid.
          */
-        static bool soFreeIndirectFileBlocks(SOInode * ip, uint32_t * bl, uint32_t ffbn);
+        static void soFreeIndirectFileBlocks(uint32_t * bl, uint32_t ffbn, uint32_t size);
 
         /* free all blocks between positions ffbn and ReferencesPerBloc**2 - 1
          * existing in the block of indirect references given by i2.
          * Return true if, after the operation, all references become NullReference.
          * It assumes i2 is valid.
          */
-        static bool soFreeDoubleIndirectFileBlocks(SOInode * ip, uint32_t * bl, uint32_t ffbn);
+        static void soFreeDoubleIndirectFileBlocks(uint32_t * bl, uint32_t ffbn);
 
-        static void free(SOInode * ip, uint32_t ffbn, uint32_t function);
 
         /* ********************************************************* */
 
@@ -42,111 +41,136 @@ namespace sofs18
             // solution by Luis Moura, student 83808 DETI - UA and
             //			   Maria João, student 84681 DETI - UA
 
-
             SOInode* ip = soITGetInodePointer(ih);
             uint32_t RPB = ReferencesPerBlock;
             uint32_t RPBSQR = RPB * RPB;
+            uint32_t doubleIndirectStart = N_INDIRECT * RPB + N_DIRECT;
+            uint32_t doubleIndirectEnd = RPBSQR * N_DOUBLE_INDIRECT + N_INDIRECT * RPB + N_DIRECT;
 
-            if (ffbn < 4) {
+            // exit condition - invalid ffbn
+            if (ffbn < 0 || ffbn >= doubleIndirectEnd) {
+				// TODO ERRO
+            	//EFAULT - Bad address
+				//EINVAL - Invalid argument
+
+			}
+
+            if (ffbn < N_DIRECT) {
 
             	// alterar diretamente d
             	for (; ffbn < N_DIRECT; ffbn++){
             		ip->d[ffbn] = NullReference;
             	}
 
-            	free(ip, ffbn, 1);	// chamar indirect para i1
-            	free(ip, ffbn, 2);	//chamar double indirect para i2
+            }
+
+            if (ffbn >= N_DIRECT  && ffbn < doubleIndirectStart) {
+
+            	// free indirect list
+            	soFreeIndirectFileBlocks(ip->i1, ffbn - N_DIRECT, N_INDIRECT);
+            	ffbn = doubleIndirectStart;
 
             }
-            else if (ffbn >= 4  && ffbn < 2 * RPB + 4) {
 
-            	free(ip, ffbn, 1);	// chamar indirect para i1
-            	free(ip, ffbn, 2);	// chamar double indirect para i2
+            if (ffbn >= doubleIndirectStart && ffbn < doubleIndirectEnd) {
+
+            	// free double indirect list
+            	soFreeDoubleIndirectFileBlocks(ip->i2, ffbn - N_DIRECT - N_INDIRECT * ReferencesPerBlock);
             }
-            else if (ffbn >= 2 * RPB + 3 && ffbn < (RPBSQR + 2 * RPB) + 4) {
 
-            	free(ip, ffbn, 2);	// chamar double indirect para i2
-            }
-        }
-
-        /* ********************************************************* */
-        static void free(SOInode * ip, uint32_t ffbn, uint32_t function) {
-
-        	if (function == 1) {
-        		uint32_t i1index = (ffbn - N_DIRECT) % ReferencesPerBlock;
-				for (int i = i1index; i < N_INDIRECT; i++) {
-					if(soFreeIndirectFileBlocks(ip, &(ip->i1[i]), ffbn)) {
-						ip->i1[i] = NullReference;
-					}
-				}
-        	}
-
-        	else if (function == 2) {
-        		uint32_t i2AdjustedRef = ffbn - N_DIRECT - N_INDIRECT * ReferencesPerBlock;
-        		uint32_t i2index = i2AdjustedRef / ReferencesPerBlock / ReferencesPerBlock;
-        		for (int i = i2index; i < N_DOUBLE_INDIRECT; i++) {
-					if (soFreeDoubleIndirectFileBlocks(ip, &(ip->i2[i]), ffbn)) {
-						ip->i2[i] = NullReference;
-					}
-        		}
-        	}
-
+            soITSaveInode(ih);
         }
 
 
         /* ********************************************************* */
 
 
-        static bool soFreeIndirectFileBlocks(SOInode * ip, uint32_t * bl, uint32_t ffbn)
+        static void soFreeIndirectFileBlocks(uint32_t * bl, uint32_t ffabn, uint32_t size)
         {
-            soProbe(303, "%s(..., %u, %u)\n", __FUNCTION__, bl, ffbn);
+            soProbe(303, "%s(..., %u, %u)\n", __FUNCTION__, bl, ffabn);
 
             /* change the following line by your code */
             //throw SOException(ENOSYS, __FUNCTION__);
 
-            uint32_t ref = ffbn % ReferencesPerBlock - N_DIRECT; // ref inclusive
+            // calculate indirect list index
+            uint32_t i1index = (ffabn / ReferencesPerBlock) % ReferencesPerBlock;
 
-            for (uint32_t i = ref; i < ReferencesPerBlock; i++) {
-            	bl[i] = NullReference;
-            }
+            // calculate direct list index
+            uint32_t ref = ffabn % ReferencesPerBlock; // ref inclusive
 
-            for (uint32_t i = 0; i < ref; i++) {
-            	if (bl[i] != NullReference) {
-            		return false;
+            // free file blocks from ref to end of indirect list
+            uint32_t db[ReferencesPerBlock];
+            for (uint32_t i = i1index; i < size; i++) {
+
+            	soReadDataBlock(bl[i], &db);
+
+            	// free direct list
+            	for (uint32_t j = ref; j < ReferencesPerBlock; j++) {
+					db[j] = NullReference;
+				}
+
+            	// verify direct list is completely empty
+            	bool del = true;
+            	for (uint32_t j = 0; j < ref; j++) {
+
+					if (db[j] != NullReference) {
+						del = false;
+					}
+				}
+
+            	soWriteDataBlock(bl[i], &db);
+
+            	// if empty, free indirect list entry
+            	if (del) {
+            		bl[i] = NullReference;
             	}
+
+            	// adjust ref (next iteration free complete direct lists)
+            	ref = 0;
             }
-            return true;
         }
 
 
         /* ********************************************************* */
 
 
-        static bool soFreeDoubleIndirectFileBlocks(SOInode * ip, uint32_t * bl, uint32_t ffbn)
+        static void soFreeDoubleIndirectFileBlocks(uint32_t * bl, uint32_t ffabn)
         {
-            soProbe(303, "%s(..., %u, %u)\n", __FUNCTION__, bl, ffbn);
+            soProbe(303, "%s(..., %u, %u)\n", __FUNCTION__, bl, ffabn);
 
             /* change the following line by your code */
             //throw SOException(ENOSYS, __FUNCTION__);
 
-            uint32_t i2AdjustedRef = ffbn - N_DIRECT - N_INDIRECT * ReferencesPerBlock;   // offsets reference value by d and i1 length
-            uint32_t i2index = i2AdjustedRef / ReferencesPerBlock / ReferencesPerBlock;   // double indirect index, just to gabate myself
-            uint32_t i2block = (i2AdjustedRef / ReferencesPerBlock) % ReferencesPerBlock; // indirect index
-            //uint32_t ref = i2AdjustedRef % ReferencesPerBlock;							  // ref index in block, not neede, just to gabate myself
+            uint32_t i2index = ffabn / ReferencesPerBlock / ReferencesPerBlock;   // double indirect index, just to gabate myself
+            uint32_t i2block = (ffabn / ReferencesPerBlock) % ReferencesPerBlock; // indirect index
 
-            for (uint32_t i = i2block; i < ReferencesPerBlock; i++) {
-            	if (soFreeIndirectFileBlocks(ip, &(bl[i2block]), ffbn)) {
-            		ip->i2[i2index] = NullReference;
-            	}
-            	ffbn = i2AdjustedRef + (ReferencesPerBlock - (i2AdjustedRef % ReferencesPerBlock)); // it could be zero... but just to gabate myself!
-            }
+            uint32_t db[ReferencesPerBlock];
+			for (uint32_t i = i2index; i < N_DOUBLE_INDIRECT; i++) {
 
-            for (uint32_t i = 0; i < i2block; i++) {
-				if (bl[i] != NullReference) {
-					return false;
+				soReadDataBlock(bl[i], &db);
+
+				// free indirect list
+				soFreeIndirectFileBlocks(db, ffabn, ReferencesPerBlock);
+
+				// verify indirect list is completely empty
+				bool del = true;
+				for (uint32_t j = 0; j < i2block; j++) {
+					if (db[j] != NullReference) {
+						del = false;
+					}
 				}
+
+				soWriteDataBlock(bl[i], &db);
+
+				// if empty, free indirect list entry
+				if (del) {
+					bl[i] = NullReference;
+				}
+
+				// adjust i2block and ffabn (next iteration free complete direct lists)
+				i2block = 0;
+				ffabn = 0;
 			}
-            return true;
         }
 
         /* ********************************************************* */
