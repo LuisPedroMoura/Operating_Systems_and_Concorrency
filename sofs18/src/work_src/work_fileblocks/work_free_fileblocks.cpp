@@ -28,8 +28,6 @@ namespace sofs18
          */
         static void soFreeDoubleIndirectFileBlocks(uint32_t * bl, uint32_t ffbn);
 
-        static void free(SOInode * ip, uint32_t ffbn, uint32_t function);
-
         /* ********************************************************* */
 
         void soFreeFileBlocks(int ih, uint32_t ffbn)
@@ -50,9 +48,7 @@ namespace sofs18
 
             // exit condition - invalid ffbn
             if (ffbn < 0 || ffbn >= doubleIndirectEnd) {
-				// TODO ERRO
-            	//EFAULT - Bad address
-				//EINVAL - Invalid argument
+				throw SOException(EINVAL, __FUNCTION__);
 
 			}
 
@@ -100,7 +96,7 @@ namespace sofs18
             uint32_t ref = ffabn % ReferencesPerBlock; // ref inclusive
 
             // free file blocks from ref to end of indirect list
-            uint32_t * db;
+            uint32_t db[ReferencesPerBlock];
             for (int i = i1index; i < size; i++) {
 
             	soReadDataBlock(bl[i], db);
@@ -144,7 +140,7 @@ namespace sofs18
             uint32_t i2index = ffabn / ReferencesPerBlock / ReferencesPerBlock;   // double indirect index, just to gabate myself
             uint32_t i2block = (ffabn / ReferencesPerBlock) % ReferencesPerBlock; // indirect index
 
-            uint32_t * db;
+            uint32_t db[ReferencesPerBlock];
 			for (int i = i2index; i < N_DOUBLE_INDIRECT; i++) {
 
 				soReadDataBlock(bl[i], db);
