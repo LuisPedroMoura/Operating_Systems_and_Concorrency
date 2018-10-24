@@ -47,7 +47,7 @@ static void printUsage(char *cmd_name)
            "  -p num-num  --- set probe ID range (default: 0-0)\n"
            "  -A num-num  --- add range of IDs to probe configuration\n"
            "  -R num-num  --- remove range of IDs from probe configuration\n"
-           "  -b          --- set bin configuration to 600-699\n"
+           "  -b          --- set bin configuration to 200-799\n"
            "  -w          --- set bin configuration to 0-0 (default)\n"
            "  -a num-num  --- add range of IDs to bin configuration\n"
            "  -r num-num  --- remove range of IDs from bin configuration\n"
@@ -325,7 +325,7 @@ int main(int argc, char *argv[])
     catch(SOException & err)
     {
         errnoMsg(err.en, err.msg);
-        return EXIT_FAILURE;
+        //return EXIT_FAILURE;
     }
 
     /* process the command */

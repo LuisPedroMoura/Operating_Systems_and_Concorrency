@@ -39,7 +39,7 @@ namespace sofs18
 			throw SOException(ENOSPC,__FUNCTION__);
 
 		if(sb -> ircache.idx==INODE_REFERENCE_CACHE_SIZE){
-			soReplenishIRCache(); 
+			sofs18::soReplenishIRCache(); 
 		}
 				
 		SOInodeReferenceCache RetrivialCache = sb -> ircache;
