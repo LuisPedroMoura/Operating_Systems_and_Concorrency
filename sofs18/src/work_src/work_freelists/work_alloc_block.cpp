@@ -30,6 +30,9 @@ namespace sofs18
             //return bin::soAllocDataBlock();
 		
 		SOSuperBlock *sb = soSBGetPointer();
+
+		if(sb -> dz_free == 0)
+			throw SOException(ENOSPC,__FUNCTION__);
 		
 		if(sb -> brcache.idx==BLOCK_REFERENCE_CACHE_SIZE){
 			sofs18::soReplenishBRCache(); 
