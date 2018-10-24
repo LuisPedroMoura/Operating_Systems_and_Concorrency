@@ -41,31 +41,22 @@ namespace sofs18
 	    SOInode* in = soITGetInodePointer(ih);
 	    uint32_t allblock;
 
-	    //if index beyond d[]
-	    if(fbn > N_DIRECT - 1) {
-		//if index beyond i1[0]
-		if(fbn > ReferencesPerBlock + N_DIRECT - 1) {
-		    //if index beyond i1[1]
-		    if(fbn > (2 * ReferencesPerBlock) + N_DIRECT - 1) {
-			//if index beyond i2[0]
-			allblock = soAllocDoubleIndirectFileBlock(in,fbn);
-		    }
-		    else {
-			//add to i1[1]
-			allblock = soAllocIndirectFileBlock(in, fbn);
-		    }
-		}
-		else {
- 		    //add to i1[0]
-		    allblock = soAllocIndirectFileBlock(in, fbn);
-		}
-	    }
-	    else {
-		//add to d[]
-		allblock = sofs18::soAllocDataBlock();
-		in->d[fbn] = allblock ;
-	    }
-
+	     //if index within d[]
+        if(fbn < N_DIRECT) {
+        //add to d[]
+        allblock = sofs18::soAllocDataBlock();
+        in->d[fbn] = allblock ;
+        } 
+        //if index within i1[0] or i1[1]
+        else if(fbn < (2 * ReferencesPerBlock) + N_DIRECT) {
+        //add to i1[0] or i1[1]
+        allblock = soAllocIndirectFileBlock(in, fbn);
+        }
+        //if index within i2[0] or i2[1]
+        else {
+        //add to i2[0] or i2[1]
+        allblock = soAllocDoubleIndirectFileBlock(in, fbn);
+        }
 	    //return number of allocated block
 	    return allblock ; 
         }
