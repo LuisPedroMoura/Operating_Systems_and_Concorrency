@@ -14,8 +14,6 @@ namespace sofs18
     namespace work
     {
 
-    	static void createEmptyDir(SODirEntry dir[DirentriesPerBlock]);
-
         void soAddDirEntry(int pih, const char *name, uint32_t cin)
         {
             soProbe(202, "%s(%d, %s, %u)\n", __FUNCTION__, pih, name, cin);
@@ -23,51 +21,42 @@ namespace sofs18
             /* change the following line by your code */
             //bin::soAddDirEntry(pih, name, cin);
 
+            if (!strcmp(name, "")) {
+            	throw SOException(EEXIST,__FUNCTION__);
+            }
+
             SOInode* pi = soITGetInodePointer(pih);
-            uint32_t emptySlot = NullReference;
-            uint32_t emptySlotBlock = NullReference;
-            bool foundEmptySlot = false;
-            bool exists = false;
+            int emptySlot = -1;
+            int emptySlotBlockIndex = -1;
+            SODirEntry emptySlotBlock[DirentriesPerBlock];
+
+
             SODirEntry d[DirentriesPerBlock];
-
-
             uint32_t i = 0;
-            for (; i <= (pi->size / BlockSize); i++ ) {
-            	printf("###### processing File Block number %d \n", i);
+            for (; i <= pi->blkcnt; i++ ) {
 
             	sofs18::soReadFileBlock(pih, i, d);
 
 				uint32_t j = 0;
 				for (; j < DirentriesPerBlock; j++) {
-					if (!foundEmptySlot && d[j].in == 0) {
-						emptySlotBlock = i;
-						emptySlot = j + i * DirentriesPerBlock;
-						foundEmptySlot = true;
+					if (emptySlot < 0 && d[j].name[0] == '\0') {
+						sofs18::soReadFileBlock(pih, i, emptySlotBlock);
+						emptySlotBlockIndex = i;
+						emptySlot = j;
 					}
 
 					if (!strcmp(d[j].name, name)) {
-						exists = true;
-						break;
+						throw SOException(EEXIST,__FUNCTION__);
 					}
 				}
-
-				if (exists) {
-				   break;
-				}
             }
 
 
-            if (exists) {
-            	throw SOException(EEXIST,__FUNCTION__);
-            }
+			if (emptySlot >= 0) {
 
-			if (foundEmptySlot) {
-
-				sofs18::soReadFileBlock(pih, emptySlotBlock, d);
-				memcpy(d[emptySlot].name, name, SOFS18_MAX_NAME+1);
-				memcpy(&d[emptySlot].in, &cin, sizeof(uint32_t));
-				//d[emptySlot].in = cin;
-				sofs18::soWriteFileBlock(pih, emptySlotBlock, d);
+				memcpy(emptySlotBlock[emptySlot].name, name, SOFS18_MAX_NAME+1);
+				memcpy(&emptySlotBlock[emptySlot].in, &cin, sizeof(uint32_t));
+				sofs18::soWriteFileBlock(pih, emptySlotBlockIndex, emptySlotBlock);
 			}
 
 			else {
@@ -75,7 +64,10 @@ namespace sofs18
 				sofs18::soAllocFileBlock(pih, i+1);
 
 				SODirEntry dir[DirentriesPerBlock];
-				createEmptyDir(dir);
+				memset(dir,0,BlockSize);
+				for(uint32_t i = 0; i < DirentriesPerBlock; i++){
+					dir[i].in = NullReference;
+				}
 				memcpy(dir[0].name, name, SOFS18_MAX_NAME+1);
 				dir[0].in = cin;
 
@@ -83,14 +75,6 @@ namespace sofs18
 
 			}
 
-        }
-
-
-        static void createEmptyDir(SODirEntry dir[DirentriesPerBlock]) {
-        	memset(dir,0,BlockSize);
-			for(uint32_t i = 0; i < DirentriesPerBlock; i++){
-				dir[i].in = NullReference;
-			}
         }
 
     };
