@@ -22,8 +22,12 @@ namespace sofs18
             //bin::soAddDirEntry(pih, name, cin);
 
             if (!strcmp(name, "")) {
-            	throw SOException(EEXIST,__FUNCTION__);
+            	throw SOException(EINVAL, __FUNCTION__);
             }
+
+            if (strlen(name) > 28) {
+				throw SOException(ENAMETOOLONG, __FUNCTION__);
+			}
 
             SOInode* pi = soITGetInodePointer(pih);
             int emptySlot = -1;
