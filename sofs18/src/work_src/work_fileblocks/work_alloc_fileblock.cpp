@@ -46,6 +46,7 @@ namespace sofs18
         //add to d[]
         allblock = sofs18::soAllocDataBlock();
         in->d[fbn] = allblock ;
+	in->blkcnt += 1;
         } 
         //if index within i1[0] or i1[1]
         else if(fbn < (2 * ReferencesPerBlock) + N_DIRECT) {
@@ -58,6 +59,7 @@ namespace sofs18
         allblock = soAllocDoubleIndirectFileBlock(in, fbn);
         }
 	    //return number of allocated block
+	    soITSaveInode(ih);
 	    return allblock ; 
         }
 
@@ -127,7 +129,8 @@ namespace sofs18
 		//add to i1[0]
 		ip->i1[0] = allblock_temp;
 	    }	    
-
+	    
+	    ip->blkcnt += 2;
 	    return allblock ;
         }
 
@@ -235,6 +238,8 @@ namespace sofs18
 		
 		ip -> i2[0] = allblock_temp1;		
 	    }	
+
+	    ip->blkcnt += 3;
 	    return allblock ;
         }
 
