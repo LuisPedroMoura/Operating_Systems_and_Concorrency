@@ -81,7 +81,7 @@ namespace sofs18
             //  throw SOException(ENOSYS, __FUNCTION__);
             uint32_t db[ReferencesPerBlock];
             uint32_t pos1 = afbn / (ReferencesPerBlock*ReferencesPerBlock);
-            uint32_t pos2 = afbn / ReferencesPerBlock;
+            uint32_t pos2 = afbn / ReferencesPerBlock-(pos1*ReferencesPerBlock);
             uint32_t pos3 = afbn  % ReferencesPerBlock;
 
             soReadDataBlock(ip->i2[pos1],&db);
