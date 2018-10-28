@@ -10,36 +10,31 @@
 #include <sys/stat.h>
 
 namespace sofs18 {
-namespace work {
+	namespace work {
 
-uint32_t soGetDirEntry(int pih, const char *name) {
-	soProbe(201, "%s(%d, %s)\n", __FUNCTION__, pih, name);
+		uint32_t soGetDirEntry(int pih, const char *name) {
 
-	/* change the following line by your code */
-	//return bin::soGetDirEntry(pih, name);
-	SOInode* ip = soITGetInodePointer(pih);
-	SODirEntry dir[DirentriesPerBlock];
+			soProbe(201, "%s(%d, %s)\n", __FUNCTION__, pih, name);
 
-	for (uint32_t i = 0; i <= ip->size / BlockSize; i++) {
-		sofs18::soReadFileBlock(pih, i, dir);
+			SOInode* ip = soITGetInodePointer(pih);
+			SODirEntry dir[DirentriesPerBlock];
 
-		for (uint32_t j = 0; j < DirentriesPerBlock; j++) {
+			for (uint32_t i = 0; i <= ip->size / BlockSize; i++) {
+				sofs18::soReadFileBlock(pih, i, dir);
 
-			if (strcmp(dir[j].name, name)==0) {
+				for (uint32_t j = 0; j < DirentriesPerBlock; j++) {
 
-					return dir[j].in;
+					if (strcmp(dir[j].name, name)==0) {
 
+							return dir[j].in;
+
+					}
+				}
 			}
 
-			}
+			return -1;
+
 		}
-
-	return -1;
-	}
-
-}
-;
-
-}
-;
+	};
+};
 
