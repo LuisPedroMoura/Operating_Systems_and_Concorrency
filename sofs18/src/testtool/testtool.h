@@ -75,6 +75,7 @@ void deleteDirEntry();
 void traversePath();
 
 /* inodeattrs */
+void setInodeSize();
 void setInodeAccess();
 void changeOwnership();
 void checkInodeAccess();

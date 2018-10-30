@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
+#include <stdlib.h>
 
 using namespace sofs18;
 
@@ -27,6 +28,7 @@ void promptMsg(const char *fmt, ...)
 /* print a result message */
 void resultMsg(const char *fmt, ...)
 {
+    if (quiet > 1) return;
     /* print the message */
     fprintf(stdout, "\e[01;34m");
     va_list ap;
@@ -41,6 +43,7 @@ void resultMsg(const char *fmt, ...)
 /* print an ERROR message */
 void errorMsg(const char *fmt, ...)
 {
+    if (quiet > 1) return;
     /* print the message */
     fprintf(stderr, "\e[01;31m");
     va_list ap;
@@ -67,8 +70,10 @@ void errnoMsg(int en, const char *fmt, ...)
 /* purge remainder of line */
 void fPurge(FILE* fin)
 {
-    fscanf(fin, "%*[^\n]");
+    int n=0;
+    fscanf(fin, "%*[^\n]%n", &n);
     fscanf(fin, "%*c");
+    if (quiet > 0 && n > 0) exit(EXIT_FAILURE);
 }
 
 /* ******************************************** */

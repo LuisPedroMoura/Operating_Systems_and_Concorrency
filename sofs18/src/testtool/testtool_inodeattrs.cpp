@@ -15,6 +15,36 @@ static FILE * fin = stdin;
 /* ******************************************** */
 
 /* get inode permissions */
+void setInodeSize()
+{
+    /* ask for inode number */
+    promptMsg("inode number: ");
+    uint32_t in;
+    fscanf(fin, "%u", &in);
+    fPurge(fin);
+
+    /* ask for new size */
+    promptMsg("size in bytes: ");
+    uint32_t size;
+    fscanf(fin, "%u", &size);
+    fPurge(fin);
+
+    /* call function */
+    int ih = soITOpenInode(in);
+    SOInode* ip = soITGetInodePointer(ih);
+    ip->size = size;
+
+    /* print result */
+    printf("Size of inode #%u set to %u\n", in, size);
+
+    /* save and close inode */
+    soITSaveInode(ih);
+    soITCloseInode(ih);
+}
+
+/* ******************************************** */
+
+/* get inode permissions */
 void setInodeAccess()
 {
     /* ask for inode number */

@@ -27,20 +27,25 @@ namespace sofs18
     /* ************************************************** */
 
     /**
-     *  \brief Get the inode associated to the given path
+     *  \brief Get the inode associated to a given path
      *
      *  The directory hierarchy of the file system is traversed to find
      *  an entry whose name is the rightmost component of
      *  <tt>path</tt>.
-     *  The path is supposed to be absolute and each component of <tt>path</tt>,
-     *  with the exception of the rightmost one,
-     *  should be a directory name or symbolic link name to a path.
-     *
-     *  The process that calls the operation must have execution
-     *  (x) permission on all the components of the path with
-     *  exception of the rightmost one.
      *
      *  \param [in] path the path to be traversed
+     *  
+     *  \remarks
+     *  
+     *  \li \c path must be absolute and each of its components,
+     *  with the exception of the rightmost one,
+     *  must be a directory name or symbolic link name to a path.
+     *
+     * \li The process that calls the operation must have traverse
+     *  (x) permission on all the components of the path with
+     *  exception of the rightmost one.
+     *  \li when calling a function of any layer, use the main version (sofs18::«func»(...)).
+     *
      *  \return the corresponding inode number
      */
     uint32_t soTraversePath(char *path);
@@ -48,17 +53,22 @@ namespace sofs18
     /* ************************************************** */
 
     /**
-     *  \brief Get the inode associated to the given name
+     *  \brief Get the inode associated to a given name
      *
      *  The directory contents, seen as an array of directory entries,
-     *  is parsed to find an entry whose name is <tt>name</tt>.
-     *
-     *  The <tt>name</tt> must also be a <em>base name</em> and not a <em>path</em>,
-     *  that is, it can not contain the character '/'.
+     *  is parsed to find an entry whose name is the given one.
      *
      *  \param [in] pih inode handler of the parent directory
      *  \param [in] name the name of the entry to be searched for
-     *  \return the corresponding inode number
+     *
+     * \remarks
+     *
+     * \li Error \c EINVAL must be thrown if \c name is not a <em>base name</em>,
+     *     that is, if it contains the character '/'.
+     * \li Error \c ENODIR must be thrown if \c pih does not represent a directory
+     *  \li when calling a function of any layer, use the main version (sofs18::«func»(...)).
+     *
+     *  \return the corresponding inode number (even if it is \c NullReference)
      */
     uint32_t soGetDirEntry(int pih, const char *name);
 
@@ -68,24 +78,38 @@ namespace sofs18
      *  \brief Add a new entry to the parent directory.
      *
      *  A direntry is added connecting the parent inode to the child inode.
-     *  The refcount of the child inode is not incremented by this function.
      *
      *  \param [in] pih inode handler of the parent inode
      *  \param [in] name the name of the entry to be created
      *  \param [in] cin inode number of the entry to be created
+     *  
+     *  \remarks 
+     *  
+     *  \li Assume \c pih is a valid inode handler of a directory where the user has write access
+     *  \li Error \c EEXIST should be thrown if \c name already exists
+     *  \li Assume \c cin is a valid inode number
+     *  \li The \c lnkcnt of the child inode is not incremented by this function.
+     *  \li when calling a function of any layer, use the main version (sofs18::«func»(...)).
      */
     void soAddDirEntry(int pih, const char *name, uint32_t cin);
 
     /* ************************************************** */
 
     /**
-     *  \brief Remove an entry from a parent directory.
+     *  \brief Delete an entry from a parent directory.
      *
      *  A direntry associated from the given directory is deleted.
-     *  The \c linkcnt of the child inode is not decremented by this function.
      *
      *  \param [in] pih inode handler of the parent inode
      *  \param [in] name name of the entry
+     *
+     *  \remarks 
+     *  
+     *  \li Assume \c pih is a valid inode handler of a directory where the user has write access
+     *  \li Error \c ENOENT should be thrown if \c name does not exist
+     *  \li The \c lnkcnt of the child inode is not decremented by this function.
+     *  \li when calling a function of any layer, use the main version (sofs18::«func»(...)).
+     *
      *  \return the inode number of the deleted entry
      */
     uint32_t soDeleteDirEntry(int pih, const char *name);
@@ -100,6 +124,12 @@ namespace sofs18
      *  \param [in] pih inode handler of the parent inode
      *  \param [in] name current name of the entry
      *  \param [in] newName new name for the entry
+     *
+     *  \remarks 
+     *  
+     *  \li Assume \c pih is a valid inode handler of a directory where the user has write access
+     *  \li Error \c ENOENT should be thrown if \c name does not exist
+     *  \li when calling a function of any layer, use the main version (sofs18::«func»(...)).
      */
     void soRenameDirEntry(int pih, const char *name, const char *newName);
 
@@ -111,6 +141,11 @@ namespace sofs18
      *  The directory is traversed to verified if the only existing entries are "." and "..".
      *
      *  \param [in] ih handler of the inode to be checked
+     *  
+     *  \remarks 
+     *  
+     *  \li Assume \c ih is a valid inode handler of a directory
+     *  \li when calling a function of any layer, use the main version (sofs18::«func»(...)).
      */
     bool soCheckDirEmpty(int ih);
 

@@ -1,6 +1,6 @@
 /**
  * \file
- * \brief Wrapper version of the disk abstraction layer module
+ * \brief Main functions of the disk abstraction (\c dal) layer module
  */
 
 #ifndef __SOFS18_DAL__
