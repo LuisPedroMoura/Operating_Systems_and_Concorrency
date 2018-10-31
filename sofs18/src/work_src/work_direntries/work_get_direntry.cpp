@@ -16,8 +16,16 @@ namespace sofs18 {
 
 			soProbe(201, "%s(%d, %s)\n", __FUNCTION__, pih, name);
 
-			SOInode* ip = soITGetInodePointer(pih);
+			SOInode* ip = sofs18::soITGetInodePointer(pih);
 			SODirEntry dir[DirentriesPerBlock];
+
+            if (strcmp(name, "")==0) {
+            	throw SOException(EINVAL, __FUNCTION__);
+            }
+
+		    if (S_ISDIR(ip->mode)==0){
+		    	throw SOException(ENOTDIR,__FUNCTION__);
+		    }
 
 			for (uint32_t i = 0; i <= ip->size / BlockSize; i++) {
 				sofs18::soReadFileBlock(pih, i, dir);
