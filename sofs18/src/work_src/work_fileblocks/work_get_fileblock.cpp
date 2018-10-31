@@ -56,19 +56,22 @@ namespace sofs18
         {
             soProbe(301, "%s(%d, ...)\n", __FUNCTION__, afbn);
 
-            /* change the following two lines by your code */
-            //:w
-            //throw SOException(ENOSYS, __FUNCTION__);
+            /* change the following line by your code */
 
             uint32_t db[ReferencesPerBlock];
             uint32_t pos1=afbn / ReferencesPerBlock;
             uint32_t pos2= afbn % ReferencesPerBlock;
 
-            soReadDataBlock(ip->i1[pos1],&db);
+            if(ip->i1[pos1] == NullReference){
+            	return NullReference;
+            }
 
-            return db[pos2];
+            else{
+                soReadDataBlock(ip->i1[pos1],&db);
+                return db[pos2];
+            }
+
         }
-
 
         /* ********************************************************* */
 
@@ -77,19 +80,32 @@ namespace sofs18
         {
             soProbe(301, "%s(%d, ...)\n", __FUNCTION__, afbn);
 
-            /* change the following two lines by your code */
-            //  throw SOException(ENOSYS, __FUNCTION__);
+            /* change the following line by your code */
+
             uint32_t db[ReferencesPerBlock];
             uint32_t pos1 = afbn / (ReferencesPerBlock*ReferencesPerBlock);
-            uint32_t pos2 = afbn / ReferencesPerBlock;
+            uint32_t pos2 = afbn / ReferencesPerBlock-(pos1*ReferencesPerBlock);
             uint32_t pos3 = afbn  % ReferencesPerBlock;
 
-            soReadDataBlock(ip->i2[pos1],&db);
-            soReadDataBlock(db[pos2],&db);
+            if(ip->i2[pos1] == NullReference){
+            	return NullReference;
+            }
 
-            return db[pos3];
+            else{
+                soReadDataBlock(ip->i2[pos1],&db);
+
+                if(db[pos2] == NullReference){
+                	return NullReference;
+                }
+
+                else{
+                	soReadDataBlock(db[pos2],&db);
+                	return db[pos3];
+                }
+
+            }
+
         }
-
 
     };
 

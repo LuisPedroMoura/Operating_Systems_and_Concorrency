@@ -26,10 +26,17 @@ namespace sofs18
     /* *************************************************** */
 
     /**
-     * \brief Get the data block number of the given file block
+     * \brief Get the data block number corresponding to the given file block
      *
      *  \param ih inode handler
      *  \param fbn file block number
+     *
+     *  \remarks
+     *
+     *  \li Assume \c ih is a valid handler of an inode in use
+     *  \li Error \c EINVAL must be thrown if \c fbn is not valid
+     *  \li when calling a function of any layer, use the main version (sofs18::«func»(...)).
+     *
      *  \return the number of the corresponding block
      */
     uint32_t soGetFileBlock(int ih, uint32_t fbn);
@@ -41,6 +48,13 @@ namespace sofs18
      *
      *  \param ih inode handler
      *  \param fbn file block number
+     *
+     *  \remarks
+     *
+     *  \li Assume \c ih is a valid handler of an inode in use
+     *  \li Error \c EINVAL must be thrown if \c fbn is not valid
+     *  \li when calling a function of any layer, use the main version (sofs18::«func»(...)).
+     *
      *  \return the number of the allocated block
      */
     uint32_t soAllocFileBlock(int ih, uint32_t fbn);
@@ -52,6 +66,11 @@ namespace sofs18
      *
      *  \param ih inode handler
      *  \param ffbn first file block number
+     *
+     *  \remarks
+     *
+     *  \li Assume \c ih is a valid handler of an inode in use
+     *  \li when calling a function of any layer, use the main version (sofs18::«func»(...)).
      */
     void soFreeFileBlocks(int ih, uint32_t ffbn);
 
@@ -64,32 +83,39 @@ namespace sofs18
      *  to an inode associated to a file (a regular
      *  file, a directory or a symbolic link). 
      *
-     *  If the referred file block has not been allocated yet, 
-     *  the returned data will consist of a byte stream filled with the
-     *  character null (ascii code 0).
-     *
      *  \param ih inode handler
      *  \param fbn file block number
      *  \param buf pointer to the buffer where data must be read into
+     *
+     *  \remarks
+     *
+     *  \li If the referred file block has not been allocated yet, 
+     *  the returned data will consist of a byte stream filled with the
+     *  character null (ascii code 0).
+     *  \li when calling a function of any layer, use the main version (sofs18::«func»(...)).
      */
     void soReadFileBlock(int ih, uint32_t fbn, void *buf);
 
     /* *************************************************** */
 
     /**
-     *  \brief Write a data block.
+     *  \brief Write a file block.
      *
      *  Data is written into a specific data block which is supposed
      *  to belong to an inode associated to a file (a regular
      *  file, a directory or a symbolic link). 
      *
      *  If the referred block has not been allocated yet,
-     *  it will be allocated now so that the data can be stored as its
+     *  it should be allocated now so that the data can be stored as its
      *  contents.
      *
      *  \param ih inode handler
      *  \param fbn file block number
      *  \param buf pointer to the buffer containing data to be written
+     *
+     *  \remarks
+     *
+     *  \li when calling a function of any layer, use the main version (sofs18::«func»(...)).
      */
     void soWriteFileBlock(int ih, uint32_t fbn, void *buf);
 
