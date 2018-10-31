@@ -25,7 +25,7 @@ namespace sofs18
             uint32_t nBlock = sofs18::soGetFileBlock(ih, fbn);
             
             // if the block is not allocated, alloc data
-            if(nBlock == NULL)
+            if(nBlock == NullReference)
             {
             	nBlock = sofs18::soAllocFileBlock(ih, fbn);
             }

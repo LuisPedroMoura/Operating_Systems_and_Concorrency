@@ -24,11 +24,11 @@ namespace sofs18
             
             uint32_t nBlock = sofs18::soGetFileBlock(ih, fbn);
             // if nblock exists, read the data
-            if (nBlock != NULL)
+            if (nBlock != NullReference)
             {
             	soReadDataBlock(nBlock, buf);
             } else {
-            	memset(buf,NULL,BlockSize);
+            	memset(buf,NullReference,BlockSize);
             }
         }
 
