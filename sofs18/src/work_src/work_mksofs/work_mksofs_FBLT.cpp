@@ -21,23 +21,33 @@ namespace sofs18
             /* change the following line by your code */
 
             uint32_t blocktab [ReferencesPerBlock];
-            uint32_t blocknumb = btotal / ReferencesPerBlock;
 
-            if( btotal % ReferencesPerBlock != 0 ) blocknumb = blocknumb+1;
+            uint32_t blocknumb;
+
+            uint32_t refnum = btotal-rdsize;
+
+            blocknumb = refnum / ReferencesPerBlock;
+
+            if( refnum % ReferencesPerBlock != 0 ) blocknumb = blocknumb+1;
+
+            refnum = refnum + rdsize;
 
             for(uint32_t i=0 ; i<blocknumb ; i++){
 
                 for(uint32_t k=0 ; k<ReferencesPerBlock ; k++){
 
-                        if( blocknumb > rdsize ) blocktab[k] = rdsize++;
+                        if( refnum > rdsize ) blocktab[k] = rdsize++;
+
                         else blocktab [k] = NullReference;
 
                 }
 
-                sofs18::soWriteRawBlock(first_block,&blocktab);
+                soWriteRawBlock(first_block,&blocktab);
 
                 first_block++;
+
             }
+
 
         return blocknumb;
 
