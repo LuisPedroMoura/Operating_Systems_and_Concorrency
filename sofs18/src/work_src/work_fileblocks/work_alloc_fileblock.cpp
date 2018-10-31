@@ -42,7 +42,6 @@ namespace sofs18
         allblock = sofs18::soAllocDataBlock();
         in->d[fbn] = allblock ;
 	in->blkcnt += 1;
-	in->size += BlockSize;
         } 
         //if index within i1[0] or i1[1]
         else if(fbn < (2 * ReferencesPerBlock) + N_DIRECT) {
@@ -133,7 +132,6 @@ namespace sofs18
 	    else
 		ip->blkcnt += 1;
 
-	    ip += BlockSize;
 	    return allblock ;
         }
 
@@ -255,7 +253,6 @@ namespace sofs18
 	    else
 		ip->blkcnt += 1;
 		
-	    ip->size += BlockSize; 
 	    return allblock ;
         }
 
