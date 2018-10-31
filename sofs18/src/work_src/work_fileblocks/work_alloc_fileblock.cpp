@@ -29,9 +29,6 @@ namespace sofs18
             //return bin::soAllocFileBlock(ih, fbn);
 
 	    SOSuperBlock *sb = soSBGetPointer();
-
-	    if(sb -> dz_free == 0)
-		throw SOException(ENOSPC,__FUNCTION__);
 	
 	    uint32_t maxNumber = N_DIRECT + (ReferencesPerBlock * N_INDIRECT) + (ReferencesPerBlock * ReferencesPerBlock) * N_DOUBLE_INDIRECT;
 

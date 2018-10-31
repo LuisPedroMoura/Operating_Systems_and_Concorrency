@@ -22,10 +22,6 @@ namespace sofs18
             //bin::soRenameDirEntry(pih, name, newName);
 	    
 	    SOInode* in = soITGetInodePointer(pih);
-	    SOSuperBlock *sb = soSBGetPointer();
-	   
-	    if(pih>(sb->itotal))
-		throw SOException(EINVAL,__FUNCTION__);
 
 	    if (!S_ISDIR(in->mode))
 		throw SOException(ENOTDIR,__FUNCTION__);
@@ -43,7 +39,7 @@ namespace sofs18
 	    uint32_t check = 1;
 	    while(blockcnt<blocks){
 		blockn = sofs18::soGetFileBlock(pih,index);
-		if(blockn==NullReference){
+		if(blockn!=NullReference){
 			sofs18::soReadFileBlock(pih,index,buff);
 			for(j=0;j<ReferencesPerBlock;j++){
 				dir = buff[j];
