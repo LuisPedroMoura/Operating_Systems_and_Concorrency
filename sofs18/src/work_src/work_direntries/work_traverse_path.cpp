@@ -27,36 +27,37 @@ namespace sofs18
 
             // solution by Maria João, student 84681 DETI - UA
 
-            printf("path %s\n",path);
-
 			//stop condition
             if (strcmp(path, "/")==0) {
             	return 0;
             }
 
             char * baseName = basename(strdupa(path));
-            printf("baseName = %s\n", baseName);
             char * dirName = dirname(strdupa(path));
-            printf("dirName = %s\n", dirName);
 
-
-			uint32_t in = soGetDirEntry(soTraversePath(dirName), baseName);
+            uint32_t inp = soTraversePath(dirName);
 
             //verify if is dir or symlink
-			SOInode * ip = soITGetInodePointer(in);
-			if (!((ip->mode & S_IFDIR) == S_IFDIR) || !((ip->mode & S_IFLNK) == S_IFLNK)){
+			uint32_t ih = soITOpenInode(inp);
+			SOInode * ip = soITGetInodePointer(ih);
+
+			if (!((ip->mode & S_IFDIR) == S_IFDIR)){// || !((ip->mode & S_IFLNK) == S_IFLNK)){
 				throw SOException(ENOENT , __FUNCTION__);
 			}
 
             //verify permissions of execution
-			bool permission = sofs18::soCheckInodeAccess(in,X_OK);
+			bool permission = sofs18::soCheckInodeAccess(ih, X_OK);
 			if (!permission) {
 				throw SOException(EACCES , __FUNCTION__);
 			}
+
+			uint32_t in = soGetDirEntry(ih, baseName);
+
+			if((int)in < 0){
+				throw SOException(ENOENT , __FUNCTION__);
+			}
+
 			return in;
-
-			printf("---------------------------------------------------------------");
-
         }
 
     };
