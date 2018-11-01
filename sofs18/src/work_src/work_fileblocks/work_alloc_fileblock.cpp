@@ -28,14 +28,9 @@ namespace sofs18
             /* change the following two lines by your code */
             //return bin::soAllocFileBlock(ih, fbn);
 
-	    SOSuperBlock *sb = soSBGetPointer();
-
-	    if(sb -> dz_free == 0)
-		throw SOException(ENOSPC,__FUNCTION__);
-	
 	    uint32_t maxNumber = N_DIRECT + (ReferencesPerBlock * N_INDIRECT) + (ReferencesPerBlock * ReferencesPerBlock) * N_DOUBLE_INDIRECT;
 
-	    if(fbn >= maxNumber)
+	    if(fbn >= maxNumber || fbn <0)
 		throw SOException(EINVAL,__FUNCTION__);
 
 	    SOInode* in = soITGetInodePointer(ih);
@@ -76,12 +71,14 @@ namespace sofs18
             uint32_t allblock_temp;
 	    uint32_t allblock = NullReference;
 	    uint32_t buff[ReferencesPerBlock];
+	    bool isEmpty=false;
 	    	
 	    //if afbn beyond the total of possible spaces for d[] and i1[0], then it is within i1[1]
     	    if(afbn > ReferencesPerBlock + N_DIRECT - 1) {
  		
 		//Search if exist already a block alocate in i1[1]		
 		if(ip->i1[1] == NullReference) {
+			isEmpty = true;
 			allblock_temp = sofs18::soAllocDataBlock();
 			for(uint32_t i=0; i<ReferencesPerBlock; i++) buff[i] = NullReference;
 			sofs18::soWriteDataBlock(allblock_temp,buff);
@@ -108,6 +105,7 @@ namespace sofs18
  	
 		//Search if exist already a block alocate in i1[0]
 		if(ip->i1[0] == NullReference){
+			isEmpty = true;
 			allblock_temp = sofs18::soAllocDataBlock();
 			for(uint32_t i=0; i<ReferencesPerBlock; i++) buff[i] = NullReference;
 			sofs18::soWriteDataBlock(allblock_temp,buff);
@@ -129,8 +127,11 @@ namespace sofs18
 		//add to i1[0]
 		ip->i1[0] = allblock_temp;
 	    }	    
-	    
-	    ip->blkcnt += 2;
+	    if(isEmpty)
+		ip->blkcnt += 2;
+	    else
+		ip->blkcnt += 1;
+
 	    return allblock ;
         }
 
@@ -153,6 +154,8 @@ namespace sofs18
 	    uint32_t buff1[ReferencesPerBlock];
 	    uint32_t buff2[ReferencesPerBlock];
 
+	    uint32_t diInnerCount=0;
+
 	    uint32_t afbn_quoc;
 	    uint32_t afbn_rem;
 
@@ -161,6 +164,7 @@ namespace sofs18
 
 		//Search if exist already a block alocate in i1[0]
 		if(ip->i2[1] == NullReference){
+			diInnerCount += 1;
 			allblock_temp1 = sofs18::soAllocDataBlock();
 			for(uint32_t i=0; i<ReferencesPerBlock; i++) buff1[i] = NullReference;
 			sofs18::soWriteDataBlock(allblock_temp1,buff1);
@@ -177,6 +181,7 @@ namespace sofs18
 	        afbn_rem = afbn % ReferencesPerBlock;
 
 		if(buff1[afbn_quoc] == NullReference){
+			diInnerCount += 1;
 			allblock_temp2 = sofs18::soAllocDataBlock();
 			for(uint32_t i=0; i<ReferencesPerBlock; i++) buff2[i] = NullReference;
 			sofs18::soWriteDataBlock(allblock_temp2,buff2);
@@ -203,6 +208,7 @@ namespace sofs18
 
 		//Search if exist already a block alocate in i1[0]
 		if(ip->i2[0] == NullReference){
+			diInnerCount += 1;
 			allblock_temp1 = sofs18::soAllocDataBlock();
 			for(uint32_t i=0; i<ReferencesPerBlock; i++) buff1[i] = NullReference;
 			sofs18::soWriteDataBlock(allblock_temp1,buff1);
@@ -219,6 +225,7 @@ namespace sofs18
 	        afbn_rem = afbn % ReferencesPerBlock;
 
 		if(buff1[afbn_quoc] == NullReference){
+			diInnerCount += 1;
 			allblock_temp2 = sofs18::soAllocDataBlock();
 			for(uint32_t i=0; i<ReferencesPerBlock; i++) buff2[i] = NullReference;
 			sofs18::soWriteDataBlock(allblock_temp2,buff2);
@@ -239,7 +246,13 @@ namespace sofs18
 		ip -> i2[0] = allblock_temp1;		
 	    }	
 
-	    ip->blkcnt += 3;
+	    if(diInnerCount == 2)
+		ip->blkcnt += 3;
+	    else if(diInnerCount == 1)
+		ip->blkcnt += 2;
+	    else
+		ip->blkcnt += 1;
+		
 	    return allblock ;
         }
 

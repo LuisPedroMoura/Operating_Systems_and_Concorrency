@@ -35,6 +35,9 @@ namespace sofs18
 
 		SOSuperBlock *sb = soSBGetPointer();
 		
+		if(type!=S_IFREG && type!=S_IFDIR && type!=S_IFLNK)
+			throw SOException(EINVAL,__FUNCTION__); 
+
 		if(sb -> ifree == 0)
 			throw SOException(ENOSPC,__FUNCTION__);
 

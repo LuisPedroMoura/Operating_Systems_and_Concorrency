@@ -20,8 +20,10 @@ namespace sofs18
             
             /* change the following line by your code */
 
-	    uint32_t blocktab [ReferencesPerBlock];
+            uint32_t blocktab [ReferencesPerBlock];
+
             uint32_t blocknumb;
+
             uint32_t refnum = btotal-rdsize;
 
             blocknumb = refnum / ReferencesPerBlock;
@@ -35,6 +37,7 @@ namespace sofs18
                 for(uint32_t k=0 ; k<ReferencesPerBlock ; k++){
 
                         if( refnum > rdsize ) blocktab[k] = rdsize++;
+
                         else blocktab [k] = NullReference;
 
                 }
@@ -42,7 +45,9 @@ namespace sofs18
                 soWriteRawBlock(first_block,&blocktab);
 
                 first_block++;
+
             }
+
 
         return blocknumb;
 
