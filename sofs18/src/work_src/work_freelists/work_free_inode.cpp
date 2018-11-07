@@ -31,7 +31,7 @@ namespace sofs18
             SOSuperBlock *sb = soSBGetPointer();
 
           	// it means that insertion cache is full
-          	if (sb->iicache.idx == INODE_REFERENCE_CACHE_SIZE - 1)
+          	if (sb->iicache.idx == INODE_REFERENCE_CACHE_SIZE)
           	{
           		sofs18::soDepleteIICache();
           	}
