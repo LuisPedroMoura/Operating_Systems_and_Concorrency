@@ -25,7 +25,7 @@ namespace sofs18
             	throw SOException(EINVAL, __FUNCTION__);
             }
 
-            if (strlen(name) > 28) {
+            if (strlen(name) > SOFS18_MAX_NAME) {
 				throw SOException(ENAMETOOLONG, __FUNCTION__);
 			}
 
