@@ -41,7 +41,7 @@ namespace sofs18
 		if(sb -> ifree == 0)
 			throw SOException(ENOSPC,__FUNCTION__);
 
-		if(sb -> ircache.idx==INODE_REFERENCE_CACHE_SIZE){
+		if(sb -> ircache.idx == INODE_REFERENCE_CACHE_SIZE){
 			sofs18::soReplenishIRCache(); 
 		}
 				
