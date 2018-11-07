@@ -57,6 +57,9 @@ namespace sofs18
 				throw SOException(ENOENT , __FUNCTION__);
 			}
 
+            // close open inode
+            soITCloseInode(ih);
+
 			return in;
         }
 
