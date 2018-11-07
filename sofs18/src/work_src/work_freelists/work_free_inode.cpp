@@ -57,21 +57,6 @@ namespace sofs18
             inode->mtime = 0;
             inode->ctime = 0;
 
-            for(uint32_t a = 0 ; a < N_DIRECT ; a++)
-            {
-            	inode->d[a] = NullReference;
-            }
-
-            for(uint32_t b = 0 ; b < N_INDIRECT ; b++)
-            {
-            	inode->i1[b] = NullReference;
-            }
-
-            for(uint32_t c = 0 ; c < N_DOUBLE_INDIRECT ; c++)
-            {
-            	inode->i2[c] = NullReference;
-            }
-
             // save inode changed            
             soITSaveInode(inode_handler);
             // save the superblock
