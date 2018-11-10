@@ -22,8 +22,6 @@ namespace sofs18
     namespace work
     {
 
-        /*
-         */
         void soDepleteIICache(void)
         {
             soProbe(404, "%s()\n", __FUNCTION__);
@@ -32,15 +30,15 @@ namespace sofs18
             
             SOSuperBlock *sb = soSBGetPointer();
 	
-            uint32_t block = sb-> filt_tail / ReferencesPerBlock ;
-            uint32_t block_used_refs = sb-> filt_tail % ReferencesPerBlock;
+            uint32_t block = sb->filt_tail / ReferencesPerBlock ;
+            uint32_t block_used_refs = sb->filt_tail % ReferencesPerBlock;
             uint32_t *block_pointer = soFILTOpenBlock(block);
             uint32_t block_free_refs;
 
-			if( block == sb-> filt_head / ReferencesPerBlock ){
+			if( block == sb->filt_head / ReferencesPerBlock ){
 
-				if( (sb-> filt_head) % ReferencesPerBlock >  (sb-> filt_tail) % ReferencesPerBlock){
-					block_free_refs = (sb-> filt_head) % ReferencesPerBlock - (sb-> filt_tail) % ReferencesPerBlock;
+				if( (sb-> filt_head) % ReferencesPerBlock >  (sb->filt_tail) % ReferencesPerBlock){
+					block_free_refs = (sb->filt_head) % ReferencesPerBlock - (sb->filt_tail) % ReferencesPerBlock;
 				}
 				else{
 					block_free_refs = ReferencesPerBlock - block_used_refs;
@@ -78,7 +76,6 @@ namespace sofs18
 				}
 			
 			}
-
 			else{
 		
 				memcpy(&(block_pointer[block_used_refs]),&(sb->iicache),(sb->iicache.idx)*sizeof(uint32_t));

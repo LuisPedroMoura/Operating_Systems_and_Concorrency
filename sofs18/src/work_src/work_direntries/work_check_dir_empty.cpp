@@ -21,33 +21,35 @@ namespace sofs18
             /* change the following line by your code */
             //"return bin::soCheckDirEmpty(ih);
 	
-	    //Reference to the node being handled
-	    SOInode* node = soITGetInodePointer(ih);
-	    
-	    uint32_t blk = (node->size)/BlockSize;
-	    SODirEntry buff[DirentriesPerBlock];
+			//Reference to the node being handled
+			SOInode* node = soITGetInodePointer(ih);
+			
+			uint32_t blk = (node->size) / BlockSize;
+			SODirEntry buff[DirentriesPerBlock];
 
-	    uint32_t blkCount = 0;
-	    uint32_t blkNum = 0;
-	    uint32_t tmpBlk;
+			uint32_t blkCount = 0;
+			uint32_t blkNum = 0;
+			uint32_t tmpBlk;
 
-	    while(blkCount < blk) {
-		tmpBlk = sofs18::soGetFileBlock(ih,blkNum);
+			while(blkCount < blk) {
+				tmpBlk = sofs18::soGetFileBlock(ih,blkNum);
 
-		if(tmpBlk != NullReference) {
-		    sofs18::soReadFileBlock(ih,blkNum,buff);
-		
-		    for(uint32_t i = 2; i < DirentriesPerBlock; i++) {
-		    	if(strcmp(buff[i].name,"\0") != 0) return false;
-	    	    }
+				if(tmpBlk != NullReference) {
+					sofs18::soReadFileBlock(ih,blkNum,buff);
+				
+					for(uint32_t i = 2; i < DirentriesPerBlock; i++) {
+						if(strcmp(buff[i].name,"\0") != 0){
+							return false;
+						}
+					}
 
-		    blkCount++;
-		}
+					blkCount++;
+				}
 
-		blkNum++;
-	    }
+				blkNum++;
+			}
 
-	    return true; 
+			return true; 
         }
 
     };

@@ -17,8 +17,6 @@ namespace sofs18
         uint32_t fillInFreeBlockListTable(uint32_t first_block, uint32_t btotal, uint32_t rdsize)
         {
             soProbe(605, "%s(%u, %u, %u)\n", __FUNCTION__, first_block, btotal, rdsize);
-            
-            /* change the following line by your code */
 
             uint32_t blocktab [ReferencesPerBlock];
             uint32_t blocknumb;

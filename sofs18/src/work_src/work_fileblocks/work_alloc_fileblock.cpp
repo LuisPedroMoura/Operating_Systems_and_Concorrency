@@ -213,7 +213,7 @@ namespace sofs18
 				buff1[afbn_quoc] = allblock_temp2;
 				sofs18::soWriteDataBlock(allblock_temp1,buff1);
 				
-				ip -> i2[1] = allblock_temp1;		
+				ip->i2[1] = allblock_temp1;		
 
 			
 			}	    
@@ -267,7 +267,7 @@ namespace sofs18
 				buff1[afbn_quoc] = allblock_temp2;
 				sofs18::soWriteDataBlock(allblock_temp1,buff1);
 				
-				ip -> i2[0] = allblock_temp1;		
+				ip->i2[0] = allblock_temp1;		
 			}	
 
 			if(diInnerCount == 2){

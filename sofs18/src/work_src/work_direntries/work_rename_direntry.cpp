@@ -21,36 +21,42 @@ namespace sofs18
             /* change the following line by your code */
             //bin::soRenameDirEntry(pih, name, newName);
 	    
-	    SOInode* in = soITGetInodePointer(pih);
+			SOInode* in = soITGetInodePointer(pih);
 
-	    if (!S_ISDIR(in->mode))
-		throw SOException(ENOTDIR,__FUNCTION__);
+			if(!S_ISDIR(in->mode)){
+				throw SOException(ENOTDIR,__FUNCTION__);
+			}
 
-	    uint32_t blocks = (in->size)/BlockSize; //Number of block use by the file
-	    
-	    SODirEntry buff[ReferencesPerBlock];
-	   
-	    SODirEntry dir;
+			uint32_t blocks = (in->size) / BlockSize; //Number of block use by the file
+			
+			SODirEntry buff[ReferencesPerBlock];
+		
+			SODirEntry dir;
 
-	    uint32_t index = 0;
-	    uint32_t blockcounter = 0;
-	    uint32_t j = 0;
-	    uint32_t check = 1;
-	    for(blockcounter=0;blockcounter<blocks;blockcounter++){
-		sofs18::soReadFileBlock(pih,index,buff);
-		for(j=0;j<ReferencesPerBlock;j++){
-			dir = buff[j];
-			if(strcmp(dir.name,name)==0){
-				memmove(dir.name,newName,SOFS18_MAX_NAME+1);
-				check = 0;
-				buff[j]=dir;
-				sofs18::soWriteFileBlock(pih,index,buff);
+			uint32_t index = 0;
+			uint32_t blockcounter = 0;
+			uint32_t j = 0;
+			uint32_t check = 1;
+			
+			for(blockcounter=0; blockcounter < blocks; blockcounter++){
+
+				sofs18::soReadFileBlock(pih,index,buff);
+
+				for(j=0; j < ReferencesPerBlock; j++){
+					dir = buff[j];
+					if(strcmp(dir.name,name) == 0){
+						memmove(dir.name,newName,SOFS18_MAX_NAME+1);
+						check = 0;
+						buff[j]=dir;
+						sofs18::soWriteFileBlock(pih,index,buff);
+					}
+				}
+			}
+
+			if(check != 0){
+				throw SOException(ENOENT,__FUNCTION__);       
 			}
 		}
-	    }
-	    if(check!=0)
-		throw SOException(ENOENT,__FUNCTION__);       
-	}
 
     };
 

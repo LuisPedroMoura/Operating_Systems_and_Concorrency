@@ -37,7 +37,7 @@ namespace sofs18
 			uint32_t block_free_refs;
 		
 			if(block == sb->fblt_head / ReferencesPerBlock ){
-				if(sb->fblt_head % ReferencesPerBlock >  sb-> fblt_tail % ReferencesPerBlock){
+				if(sb->fblt_head % ReferencesPerBlock >  sb->fblt_tail % ReferencesPerBlock){
 					block_free_refs = (sb->fblt_head % ReferencesPerBlock) - (sb->fblt_tail % ReferencesPerBlock);
 				}
 				else{
@@ -65,7 +65,6 @@ namespace sofs18
 					sb->bicache.ref[(sb->bicache.idx)+i] = NullReference;
 				}
 			}
-
 			else{
 				memcpy(&(block_pointer[block_used_refs]),&(sb->bicache),(sb->bicache.idx)*sizeof(uint32_t));
 				sb->fblt_tail += sb->bicache.idx;	

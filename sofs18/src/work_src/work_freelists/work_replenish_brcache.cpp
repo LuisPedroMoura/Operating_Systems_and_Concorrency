@@ -29,8 +29,6 @@ namespace sofs18
 
             SOSuperBlock *sb = soSBGetPointer();
 
-            //SOBlockReferenceCache retrievalCache = sb->brcache;
-
             if(sb->brcache.idx != BLOCK_REFERENCE_CACHE_SIZE ){
             	return;
             }

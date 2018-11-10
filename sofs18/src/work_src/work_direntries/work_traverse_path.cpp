@@ -28,7 +28,7 @@ namespace sofs18
             // solution by Maria João, student 84681 DETI - UA
 
 			//stop condition
-            if (strcmp(path, "/")==0) {
+            if(strcmp(path, "/") == 0){
             	return 0;
             }
 
@@ -41,13 +41,12 @@ namespace sofs18
 			uint32_t ih = soITOpenInode(inp);
 			SOInode * ip = soITGetInodePointer(ih);
 
-			if (!((ip->mode & S_IFDIR) == S_IFDIR)){// || !((ip->mode & S_IFLNK) == S_IFLNK)){
+			if((ip->mode & S_IFDIR) != S_IFDIR){
 				throw SOException(ENOENT , __FUNCTION__);
 			}
 
             //verify permissions of execution
-			bool permission = sofs18::soCheckInodeAccess(ih, X_OK);
-			if (!permission) {
+			if(!sofs18::soCheckInodeAccess(ih, X_OK)) {
 				throw SOException(EACCES , __FUNCTION__);
 			}
 

@@ -31,21 +31,21 @@ namespace sofs18
 		
 			SOSuperBlock *sb = soSBGetPointer();
 
-			if(sb -> dz_free == 0){
+			if(sb->dz_free == 0){
 				throw SOException(ENOSPC,__FUNCTION__);
 			}
 			
-			if(sb -> brcache.idx==BLOCK_REFERENCE_CACHE_SIZE){
+			if(sb->brcache.idx == BLOCK_REFERENCE_CACHE_SIZE){
 				sofs18::soReplenishBRCache(); 
 			}
 					
-			SOBlockReferenceCache RetrivialCache = sb -> brcache;
+			SOBlockReferenceCache RetrivialCache = sb->brcache;
 			
 			uint32_t blockref = RetrivialCache.ref[RetrivialCache.idx];
 
-			sb -> brcache.ref[RetrivialCache.idx] = NullReference;
-			sb -> dz_free -= 1;
-			sb -> brcache.idx += 1;
+			sb->brcache.ref[RetrivialCache.idx] = NullReference;
+			sb->dz_free -= 1;
+			sb->brcache.idx += 1;
 
 			soSBSave();
 					

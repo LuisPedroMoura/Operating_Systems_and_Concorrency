@@ -19,11 +19,11 @@ namespace sofs18 {
 			SOInode* ip = sofs18::soITGetInodePointer(pih);
 			SODirEntry dir[DirentriesPerBlock];
 
-            if (strcmp(name, "")==0) {
+            if (strcmp(name, "") == 0) {
             	throw SOException(EINVAL, __FUNCTION__);
             }
 
-		    if (S_ISDIR(ip->mode)==0){
+		    if (S_ISDIR(ip->mode) == 0){
 		    	throw SOException(ENOTDIR,__FUNCTION__);
 		    }
 
@@ -32,10 +32,8 @@ namespace sofs18 {
 
 				for (uint32_t j = 0; j < DirentriesPerBlock; j++) {
 
-					if (strcmp(dir[j].name, name)==0) {
-
-							return dir[j].in;
-
+					if (strcmp(dir[j].name, name) == 0) {
+						return dir[j].in;
 					}
 				}
 			}

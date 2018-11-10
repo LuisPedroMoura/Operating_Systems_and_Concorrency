@@ -47,7 +47,6 @@ namespace sofs18
             	(sb->ircache).idx = destStart;
             	(sb->iicache).idx = 0;
             }
-
             else {
 
 				uint32_t headBlock = sb->filt_head / ReferencesPerBlock;
