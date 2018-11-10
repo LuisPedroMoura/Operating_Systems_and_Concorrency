@@ -39,7 +39,7 @@ namespace sofs18
 
             SODirEntry d[DirentriesPerBlock];
             uint32_t i = 0;
-            for (; i <= pi->blkcnt; i++ ) {
+            for (; i <= (pi->size / BlockSize); i++ ) {
 
             	sofs18::soReadFileBlock(pih, i, d);
 
