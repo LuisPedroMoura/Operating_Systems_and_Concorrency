@@ -75,7 +75,7 @@ namespace sofs18
 
 				// copy chunk the size of remaining references in block
 				uint32_t destStart = INODE_REFERENCE_CACHE_SIZE - refsAvailable;
-				memcpy(&((sb->ircache).ref[destStart]), &blockPointer[refHead], refsAvailable * sizeof(uint32_t));
+				memcpy(&((sb->ircache).ref[destStart]), &blockPointer[refHead], refsAvailable * sizeof(uint32_t));  // o erro é capaz de ser aqui porque acho que está a ler posições fora da lista tenta fazer bem as contas para confirmar.
 				memset(&blockPointer[refHead], 0xFF, refsAvailable * sizeof(uint32_t));
 
 				// update idx
