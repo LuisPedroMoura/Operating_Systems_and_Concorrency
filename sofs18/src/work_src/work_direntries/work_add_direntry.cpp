@@ -21,6 +21,8 @@ namespace sofs18
             /* change the following line by your code */
             //bin::soAddDirEntry(pih, name, cin);
 
+			// solution by Luis Moura, student 83808 DETI - UA
+
             if (!strcmp(name, "")) {
             	throw SOException(EINVAL, __FUNCTION__);
             }
@@ -55,14 +57,12 @@ namespace sofs18
 				}
             }
 
-
 			if (emptySlot >= 0) {
 
 				memcpy(emptySlotBlock[emptySlot].name, name, SOFS18_MAX_NAME+1);
 				memcpy(&emptySlotBlock[emptySlot].in, &cin, sizeof(uint32_t));
 				sofs18::soWriteFileBlock(pih, emptySlotBlockIndex, emptySlotBlock);
-			}
-
+			}			
 			else {
 
 				sofs18::soAllocFileBlock(pih, i+1);
@@ -76,7 +76,6 @@ namespace sofs18
 				dir[0].in = cin;
 
 				sofs18::soWriteFileBlock(pih, i+1, dir);
-
 			}
 
         }

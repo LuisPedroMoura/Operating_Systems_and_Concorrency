@@ -18,7 +18,6 @@ namespace sofs18
         {
             soProbe(203, "%s(%d, %s, %s)\n", __FUNCTION__, pih, name);
 
-            /* change the following line by your code */
             // code developed by Fernando Marques 80238
 
 			SOInode *inode = soITGetInodePointer(pih);
@@ -55,6 +54,8 @@ namespace sofs18
 			}
 			// if do not exist corresponding exception is launched
 			throw SOException(ENOENT, __FUNCTION__);
+
+			/* change the following line by your code */
 			//return bin::soDeleteDirEntry(pih, name);
 		}
     }

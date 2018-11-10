@@ -27,7 +27,8 @@ namespace sofs18
             if (nBlock != NullReference)
             {
             	soReadDataBlock(nBlock, buf);
-            } else {
+            }
+            else {
             	memset(buf,NullReference,BlockSize);
             }
         }

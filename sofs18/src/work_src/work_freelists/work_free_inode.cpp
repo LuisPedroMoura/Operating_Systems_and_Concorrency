@@ -26,7 +26,6 @@ namespace sofs18
         {
             soProbe(402, "%s(%u)\n", __FUNCTION__, in);
 
-            /* change the following line by your code */
             // code developed by Fernando Marques 80238
             SOSuperBlock *sb = soSBGetPointer();
 
@@ -64,7 +63,7 @@ namespace sofs18
             // close open inode
             soITCloseInode(inode_handler);
 
-
+            /* change the following line by your code */
             //bin::soFreeInode(in);
         }
 

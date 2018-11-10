@@ -46,7 +46,6 @@ namespace sofs18
             	memset(sb->iicache.ref, 0xFF, insertionIDX * sizeof(uint32_t));
             	return;
             }
-
             else {
 
 				uint32_t headBlock = sb->filt_head / ReferencesPerBlock;

@@ -35,19 +35,19 @@ namespace sofs18
 
 			SOSuperBlock *sb = soSBGetPointer();
 			
-			if(type!=S_IFREG && type!=S_IFDIR && type!=S_IFLNK){
+			if(type != S_IFREG && type != S_IFDIR && type != S_IFLNK){
 				throw SOException(EINVAL,__FUNCTION__); 
 			}
 
-			if(sb -> ifree <= 0){
+			if(sb->ifree <= 0){
 				throw SOException(ENOSPC,__FUNCTION__);
 			}
 
-			if(sb -> ircache.idx==INODE_REFERENCE_CACHE_SIZE){
+			if(sb->ircache.idx == INODE_REFERENCE_CACHE_SIZE){
 				sofs18::soReplenishIRCache(); 
 			}
 					
-			SOInodeReferenceCache RetrivalCache = sb -> ircache;
+			SOInodeReferenceCache RetrivalCache = sb->ircache;
 			
 			uint32_t inoderef = RetrivalCache.ref[RetrivalCache.idx];
 			
@@ -56,22 +56,22 @@ namespace sofs18
 
 			time_t current_time = time(NULL);
 			
-			in -> mode = type;
-			in -> atime = current_time;
-			in -> mtime = current_time;
-			in -> ctime = current_time;
-			in -> owner = getuid();
-			in -> group = getgid();
+			in->mode = type;
+			in->atime = current_time;
+			in->mtime = current_time;
+			in->ctime = current_time;
+			in->owner = getuid();
+			in->group = getgid();
 
 			soITSaveInode(inode_Handler);
 			soITCloseInode(inode_Handler);
 
-			sb -> ircache.ref[RetrivalCache.idx] = NullReference;
-			sb -> ircache.idx += 1;
-			sb -> ifree -= 1;
+			sb->ircache.ref[RetrivalCache.idx] = NullReference;
+			sb->ircache.idx += 1;
+			sb->ifree -= 1;
 		
-			if(sb -> ifree <= 0){
-				sb -> ifree = 0;
+			if(sb->ifree <= 0){
+				sb->ifree = 0;
 			}
 
 			soSBSave();
@@ -79,7 +79,6 @@ namespace sofs18
 			return inoderef;	
 
         }
-
     };
 
 };
