@@ -6,9 +6,6 @@
 #include <inttypes.h>
 #include <iostream>
 
-#define TRUE 1
-#define FALSE 0
-
 namespace sofs18
 {
     namespace work

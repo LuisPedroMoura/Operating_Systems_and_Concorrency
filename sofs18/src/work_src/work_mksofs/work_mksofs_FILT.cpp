@@ -20,31 +20,34 @@ namespace sofs18
             //return bin::fillInFreeInodeListTable(first_block, itotal);
 
 			//Number of blocks needed for all the inodes
-			uint32_t inodeBlocks = itotal / ReferencesPerBlock;
+			uint32_t inodeBlocks = (itotal-1) / ReferencesPerBlock;
 
-			//Since inodeBlocks is an integer number, we need to account for the mod (division remainder)
-			if(itotal % InodesPerBlock != 0){
-				inodeBlocks++;
-			}
-
-			//Variable to assist in counting the first free block for inode storage
-			uint32_t blockCount = first_block;
-		
 			//Array that stores the inodes to write
 			uint32_t inodeRL[ReferencesPerBlock];
 
 			uint32_t count = 1;
-			for(uint32_t i=0; i<inodeBlocks; i++) {
-				for(uint32_t j=0; j<ReferencesPerBlock; j++) {
-					if(itotal > count){
+			for (uint32_t i = 0; i < inodeBlocks; i++) {
+
+				for (uint32_t j = 0; j < ReferencesPerBlock; j++) {
+
+					inodeRL[j] = count++;
+				}
+				soWriteRawBlock(first_block + i,&inodeRL);
+			}
+
+			//Since inodeBlocks is an integer number, we need to account for the mod (division remainder)
+			if((itotal-1) % InodesPerBlock != 0){
+
+				for(uint32_t j = 0; j < ReferencesPerBlock; j++) {
+					if ((itotal-1) >= count) {
 						inodeRL[j] = count++;
 					}
-					else{
+					else {
 						inodeRL[j] = NullReference;
 					}
 				}
-				soWriteRawBlock(blockCount,&inodeRL);	
-				blockCount++;
+				soWriteRawBlock(first_block + inodeBlocks,&inodeRL);
+				inodeBlocks++;
 			}
 
 			return inodeBlocks;

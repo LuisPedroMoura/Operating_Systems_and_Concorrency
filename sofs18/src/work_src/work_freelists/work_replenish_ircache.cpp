@@ -44,7 +44,8 @@ namespace sofs18
             	uint32_t destStart = INODE_REFERENCE_CACHE_SIZE - insertionIDX;
             	memcpy(&((sb->ircache).ref[destStart]), sb->iicache.ref, insertionIDX * sizeof(uint32_t));
             	memset(sb->iicache.ref, 0xFF, insertionIDX * sizeof(uint32_t));
-            	return;
+            	(sb->ircache).idx = destStart;
+            	(sb->iicache).idx = 0;
             }
 
             else {
@@ -71,10 +72,15 @@ namespace sofs18
 
 				// update filt head
 				sb->filt_head = (sb->filt_head + refsAvailable) % (sb->filt_size * ReferencesPerBlock);
+				if (sb->filt_head == sb->filt_tail) {
+					sb->filt_head = 0;
+					sb->filt_tail = 0;
+				}
+
+				soFILTSaveBlock();
+				soFILTCloseBlock();
             }
 
-            soFILTSaveBlock();
-            soFILTCloseBlock();
             soSBSave();
 
         }

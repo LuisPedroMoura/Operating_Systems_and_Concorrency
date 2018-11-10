@@ -21,9 +21,7 @@ namespace sofs18
             /* change the following line by your code */
 
             uint32_t blocktab [ReferencesPerBlock];
-
             uint32_t blocknumb;
-
             uint32_t refnum = btotal-rdsize;
 
             blocknumb = refnum / ReferencesPerBlock;
