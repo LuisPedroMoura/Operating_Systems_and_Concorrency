@@ -29,44 +29,56 @@ namespace sofs18
             /* change the following line by your code */
             //bin::soDepleteBICache();
 
-	    SOSuperBlock *sb = soSBGetPointer();
+			SOSuperBlock *sb = soSBGetPointer();
 
-	    uint32_t block = sb->fblt_tail / ReferencesPerBlock ;
-            uint32_t block_used_refs = sb-> fblt_tail % ReferencesPerBlock;
-            uint32_t *block_pointer = soFBLTOpenBlock(block);
-            uint32_t block_free_refs;
-	
-	    if(block == sb->fblt_head / ReferencesPerBlock ){
-		if(sb->fblt_head % ReferencesPerBlock >  sb-> fblt_tail % ReferencesPerBlock)
-		    block_free_refs = (sb->fblt_head % ReferencesPerBlock) - (sb->fblt_tail % ReferencesPerBlock);
+			uint32_t block = sb->fblt_tail / ReferencesPerBlock ;
+			uint32_t block_used_refs = sb-> fblt_tail % ReferencesPerBlock;
+			uint32_t *block_pointer = soFBLTOpenBlock(block);
+			uint32_t block_free_refs;
+		
+			if(block == sb->fblt_head / ReferencesPerBlock ){
+				if(sb->fblt_head % ReferencesPerBlock >  sb-> fblt_tail % ReferencesPerBlock){
+					block_free_refs = (sb->fblt_head % ReferencesPerBlock) - (sb->fblt_tail % ReferencesPerBlock);
+				}
+				else{
+					block_free_refs = ReferencesPerBlock - block_used_refs ;
+				} 
+			}
+			else{
+				block_free_refs = ReferencesPerBlock - block_used_refs;
+			}
 
-		else block_free_refs = ReferencesPerBlock - block_used_refs ;	
-	    }
-	    else block_free_refs = ReferencesPerBlock - block_used_refs;
-	  
-	    if(sb->bicache.idx > block_free_refs){
-	        memcpy(&(block_pointer[block_used_refs]),&(sb->bicache),block_free_refs * sizeof(uint32_t));
+			if(sb->bicache.idx > block_free_refs){
+				memcpy(&(block_pointer[block_used_refs]),&(sb->bicache),block_free_refs * sizeof(uint32_t));
 
-		if(sb->fblt_size - 1 > block) sb->fblt_tail += block_free_refs;
-		else sb->fblt_tail = 0;
+				if(sb->fblt_size - 1 > block){
+					sb->fblt_tail += block_free_refs;
+				}
+				else{
+					sb->fblt_tail = 0;
+				}
 
-		memcpy(&(sb->bicache),&(sb->bicache.ref[block_free_refs]),((sb->bicache.idx)-block_free_refs)*sizeof(uint32_t));
-		sb->bicache.idx -= block_free_refs ;
+				memcpy(&(sb->bicache),&(sb->bicache.ref[block_free_refs]),((sb->bicache.idx)-block_free_refs)*sizeof(uint32_t));
+				sb->bicache.idx -= block_free_refs ;
 
-		for(uint32_t i= 0 ; i < block_free_refs ; i++ ) sb->bicache.ref[(sb->bicache.idx)+i] = NullReference;
-	    }
+				for(uint32_t i= 0 ; i < block_free_refs ; i++ ){
+					sb->bicache.ref[(sb->bicache.idx)+i] = NullReference;
+				}
+			}
 
-	    else{
-		memcpy(&(block_pointer[block_used_refs]),&(sb->bicache),(sb->bicache.idx)*sizeof(uint32_t));
-        	sb->fblt_tail += sb->bicache.idx;	
-        	sb->bicache.idx = 0;
+			else{
+				memcpy(&(block_pointer[block_used_refs]),&(sb->bicache),(sb->bicache.idx)*sizeof(uint32_t));
+				sb->fblt_tail += sb->bicache.idx;	
+				sb->bicache.idx = 0;
 
-		for( uint32_t i=0 ; i < BLOCK_REFERENCE_CACHE_SIZE ; i++ ) sb->bicache.ref[i] = NullReference;
-	    }
+				for( uint32_t i=0 ; i < BLOCK_REFERENCE_CACHE_SIZE ; i++ ){
+					sb->bicache.ref[i] = NullReference;
+				}
+			}
 
-	    soFBLTSaveBlock();
-	    soFBLTCloseBlock();
-	    soSBSave();
+			soFBLTSaveBlock();
+			soFBLTCloseBlock();
+			soSBSave();
         }
 
     };

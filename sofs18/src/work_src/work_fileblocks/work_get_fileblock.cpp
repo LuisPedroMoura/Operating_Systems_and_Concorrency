@@ -65,7 +65,6 @@ namespace sofs18
             if(ip->i1[pos1] == NullReference){
             	return NullReference;
             }
-
             else{
                 soReadDataBlock(ip->i1[pos1],&db);
                 return db[pos2];
@@ -90,14 +89,12 @@ namespace sofs18
             if(ip->i2[pos1] == NullReference){
             	return NullReference;
             }
-
             else{
                 soReadDataBlock(ip->i2[pos1],&db);
 
                 if(db[pos2] == NullReference){
                 	return NullReference;
                 }
-
                 else{
                 	soReadDataBlock(db[pos2],&db);
                 	return db[pos3];

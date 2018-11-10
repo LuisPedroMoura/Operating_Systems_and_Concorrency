@@ -33,44 +33,46 @@ namespace sofs18
             /* change the following line by your code */
             //return bin::soAllocInode(type);		
 
-		SOSuperBlock *sb = soSBGetPointer();
-		
-		if(type!=S_IFREG && type!=S_IFDIR && type!=S_IFLNK)
-			throw SOException(EINVAL,__FUNCTION__); 
+			SOSuperBlock *sb = soSBGetPointer();
+			
+			if(type!=S_IFREG && type!=S_IFDIR && type!=S_IFLNK){
+				throw SOException(EINVAL,__FUNCTION__); 
+			}
 
-		if(sb -> ifree == 0)
-			throw SOException(ENOSPC,__FUNCTION__);
+			if(sb -> ifree == 0){
+				throw SOException(ENOSPC,__FUNCTION__);
+			}
 
-		if(sb -> ircache.idx==INODE_REFERENCE_CACHE_SIZE){
-			sofs18::soReplenishIRCache(); 
-		}
-				
-		SOInodeReferenceCache RetrivialCache = sb -> ircache;
-		
-		uint32_t inoderef = RetrivialCache.ref[RetrivialCache.idx];
-		
-		int inode_Handler = soITOpenInode(inoderef);
-		SOInode* in = soITGetInodePointer(inode_Handler);
+			if(sb -> ircache.idx==INODE_REFERENCE_CACHE_SIZE){
+				sofs18::soReplenishIRCache(); 
+			}
+					
+			SOInodeReferenceCache RetrivialCache = sb -> ircache;
+			
+			uint32_t inoderef = RetrivialCache.ref[RetrivialCache.idx];
+			
+			int inode_Handler = soITOpenInode(inoderef);
+			SOInode* in = soITGetInodePointer(inode_Handler);
 
-		time_t current_time = time(NULL);
-		
-		in -> mode = type;
-		in -> atime = current_time;
-		in -> mtime = current_time;
-		in -> ctime = current_time;
-		in -> owner = getuid();
-		in -> group = getgid();
+			time_t current_time = time(NULL);
+			
+			in -> mode = type;
+			in -> atime = current_time;
+			in -> mtime = current_time;
+			in -> ctime = current_time;
+			in -> owner = getuid();
+			in -> group = getgid();
 
-		soITSaveInode(inode_Handler);
-		soITCloseInode(inode_Handler);
+			soITSaveInode(inode_Handler);
+			soITCloseInode(inode_Handler);
 
-		sb -> ircache.ref[RetrivialCache.idx] = NullReference;
-		sb -> ircache.idx += 1;
-		sb -> ifree -= 1;
+			sb -> ircache.ref[RetrivialCache.idx] = NullReference;
+			sb -> ircache.idx += 1;
+			sb -> ifree -= 1;
 
-		soSBSave();
-				
-		return inoderef;	
+			soSBSave();
+					
+			return inoderef;	
         }
 
     };

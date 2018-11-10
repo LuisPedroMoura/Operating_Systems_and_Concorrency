@@ -28,7 +28,9 @@ namespace sofs18
 
             blocknumb = refnum / ReferencesPerBlock;
 
-            if( refnum % ReferencesPerBlock != 0 ) blocknumb = blocknumb+1;
+            if( refnum % ReferencesPerBlock != 0 ){
+                blocknumb = blocknumb+1;
+            }
 
             refnum = refnum + rdsize;
 
@@ -36,9 +38,12 @@ namespace sofs18
 
                 for(uint32_t k=0 ; k<ReferencesPerBlock ; k++){
 
-                        if( refnum > rdsize ) blocktab[k] = rdsize++;
-
-                        else blocktab [k] = NullReference;
+                        if( refnum > rdsize ){
+                            blocktab[k] = rdsize++;
+                        }
+                        else{
+                            blocktab [k] = NullReference;
+                        }
 
                 }
 
@@ -48,9 +53,7 @@ namespace sofs18
 
             }
 
-
-        return blocknumb;
-
+            return blocknumb;
         }
 
 

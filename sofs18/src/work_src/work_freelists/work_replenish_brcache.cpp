@@ -37,7 +37,7 @@ namespace sofs18
 
             //get references from insertion cache
             if(sb->fblt_head == sb->fblt_tail){
-            	//SOBlockReferenceCache insertionCache = sb->bicache;
+            	
             	uint32_t insertionIDX = sb->bicache.idx;
 
             	//insertion cache is empty
@@ -57,16 +57,18 @@ namespace sofs18
 
 				uint32_t block = sb->fblt_head / ReferencesPerBlock;
 				uint32_t ref = sb->fblt_head % ReferencesPerBlock;
+				uint32_t nRefAvailable = ReferencesPerBlock - ref;
+				uint32_t totalRefs = (sb->fblt_tail - sb->fblt_head + sb->fblt_size) % sb->fblt_size;
 
 				uint32_t *blockPointer = soFBLTOpenBlock(block);
-
-				uint32_t nRefAvailable = ReferencesPerBlock - ref;
-				if((sb->fblt_tail - sb->fblt_head) < nRefAvailable)
-					nRefAvailable = sb->fblt_tail - sb->fblt_head;
-
+				
+				if(totalRefs < nRefAvailable){
+					nRefAvailable = totalRefs;
+				}
 
 				if(nRefAvailable >= BLOCK_REFERENCE_CACHE_SIZE){
 
+					// copy cache size chunk from fblt to brcache
 					memcpy(&(sb->brcache), &blockPointer[ref], BLOCK_REFERENCE_CACHE_SIZE*sizeof(uint32_t));
 					memset(&(blockPointer[ref]), 0xFF, BLOCK_REFERENCE_CACHE_SIZE * sizeof(uint32_t));
 

@@ -59,8 +59,9 @@ namespace sofs18
 
             uint32_t remBlocks = data%(ReferencesPerBlock + 1);
             if(remBlocks==1){
-               	if(rdsize==2)
+               	if(rdsize==2){
             		sb.dz_total += 1;
+                }
             }
             else if(remBlocks > 1){
             	sb.fblt_size += 1;
@@ -73,7 +74,9 @@ namespace sofs18
 
             sb.dz_start = sb.fblt_start + sb.fblt_size; //physical number of the block where the data zone starts
             sb.dz_free =  sb.dz_total-1; 				//number of free blocks in data zone
-            if(rdsize==2) sb.dz_free -= 1;
+            if(rdsize==2){
+                sb.dz_free -= 1;
+            }
 
 
             /* caches of free inodes and free blocks */

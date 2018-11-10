@@ -40,16 +40,16 @@ namespace sofs18
 			if( block == sb-> filt_head / ReferencesPerBlock ){
 
 				if( (sb-> filt_head) % ReferencesPerBlock >  (sb-> filt_tail) % ReferencesPerBlock){
-					block_free_refs =  (sb-> filt_head) % ReferencesPerBlock -  (sb-> filt_tail) % ReferencesPerBlock ;
+					block_free_refs = (sb-> filt_head) % ReferencesPerBlock - (sb-> filt_tail) % ReferencesPerBlock;
 				}
 				else{
-					block_free_refs = ReferencesPerBlock - block_used_refs ;
+					block_free_refs = ReferencesPerBlock - block_used_refs;
 				}
 			
 			}
 			else{
 
-				block_free_refs = ReferencesPerBlock - block_used_refs ;
+				block_free_refs = ReferencesPerBlock - block_used_refs;
 
 			}
 
@@ -68,7 +68,7 @@ namespace sofs18
 
 				memcpy(&(sb->iicache),&(sb->iicache.ref[block_free_refs]),((sb->iicache.idx)-block_free_refs)*sizeof(uint32_t));
 
-					sb->iicache.idx -= block_free_refs ;
+				sb->iicache.idx -= block_free_refs ;
 
 
 				for(uint32_t i= 0 ; i < block_free_refs ; i++ ){
@@ -95,9 +95,9 @@ namespace sofs18
 		
 			}
 
-		soFILTSaveBlock();
-		soFILTCloseBlock();
-		soSBSave();
+			soFILTSaveBlock();
+			soFILTCloseBlock();
+			soSBSave();
 
         }
 

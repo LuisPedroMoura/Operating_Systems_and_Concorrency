@@ -29,26 +29,27 @@ namespace sofs18
             /* change the following line by your code */
             //return bin::soAllocDataBlock();
 		
-		SOSuperBlock *sb = soSBGetPointer();
+			SOSuperBlock *sb = soSBGetPointer();
 
-		if(sb -> dz_free == 0)
-			throw SOException(ENOSPC,__FUNCTION__);
-		
-		if(sb -> brcache.idx==BLOCK_REFERENCE_CACHE_SIZE){
-			sofs18::soReplenishBRCache(); 
-		}
-				
-		SOBlockReferenceCache RetrivialCache = sb -> brcache;
-		
-		uint32_t blockref = RetrivialCache.ref[RetrivialCache.idx];
+			if(sb -> dz_free == 0){
+				throw SOException(ENOSPC,__FUNCTION__);
+			}
+			
+			if(sb -> brcache.idx==BLOCK_REFERENCE_CACHE_SIZE){
+				sofs18::soReplenishBRCache(); 
+			}
+					
+			SOBlockReferenceCache RetrivialCache = sb -> brcache;
+			
+			uint32_t blockref = RetrivialCache.ref[RetrivialCache.idx];
 
-		sb -> brcache.ref[RetrivialCache.idx] = NullReference;
-		sb -> dz_free -= 1;
-		sb -> brcache.idx += 1;
+			sb -> brcache.ref[RetrivialCache.idx] = NullReference;
+			sb -> dz_free -= 1;
+			sb -> brcache.idx += 1;
 
-		soSBSave();
-				
-		return blockref;
+			soSBSave();
+					
+			return blockref;
         }
 
     };
