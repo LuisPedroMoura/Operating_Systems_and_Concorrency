@@ -41,11 +41,6 @@ namespace sofs18
             	SOInodeReferenceCache insertionCache = sb->iicache;
             	uint32_t insertionIDX = insertionCache.idx;
 
-            	if (insertionIDX == 0){
-            		throw SOException(ENOSPC,__FUNCTION__);
-            		return;
-            	}
-
             	uint32_t destStart = INODE_REFERENCE_CACHE_SIZE - insertionIDX;
             	memcpy(&((sb->ircache).ref[destStart]), sb->iicache.ref, insertionIDX * sizeof(uint32_t));
             	memset(sb->iicache.ref, 0xFF, insertionIDX * sizeof(uint32_t));
@@ -54,42 +49,28 @@ namespace sofs18
 
             else {
 
-				uint32_t block = sb->filt_head / ReferencesPerBlock;
-				uint32_t ref = sb->filt_head % ReferencesPerBlock;
-				uint32_t refsAvailable = ReferencesPerBlock - ref;
-				uint32_t totalRefs = sb->filt_tail - sb->filt_head;
-				if (totalRefs < refsAvailable ) {
-					refsAvailable = totalRefs;
+				uint32_t headBlock = sb->filt_head / ReferencesPerBlock;
+				uint32_t refHead = sb->filt_head % ReferencesPerBlock;
+				uint32_t tailBlock = sb->filt_tail / ReferencesPerBlock;
+				uint32_t refTail = sb->filt_tail % ReferencesPerBlock;
+				uint32_t lastRef = (headBlock == tailBlock && refTail > refHead) ? refTail : ReferencesPerBlock;
+				uint32_t refsAvailable = lastRef - refHead;
+				uint32_t *blockPointer = soFILTOpenBlock(headBlock);
+
+				if (refsAvailable >= INODE_REFERENCE_CACHE_SIZE) {
+					refsAvailable = INODE_REFERENCE_CACHE_SIZE;
 				}
 
-				uint32_t *blockPointer = soFILTOpenBlock(block);
+				// copy chunk the size of remaining references in block
+				uint32_t destStart = INODE_REFERENCE_CACHE_SIZE - refsAvailable;
+				memcpy(&((sb->ircache).ref[destStart]), &blockPointer[refHead], refsAvailable * sizeof(uint32_t));
+				memset(&blockPointer[refHead], 0xFF, refsAvailable * sizeof(uint32_t));
 
-				if ((refsAvailable) >= INODE_REFERENCE_CACHE_SIZE) {
+				// update idx
+				sb->ircache.idx = destStart;
 
-					// copy cache size chunk from filt to ircache
-					memcpy(&(sb->ircache), &blockPointer[ref], INODE_REFERENCE_CACHE_SIZE * sizeof(uint32_t));
-					memset(&blockPointer[ref], 0xFF, INODE_REFERENCE_CACHE_SIZE * sizeof(uint32_t));
-
-					// update idx
-					sb->ircache.idx = 0;
-
-					// update filt head
-					sb->filt_head += INODE_REFERENCE_CACHE_SIZE;
-				}
-
-				else {
-
-					// copy chunk the size of remaining references in block
-					uint32_t destStart = INODE_REFERENCE_CACHE_SIZE - refsAvailable;
-					memcpy(&((sb->ircache).ref[destStart]), &blockPointer[ref], refsAvailable * sizeof(uint32_t));
-					memset(&blockPointer[ref], 0xFF, refsAvailable * sizeof(uint32_t));
-
-					// update idx
-					sb->ircache.idx = destStart;
-
-					// update filt head
-					sb->filt_head += refsAvailable;
-				}
+				// update filt head
+				sb->filt_head = (sb->filt_head + refsAvailable) % (sb->filt_size * ReferencesPerBlock);
             }
 
             soFILTSaveBlock();

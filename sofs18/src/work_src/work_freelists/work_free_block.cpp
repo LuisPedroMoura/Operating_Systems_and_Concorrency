@@ -33,7 +33,7 @@ namespace sofs18
             SOSuperBlock *sb = soSBGetPointer();
 
             // verify if cache is full
-            if(sb->bicache.idx == BLOCK_REFERENCE_CACHE_SIZE-1)
+            if(sb->bicache.idx == BLOCK_REFERENCE_CACHE_SIZE)
             {
             	sofs18::soDepleteBICache();
             }
