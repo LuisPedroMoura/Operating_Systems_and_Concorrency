@@ -37,17 +37,17 @@ namespace sofs18
 		
 		if(type!=S_IFREG && type!=S_IFDIR && type!=S_IFLNK)
 			throw SOException(EINVAL,__FUNCTION__); 
-
-		if(sb -> ifree == 0)
+		
+		if(sb -> ifree <= 0)
 			throw SOException(ENOSPC,__FUNCTION__);
 
-		if(sb -> ircache.idx == INODE_REFERENCE_CACHE_SIZE){
+		if(sb -> ircache.idx == INODE_REFERENCE_CACHE_SIZE)
 			sofs18::soReplenishIRCache(); 
-		}
-				
-		SOInodeReferenceCache RetrivialCache = sb -> ircache;
 		
-		uint32_t inoderef = RetrivialCache.ref[RetrivialCache.idx];
+				
+		SOInodeReferenceCache RetrivalCache = sb -> ircache;
+		
+		uint32_t inoderef = RetrivalCache.ref[RetrivalCache.idx];
 		
 		int inode_Handler = soITOpenInode(inoderef);
 		SOInode* in = soITGetInodePointer(inode_Handler);
@@ -64,9 +64,13 @@ namespace sofs18
 		soITSaveInode(inode_Handler);
 		soITCloseInode(inode_Handler);
 
-		sb -> ircache.ref[RetrivialCache.idx] = NullReference;
+		sb -> ircache.ref[RetrivalCache.idx] = NullReference;
 		sb -> ircache.idx += 1;
 		sb -> ifree -= 1;
+		
+		if(sb -> ifree <= 0)
+			sb -> ifree = 0;
+
 
 		soSBSave();
 				

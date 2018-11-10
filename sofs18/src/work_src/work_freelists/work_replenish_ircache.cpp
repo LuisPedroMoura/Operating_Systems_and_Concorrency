@@ -44,6 +44,10 @@ namespace sofs18
             	uint32_t destStart = INODE_REFERENCE_CACHE_SIZE - insertionIDX;
             	memcpy(&((sb->ircache).ref[destStart]), sb->iicache.ref, insertionIDX * sizeof(uint32_t));
             	memset(sb->iicache.ref, 0xFF, insertionIDX * sizeof(uint32_t));
+		sb -> iicache.idx = 0;
+		sb -> ircache.idx = destStart;
+		sb -> filt_tail = 0;
+		sb -> filt_head = 0;
             	return;
             }
 
@@ -56,10 +60,20 @@ namespace sofs18
 				uint32_t lastRef = (headBlock == tailBlock && refTail > refHead) ? refTail : ReferencesPerBlock;
 				uint32_t refsAvailable = lastRef - refHead;
 				uint32_t *blockPointer = soFILTOpenBlock(headBlock);
+<<<<<<< HEAD
 
 				if (refsAvailable >= INODE_REFERENCE_CACHE_SIZE) {
+=======
+				uint32_t aux =ReferencesPerBlock-refHead;
+
+				//printf("THE FILT HEAD IS: %d\n", sb->filt_head);
+				//printf("THE FILT TAIL IS: %d\n", sb->filt_tail);
+
+				if (aux >= INODE_REFERENCE_CACHE_SIZE) {
+>>>>>>> master
 					refsAvailable = INODE_REFERENCE_CACHE_SIZE;
 				}
+				else{refsAvailable= aux;}
 
 				// copy chunk the size of remaining references in block
 				uint32_t destStart = INODE_REFERENCE_CACHE_SIZE - refsAvailable;
