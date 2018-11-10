@@ -41,11 +41,6 @@ namespace sofs18
             	SOInodeReferenceCache insertionCache = sb->iicache;
             	uint32_t insertionIDX = insertionCache.idx;
 
-//            	if (insertionIDX == 0){
-//            		throw SOException(ENOSPC,__FUNCTION__);
-//            		return;
-//            	}
-
             	uint32_t destStart = INODE_REFERENCE_CACHE_SIZE - insertionIDX;
             	memcpy(&((sb->ircache).ref[destStart]), sb->iicache.ref, insertionIDX * sizeof(uint32_t));
             	memset(sb->iicache.ref, 0xFF, insertionIDX * sizeof(uint32_t));
@@ -58,16 +53,9 @@ namespace sofs18
 				uint32_t refHead = sb->filt_head % ReferencesPerBlock;
 				uint32_t tailBlock = sb->filt_tail / ReferencesPerBlock;
 				uint32_t refTail = sb->filt_tail % ReferencesPerBlock;
-				uint32_t lastRef = headBlock == tailBlock ? refTail : ReferencesPerBlock -1;
-
+				uint32_t lastRef = (headBlock == tailBlock && refTail > refHead) ? refTail : ReferencesPerBlock;
 				uint32_t refsAvailable = lastRef - refHead;
-
-				//printf("headblock is: %d\n", headBlock);
 				uint32_t *blockPointer = soFILTOpenBlock(headBlock);
-
-
-				//printf("THE FILT HEAD IS: %d\n", sb->filt_head);
-				//printf("THE FILT TAIL IS: %d\n", sb->filt_tail);
 
 				if (refsAvailable >= INODE_REFERENCE_CACHE_SIZE) {
 					refsAvailable = INODE_REFERENCE_CACHE_SIZE;
@@ -75,7 +63,8 @@ namespace sofs18
 
 				// copy chunk the size of remaining references in block
 				uint32_t destStart = INODE_REFERENCE_CACHE_SIZE - refsAvailable;
-				memcpy(&((sb->ircache).ref[destStart]), &blockPointer[refHead], refsAvailable * sizeof(uint32_t));  // o erro é capaz de ser aqui porque acho que está a ler posições fora da lista tenta fazer bem as contas para confirmar.
+				fprintf(stderr, "destStart is: %d\n", destStart);
+				memcpy(&((sb->ircache).ref[destStart]), &blockPointer[refHead], refsAvailable * sizeof(uint32_t));
 				memset(&blockPointer[refHead], 0xFF, refsAvailable * sizeof(uint32_t));
 
 				// update idx
@@ -83,8 +72,6 @@ namespace sofs18
 
 				// update filt head
 				sb->filt_head = (sb->filt_head + refsAvailable) % (sb->filt_size * ReferencesPerBlock);
-				//printf("refsAvailable: %d\n", refsAvailable);
-
             }
 
             soFILTSaveBlock();
