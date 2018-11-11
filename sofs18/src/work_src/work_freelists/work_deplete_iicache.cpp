@@ -48,14 +48,12 @@ namespace sofs18
 			else{
 
 				block_free_refs = ReferencesPerBlock - block_used_refs;
-
 			}
 
 
 			if( sb->iicache.idx > block_free_refs ){
 
 				memcpy(&(block_pointer[block_used_refs]),&(sb->iicache),block_free_refs * sizeof(uint32_t));
-
 
 				if(  (sb-> filt_size)-1 > block ){
 					sb->filt_tail += block_free_refs;
@@ -72,7 +70,6 @@ namespace sofs18
 				for(uint32_t i= 0 ; i < block_free_refs ; i++ ){
 
 					sb->iicache.ref[(sb->iicache.idx)+i] = NullReference;
-
 				}
 			
 			}
@@ -87,7 +84,6 @@ namespace sofs18
         		for( uint32_t i=0 ; i < INODE_REFERENCE_CACHE_SIZE ; i++ ){
 
         			sb->iicache.ref[i] = NullReference;
-			
         		}
 		
 			}

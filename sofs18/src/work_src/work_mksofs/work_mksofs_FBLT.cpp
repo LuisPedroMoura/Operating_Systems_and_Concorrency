@@ -19,34 +19,26 @@ namespace sofs18
             soProbe(605, "%s(%u, %u, %u)\n", __FUNCTION__, first_block, btotal, rdsize);
 
             uint32_t blocktab [ReferencesPerBlock];
-            uint32_t blocknumb;
-            uint32_t refnum = btotal-rdsize;
+            uint32_t blocknumb = btotal / ReferencesPerBlock;
 
-            blocknumb = refnum / ReferencesPerBlock;
-
-            if( refnum % ReferencesPerBlock != 0 ){
+            if( btotal % ReferencesPerBlock != 0 ){
                 blocknumb = blocknumb+1;
             }
-
-            refnum = refnum + rdsize;
 
             for(uint32_t i=0 ; i<blocknumb ; i++){
 
                 for(uint32_t k=0 ; k<ReferencesPerBlock ; k++){
 
-                        if( refnum > rdsize ){
-                            blocktab[k] = rdsize++;
-                        }
-                        else{
-                            blocktab [k] = NullReference;
-                        }
-
+					if( btotal > rdsize ){
+						blocktab[k] = rdsize++;
+					}
+					else{
+						blocktab [k] = NullReference;
+					}
                 }
 
                 soWriteRawBlock(first_block,&blocktab);
-
                 first_block++;
-
             }
 
             return blocknumb;

@@ -19,6 +19,7 @@ namespace sofs18
 
             /* change the following line by your code */
             //bin::soWriteFileBlock(ih, fbn, buf);
+
             // code developed by Fernando Marques 80238
 
             // get the block number of the file

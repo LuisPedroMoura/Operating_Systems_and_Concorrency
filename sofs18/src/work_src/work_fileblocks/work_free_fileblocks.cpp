@@ -44,7 +44,7 @@ namespace sofs18
             uint32_t RPB = ReferencesPerBlock;
             uint32_t RPBSQR = RPB * RPB;
             uint32_t doubleIndirectStart = N_INDIRECT * RPB + N_DIRECT;
-            uint32_t doubleIndirectEnd = RPBSQR * N_DOUBLE_INDIRECT + N_INDIRECT * RPB + N_DIRECT;
+            uint32_t doubleIndirectEnd = RPBSQR * N_DOUBLE_INDIRECT + doubleIndirectStart;
 
             uint32_t count = 0;
 
@@ -65,7 +65,7 @@ namespace sofs18
             	}
             }
 
-            if (ffbn >= N_DIRECT  && ffbn < doubleIndirectStart) {
+            if (ffbn >= N_DIRECT && ffbn < doubleIndirectStart) {
 
             	// free indirect list
             	count += soFreeIndirectFileBlocks(ip->i1, ffbn - N_DIRECT, N_INDIRECT);
