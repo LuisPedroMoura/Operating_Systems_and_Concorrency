@@ -182,7 +182,7 @@ namespace sofs18
      *    - All data blocks associated to the deleted (child) directory are freed
      *    - The inode of the child directory is freed
      *    - The \c direntry named \c basename(path) is deleted from \c dirname(path)
-     *    - \c lnkcnt of the inode associated to \c basename(path) is updated in order to exclude 
+     *    - \c lnkcnt of the inode associated to \c dirname(path) is updated in order to exclude 
      *          the deleted incoming arc
      *
      *  \return 0 on success; 
