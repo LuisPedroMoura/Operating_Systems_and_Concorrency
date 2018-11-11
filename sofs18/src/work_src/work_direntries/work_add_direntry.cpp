@@ -39,7 +39,7 @@ namespace sofs18
 
             SODirEntry d[DirentriesPerBlock];
             uint32_t i = 0;
-            for (; i <= (pi->size / BlockSize); i++ ) {
+            for (; i < (pi->size / BlockSize); i++ ) {
 
             	sofs18::soReadFileBlock(pih, i, d);
 
@@ -65,7 +65,9 @@ namespace sofs18
 			}			
 			else {
 
-				sofs18::soAllocFileBlock(pih, i+1);
+				if (sofs18::soGetFileBlock(pih, i) == NullReference){
+					sofs18::soAllocFileBlock(pih, i);
+				}
 
 				SODirEntry dir[DirentriesPerBlock];
 				memset(dir,0,BlockSize);
@@ -74,8 +76,9 @@ namespace sofs18
 				}
 				memcpy(dir[0].name, name, SOFS18_MAX_NAME+1);
 				dir[0].in = cin;
+				pi->size += BlockSize;
 
-				sofs18::soWriteFileBlock(pih, i+1, dir);
+				sofs18::soWriteFileBlock(pih, i, dir);
 			}
 
         }
