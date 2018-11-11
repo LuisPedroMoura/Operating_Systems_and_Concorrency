@@ -32,6 +32,10 @@ namespace sofs18
 			}
 
             SOInode* pi = soITGetInodePointer(pih);
+            if(!S_ISDIR(pi->mode)){
+				throw SOException(ENOTDIR,__FUNCTION__);
+			}
+
             int emptySlot = -1;
             int emptySlotBlockIndex = -1;
             SODirEntry emptySlotBlock[DirentriesPerBlock];

@@ -23,38 +23,51 @@ namespace sofs18
 	    
 			SOInode* in = soITGetInodePointer(pih);
 
+			if (!strcmp(newName, "")) {
+				throw SOException(EINVAL, __FUNCTION__);
+			}
+
+			if (strlen(newName) > SOFS18_MAX_NAME) {
+				throw SOException(ENAMETOOLONG, __FUNCTION__);
+			}
+
 			if(!S_ISDIR(in->mode)){
 				throw SOException(ENOTDIR,__FUNCTION__);
 			}
 
-			uint32_t blocks = (in->size) / BlockSize; //Number of blocks used by the file
-			
-			SODirEntry buff[ReferencesPerBlock];
-		
-			SODirEntry dir;
+			SOInode* pi = soITGetInodePointer(pih);
+			int renameSlot = -1;
+			int renameSlotBlockIndex = -1;
+			SODirEntry renameSlotBlock[DirentriesPerBlock];
 
-			uint32_t index = 0;
-			uint32_t blockcounter = 0;
-			uint32_t check = 1;
-			
-			for(blockcounter=0; blockcounter < blocks; blockcounter++){
+			SODirEntry d[DirentriesPerBlock];
+			uint32_t i = 0;
+			for (; i < (pi->size / BlockSize); i++) {
 
-				sofs18::soReadFileBlock(pih,index,buff);
+				sofs18::soReadFileBlock(pih, i, d);
 
-				for(uint32_t j = 0; j < ReferencesPerBlock; j++){
-					dir = buff[j];
-					if(strcmp(dir.name,name) == 0){
-						memmove(dir.name,newName,SOFS18_MAX_NAME+1);
-						bool check = true;
-						buff[j]=dir;
-						sofs18::soWriteFileBlock(pih,index,buff);
-						break;
+				uint32_t j = 0;
+				for (; j < DirentriesPerBlock; j++) {
+					if (renameSlot < 0 && strcmp(d[j].name,name) == 0) {
+						sofs18::soReadFileBlock(pih, i, renameSlotBlock);
+						renameSlotBlockIndex = i;
+						renameSlot = j;
+					}
+
+					if (strcmp(d[j].name, newName) == 0) {
+						throw SOException(EEXIST,__FUNCTION__);
 					}
 				}
 			}
 
-			if(!check){
-				throw SOException(ENOENT,__FUNCTION__);       
+			if (renameSlot >= 0) {
+
+				memcpy(renameSlotBlock[renameSlot].name, name, SOFS18_MAX_NAME+1);
+				sofs18::soWriteFileBlock(pih, renameSlotBlockIndex, renameSlotBlock);
+			}
+
+			if(renameSlot < 0){
+				throw SOException(ENOENT,__FUNCTION__);
 			}
 		}
 
