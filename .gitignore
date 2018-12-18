@@ -4,5 +4,6 @@
 # files and folders to white list
 !.gitignore
 !sofs18
-!README-sofs18.md
 
+!README-barber-shop.md
+!barber-shop
