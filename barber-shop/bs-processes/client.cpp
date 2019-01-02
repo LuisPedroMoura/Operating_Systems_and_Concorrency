@@ -276,6 +276,36 @@ static void wait_all_services_done(Client* client)
 
    require (client != NULL, "client argument required");
 
+   while(client->state != DONE) {
+     client->state = WAITING_SERVICE;
+     Service given_service = wait_service_from_barber(client->shop,client->barberID);
+     Service* tmp_service = &(given_service);
+     client->state = WAITING_SERVICE_START;
+  
+     if(is_barber_chair_service(tmp_service))
+       client->chairPosition = service_position(tmp_service);
+     else
+       client->basinPosition = service_position(tmp_service);     
+
+     log_client(client);
+
+     if(tmp_service->request == 1)
+       client->state = HAVING_A_HAIRCUT;
+     else if(tmp_service->request == 2)
+       client->state = HAVING_A_HAIR_WASH;
+     else
+       client->state = HAVING_A_SHAVE;
+   
+     if(is_barber_chair_service(&given_service))
+       client->chairPosition = -1;
+     else
+       client->basinPosition = -1;    
+  
+     log_client(client);
+   }
+
+   leave_barber_shop(client->shop,client->id);
+
    log_client(client); // more than one in proper places!!!
 }
 
