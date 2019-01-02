@@ -253,6 +253,9 @@ static void rise_from_client_benches(Client* client)
    require (client != NULL, "client argument required");
    require (seated_in_client_benches(client_benches(client->shop), client->id), concat_3str("client ",int2str(client->id)," not seated in benches"));
 
+   rise_client_benches(client_benches(client->shop),client->benchesPosition,client->id);
+   client->benchesPosition = -1;
+
    log_client(client);
 }
 
