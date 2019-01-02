@@ -155,7 +155,8 @@ static void notify_client_birth(Client* client)
     * 1: (if necessary) inform simulation that a new client begins its existence.
     **/
 
-   log_client(client);
+   if(client->state == NONE)
+      log_client(client);
 }
 
 static void notify_client_death(Client* client)
@@ -166,7 +167,8 @@ static void notify_client_death(Client* client)
 
    require (client != NULL, "client argument required");
 
-   log_client(client);
+   if(client->state == DONE)
+      log_client(client);
 }
 
 static void wandering_outside(Client* client)
@@ -177,6 +179,9 @@ static void wandering_outside(Client* client)
     **/
 
    require (client != NULL, "client argument required");
+   
+   client->state = WANDERING_OUTSIDE;
+   spend(random_int(global->MIN_OUTSIDE_TIME_UNITS, global->MAX_OUTSIDE_TIME_UNITS));
 
    log_client(client);
 }
@@ -192,6 +197,14 @@ static int vacancy_in_barber_shop(Client* client)
 
    int res = 0;
 
+   client->state = WAITING_BARBERSHOP_VACANCY;
+   
+   for(int i = 0; i < (client_benches(client->shop))->numSeats; i++) 
+     if((client_benches(client->shop))->id[i] == 0) {
+       res = 1;
+       break;
+     }
+
    log_client(client);
    return res;
 }
@@ -205,6 +218,9 @@ static void select_requests(Client* client)
 
    require (client != NULL, "client argument required");
 
+   client->state = SELECTING_REQUESTS;
+   client->requests = random_int(1,7);
+
    log_client(client);
 }
 
@@ -217,6 +233,12 @@ static void wait_its_turn(Client* client)
     **/
 
    require (client != NULL, "client argument required");
+
+   client->state = WAITING_ITS_TURN;
+
+   while(!vacancy_in_barber_shop(client));
+   client->benchesPosition = enter_barber_shop(client->shop,client->id,client->requests);
+   client->barberID = greet_barber(client->shop,client->id);
 
    log_client(client);
 }
