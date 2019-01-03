@@ -259,6 +259,8 @@ static void process_resquests_from_client(Barber* barber)
 	 	 	 barber->state = SHAVING;
 	 	 }
 
+     log_barber(barber);
+
 	 	 if(current_request == 1 || current_request == 4)
 	 	 	 set_barber_chair_service(&service_to_send,barber->id,barber->clientID,barber->chairPosition,current_request);
 	 	 else
@@ -270,12 +272,14 @@ static void process_resquests_from_client(Barber* barber)
 
 	 	 if(current_request == 1) {
        barber->state = REQ_SCISSOR;
+       log_barber(barber);
        while((tools_pot(barber->shop))->availScissors == 0);
 	 	 	 pick_scissor(tools_pot(barber->shop));
 	 	 	 barber->tools += 1;
        bbchair->toolsHolded += 1;
 
        barber->state = REQ_COMB;
+       log_barber(barber);
 	 	 	 while((tools_pot(barber->shop))->availCombs == 0);
 	 	 	 pick_comb(tools_pot(barber->shop));
 	 	 	 barber->tools += 2;
@@ -285,6 +289,7 @@ static void process_resquests_from_client(Barber* barber)
 	 	 }
 	 	 else if(current_request == 4) {
        barber->state = REQ_RAZOR;
+       log_barber(barber);
        while((tools_pot(barber->shop))->availRazors == 0);
 	 	 	 pick_razor(tools_pot(barber->shop));
 	 	 	 barber->tools += 4;
@@ -295,14 +300,17 @@ static void process_resquests_from_client(Barber* barber)
 
      if(current_request == 1) {
        barber->state = CUTTING;
+       log_barber(barber);
        process_haircut_request(barber);
      }
      else if(current_request == 2) {
        barber->state = WASHING;
+       log_barber(barber);
        process_hairwash_request(barber);
      }
      else {
        barber->state = SHAVING;
+       log_barber(barber);
        process_shave_request(barber);
      }
 
@@ -324,7 +332,7 @@ static void process_resquests_from_client(Barber* barber)
      ensure(barber->tools == 0,"Post-condition not met: barber->tools must be 0!");
      ensure(bbchair->toolsHolded == 0,"Post-condition not met: bbchair->toolsHolded must be 0!");
 
-     client_done(barber->shop,barber->clientID);
+     release_client(barber);
 	 }
 
    log_barber(barber);  // (if necessary) more than one in proper places!!!
@@ -333,10 +341,13 @@ static void process_resquests_from_client(Barber* barber)
 static void release_client(Barber* barber)
 {
    /** TODO:
-    * 1: notify client the all the services are done
+    * 1: notify client that all the services are done
     **/
 
    require (barber != NULL, "barber argument required");
+
+   done(barber);
+   barber->clientID = 0;
 
    log_barber(barber);
 }
@@ -347,6 +358,8 @@ static void done(Barber* barber)
     * 1: set the client state to DONE
     **/
    require (barber != NULL, "barber argument required");
+
+   client_done(barber->shop,barber->clientID);
 
    log_barber(barber);
 }
