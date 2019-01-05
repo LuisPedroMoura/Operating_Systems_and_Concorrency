@@ -84,10 +84,10 @@ static void go()
    require (allBarbers != NULL, "list of barbers data structures not created");
    require (allClients != NULL, "list of clients data structures not created");
 
-   psem_open("sem_shop",IPC_CREAT,00700,1);
-   psem_open("sem_tools_box",IPC_CREAT,00700,1);
-   psem_open("sem_washbasin",IPC_CREAT,00700,1);
-   psem_open("sem_barber_chair",IPC_CREAT,00700,1);	
+   //psem_open("sem_shop",IPC_CREAT,00700,1);
+   //psem_open("sem_tools_box",IPC_CREAT,00700,1);
+   //psem_open("sem_washbasin",IPC_CREAT,00700,1);
+   //psem_open("sem_barber_chair",IPC_CREAT,00700,1);	
 
    launch_logger();
    char* descText;
@@ -117,10 +117,10 @@ static void go()
    main_barber(allBarbers);
 
    //if(pdi==0)
-   psem_unlink("sem_shop");
-   psem_unlink("sem_tools_box");
-   psem_unlink("sem_washbasin");
-   psem_unlink("sem_barber_chair");    
+   //psem_unlink("sem_shop");
+   //psem_unlink("sem_tools_box");
+   //psem_unlink("sem_washbasin");
+   //psem_unlink("sem_barber_chair");    
 
 }
 
@@ -130,10 +130,10 @@ static void go()
 static void finish()
 {
    /* TODO: change this function to your needs */
-   psem_destroy(&sem_shop);
-   psem_destroy(&sem_tools_box);
-   psem_destroy(&sem_washbasin);
-   psem_destroy(&sem_barber_chair);
+   //psem_destroy(&sem_shop);
+   //psem_destroy(&sem_tools_box);
+   //psem_destroy(&sem_washbasin);
+   //psem_destroy(&sem_barber_chair);
    term_logger();
 
 }

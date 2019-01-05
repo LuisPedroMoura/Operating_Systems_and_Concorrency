@@ -244,9 +244,15 @@ static void wait_its_turn(Client* client)
    require (client != NULL, "client argument required");
 
    client->state = WAITING_ITS_TURN;
+   log_client(client);
 
-   while(!vacancy_in_barber_shop(client));
+   while(client->shop->numClientsInside == client_benches(client->shop)->numSeats);
    client->benchesPosition = enter_barber_shop(client->shop,client->id,client->requests);
+   log_client(client);
+   
+   BCInterface* tmp_inter = &(client->shop->bcinterfaces[client->barberID]);
+   
+   while(tmp_inter->currentState == NO_BARBER_GREET);
    client->barberID = greet_barber(client->shop,client->id);
 
    log_client(client);
