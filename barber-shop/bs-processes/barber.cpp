@@ -215,7 +215,7 @@ static void process_resquests_from_client(Barber* barber)
     * For each request:
     * 1: select the request to process (any order is acceptable)
     * 2: reserve the chair/basin for the service (setting the barber's state accordingly) 
-    *    2.1: set the client state to a proper value <- wrong (?)
+    *    2.1: set the client state to a proper value
     *    2.2: reserve a random empty chair/basin 
     *    2.3: inform client on the service to be performed
     * 3: depending on the service, grab the necessary tools from the pot (if any)
@@ -225,7 +225,6 @@ static void process_resquests_from_client(Barber* barber)
     *
     * At the end the client must leave the barber shop
     **/
-
 
    require (barber != NULL, "barber argument required");
 
@@ -239,7 +238,7 @@ static void process_resquests_from_client(Barber* barber)
 	 	 	 current_request = 1;
 	 	 
 	 	 barber->reqToDo -= current_request;
-
+     
 	 	 Service service_to_send;
 
 	 	 if(current_request == 1) {
@@ -331,10 +330,9 @@ static void process_resquests_from_client(Barber* barber)
 
      ensure(barber->tools == 0,"Post-condition not met: barber->tools must be 0!");
      ensure(bbchair->toolsHolded == 0,"Post-condition not met: bbchair->toolsHolded must be 0!");
-
-     release_client(barber);
 	 }
 
+   release_client(barber);
    log_barber(barber);  // (if necessary) more than one in proper places!!!
 }
 

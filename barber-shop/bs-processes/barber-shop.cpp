@@ -15,7 +15,7 @@
 
 /* TODO: change here this file to your needs */
 
-
+static Service services[MAX_BARBERS];
 
 static const int skel_length = 10000;
 static char skel[skel_length];
@@ -270,8 +270,10 @@ Service wait_service_from_barber(BarberShop* shop, int barberID)
 
    require (shop != NULL, "shop argument required");
    require (barberID > 0, concat_3str("invalid barber id (", int2str(barberID), ")"));
-
-   Service res;
+   
+   while(service[barberID] == NULL);
+   Service res = services[barberID];
+   service[barberID] = NULL;
    return res;
 }
 
@@ -282,7 +284,7 @@ void inform_client_on_service(BarberShop* shop, Service service)
     **/
 
    require (shop != NULL, "shop argument required");
-
+   services[service->barberID] = service;
 }
 
 void client_done(BarberShop* shop, int clientID)

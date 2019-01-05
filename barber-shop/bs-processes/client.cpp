@@ -198,7 +198,7 @@ static int vacancy_in_barber_shop(Client* client)
    int res = 0;
 
    client->state = WAITING_BARBERSHOP_VACANCY;
-   
+
    for(int i = 0; i < (client_benches(client->shop))->numSeats; i++) 
      if((client_benches(client->shop))->id[i] == 0) {
        res = 1;
@@ -278,10 +278,14 @@ static void wait_all_services_done(Client* client)
 
    while(client->state != DONE) {
      client->state = WAITING_SERVICE;
+     log_client(client);
+
      Service given_service = wait_service_from_barber(client->shop,client->barberID);
      Service* tmp_service = &(given_service);
+
      client->state = WAITING_SERVICE_START;
-  
+     log_client(client);  
+
      if(is_barber_chair_service(tmp_service))
        client->chairPosition = service_position(tmp_service);
      else
@@ -296,6 +300,8 @@ static void wait_all_services_done(Client* client)
      else
        client->state = HAVING_A_SHAVE;
    
+     log_client(client);
+
      if(is_barber_chair_service(&given_service))
        client->chairPosition = -1;
      else
