@@ -8,6 +8,15 @@
 #include "barber-shop.h"
 #include "barber.h"
 
+enum BCState
+{
+   NO_BARBER_GREET,           //barber has yet to receive and greet the client
+   WAITING_ON_RESERVE,        //client waiting until the barber has reserved the seat for the process
+   WAITING_ON_PROCESS_START,  //client waiting until the process starts (barber has all the needed tools)
+   PROCESSING,                //process running
+   PROCESS_DONE               //process has finished   
+};
+
 enum State
 {
    NONE = 0,
@@ -155,6 +164,7 @@ static void sit_in_barber_bench(Barber* barber)
    require (!seated_in_barber_bench(barber_bench(barber->shop), barber->id), "barber already seated in barber shop");
 
 	 barber->benchPosition = random_sit_in_barber_bench(barber_bench(barber->shop),barber->id);
+   set_interface_state(barber->shop,barber->id,NO_BARBER_GREET);
 
    log_barber(barber);
 }
@@ -175,6 +185,7 @@ static void wait_for_client(Barber* barber)
 	 RQItem queue_item = next_client_in_benches(client_benches(barber->shop));
 	 RQItem* tmp_qitem = &(queue_item);
 	 receive_and_greet_client(barber->shop,barber->id,tmp_qitem->clientID);
+	 barber->clientID = tmp_qitem->clientID;
 
    log_barber(barber);  // (if necessary) more than one in proper places!!!
 }

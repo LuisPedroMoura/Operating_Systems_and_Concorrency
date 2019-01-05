@@ -15,7 +15,14 @@
 
 /* TODO: change here this file to your needs */
 
-static Service services[MAX_BARBERS];
+enum BCState
+{
+   NO_BARBER_GREET,           //barber has yet to receive and greet the client
+   WAITING_ON_RESERVE,        //client waiting until the barber has reserved the seat for the process
+   WAITING_ON_PROCESS_START,  //client waiting until the process starts (barber has all the needed tools)
+   PROCESSING,                //process running
+   PROCESS_DONE               //process has finished   
+};
 
 static const int skel_length = 10000;
 static char skel[skel_length];
@@ -179,6 +186,23 @@ ClientBenches* client_benches(BarberShop* shop)
    return &shop->clientBenches;
 }
 
+BCInterface* bc_interface_by_barberID(BarberShop* shop, int barberID)
+{
+   require (shop != NULL, "shop argument required");
+
+   return &shop->bcinterfaces[barberID];
+}
+
+BCInterface* bc_interface_by_clientID(BarberShop* shop, int clientID)
+{
+   require (shop != NULL, "shop argument required");
+
+   for(int i=0; i<MAX_BARBERS; i++) {
+     if(get_interface_service(shop,i)->clientID == clientID)
+       return &shop->bcinterfaces[i];
+   }
+}
+
 int num_available_barber_chairs(BarberShop* shop)
 {
    require (shop != NULL, "shop argument required");
@@ -271,9 +295,8 @@ Service wait_service_from_barber(BarberShop* shop, int barberID)
    require (shop != NULL, "shop argument required");
    require (barberID > 0, concat_3str("invalid barber id (", int2str(barberID), ")"));
    
-   while(service[barberID] == NULL);
-   Service res = services[barberID];
-   service[barberID] = NULL;
+   while(get_interface_state(shop,barberID) == WAITING_ON_RESERVE);
+   Service res = *(get_interface_service(shop,barberID));
    return res;
 }
 
@@ -284,7 +307,9 @@ void inform_client_on_service(BarberShop* shop, Service service)
     **/
 
    require (shop != NULL, "shop argument required");
-   services[service->barberID] = service;
+   Service* tmp_serv = &service;
+   set_interface_service(shop,tmp_serv->barberID,service);
+   set_interface_state(shop,tmp_serv->barberID,WAITING_ON_PROCESS_START);
 }
 
 void client_done(BarberShop* shop, int clientID)
@@ -296,6 +321,7 @@ void client_done(BarberShop* shop, int clientID)
    require (shop != NULL, "shop argument required");
    require (clientID > 0, concat_3str("invalid client id (", int2str(clientID), ")"));
 
+   set_interface_state(shop,get_interface_service(shop,clientID)->barberID,PROCESS_DONE);
 }
 
 int enter_barber_shop(BarberShop* shop, int clientID, int request)
@@ -344,7 +370,13 @@ void receive_and_greet_client(BarberShop* shop, int barberID, int clientID)
    require (shop != NULL, "shop argument required");
    require (barberID > 0, concat_3str("invalid barber id (", int2str(barberID), ")"));
    require (clientID > 0, concat_3str("invalid client id (", int2str(clientID), ")"));
-
+   
+   if(get_interface_service(shop,barberID)->barberChair == 1) {
+     set_barber_chair_service(get_interface_service(shop,barberID),barberID,clientID,get_interface_service(shop,barberID)->pos,get_interface_service(shop,barberID)->request);
+   }
+   else if(get_interface_service(shop,barberID)->washbasin == 1) {
+     set_washbasin_service(get_interface_service(shop,barberID),barberID,clientID,get_interface_service(shop,barberID)->pos);
+   }
 }
 
 int greet_barber(BarberShop* shop, int clientID)
@@ -356,7 +388,8 @@ int greet_barber(BarberShop* shop, int clientID)
    require (shop != NULL, "shop argument required");
    require (clientID > 0, concat_3str("invalid client id (", int2str(clientID), ")"));
 
-   int res = 0;
+   int res = bc_interface_by_clientID(shop,clientID)->service->barberID;
+   set_interface_state(shop,res,WAITING_ON_RESERVE);
    return res;
 }
 
@@ -380,3 +413,34 @@ static char* to_string_barber_shop(BarberShop* shop)
    return gen_boxes(shop->internal, skel_length, skel);
 }
 
+Service* get_interface_service(BarberShop* shop, int barberID)
+{
+   require (shop != NULL, "shop argument required");
+   require (barberID > 0, concat_3str("invalid barber id (", int2str(barberID), ")"));
+   
+   return bc_interface_by_barberID(shop,barberID)->service;
+}
+
+int get_interface_state(BarberShop* shop, int barberID)
+{
+   require (shop != NULL, "shop argument required");
+   require (barberID > 0, concat_3str("invalid barber id (", int2str(barberID), ")"));
+   
+   return bc_interface_by_barberID(shop,barberID)->currentState;
+}
+
+void set_interface_service(BarberShop* shop, int barberID, Service service)
+{
+   require (shop != NULL, "shop argument required");
+   require (barberID > 0, concat_3str("invalid barber id (", int2str(barberID), ")"));
+   
+   bc_interface_by_barberID(shop,barberID)->service = &service;
+}
+
+void set_interface_state(BarberShop* shop, int barberID, int state)
+{
+   require (shop != NULL, "shop argument required");
+   require (barberID > 0, concat_3str("invalid barber id (", int2str(barberID), ")"));
+   
+   bc_interface_by_barberID(shop,barberID)->currentState = state;
+}

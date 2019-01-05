@@ -15,6 +15,12 @@
 #include "service.h"
 #include "client-benches.h"
 
+typedef struct _BCInterface_
+{	
+   Service* service;
+   int currentState;
+} BCInterface;
+
 typedef struct _BarberShop_
 {
    int numBarbers;
@@ -39,6 +45,8 @@ typedef struct _BarberShop_
    int numClientsInside;
    int clientsInside[MAX_CLIENTS];
 
+   BCInterface bcinterfaces[MAX_BARBERS];
+
    int opened;
 
    int logId;
@@ -61,6 +69,9 @@ Washbasin* washbasin(BarberShop* shop, int pos);
 BarberBench* barber_bench(BarberShop* shop);
 ClientBenches* client_benches(BarberShop* shop);
 
+BCInterface* bc_interface_by_barberID(BarberShop* shop, int barberID);
+BCInterface* bc_interface_by_clientID(BarberShop* shop, int clientID);
+
 int num_available_barber_chairs(BarberShop* shop);
 int reserve_random_empty_barber_chair(BarberShop* shop, int barberID);
 int num_available_washbasin(BarberShop* shop);
@@ -80,5 +91,10 @@ int greet_barber(BarberShop* shop, int clientID); // returns barberID
 
 int shop_opened(BarberShop* shop);
 void close_shop(BarberShop* shop); // no more outside clients accepted
+
+Service* get_interface_service(BarberShop* shop, int barberID);
+int get_interface_state(BarberShop* shop, int barberID);
+void set_interface_service(BarberShop* shop, int barberID, Service service);
+void set_interface_state(BarberShop* shop, int barberID, int state);
 
 #endif

@@ -8,6 +8,15 @@
 #include "service.h"
 #include "client.h"
 
+enum BCState
+{
+   NO_BARBER_GREET,           //barber has yet to receive and greet the client
+   WAITING_ON_RESERVE,        //client waiting until the barber has reserved the seat for the process
+   WAITING_ON_PROCESS_START,  //client waiting until the process starts (barber has all the needed tools)
+   PROCESSING,                //process running
+   PROCESS_DONE               //process has finished   
+};
+
 enum ClientState
 {
    NONE = 0,                   // initial state
@@ -289,7 +298,7 @@ static void wait_all_services_done(Client* client)
      if(is_barber_chair_service(tmp_service))
        client->chairPosition = service_position(tmp_service);
      else
-       client->basinPosition = service_position(tmp_service);     
+       client->basinPosition = service_position(tmp_service);
 
      log_client(client);
 
@@ -308,6 +317,12 @@ static void wait_all_services_done(Client* client)
        client->basinPosition = -1;    
   
      log_client(client);
+
+     BCInterface* tmp_inter = &(client->shop->bcinterfaces[client->barberID]);
+
+     if(tmp_inter->currentState == PROCESS_DONE) {
+       client->state = DONE;
+     } 
    }
 
    leave_barber_shop(client->shop,client->id);
