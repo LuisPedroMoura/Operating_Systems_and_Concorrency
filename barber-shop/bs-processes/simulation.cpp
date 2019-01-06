@@ -98,7 +98,7 @@ static void go()
    show_barber_shop(shop);
    pid_t pdi = 0;
  
-   for(int i = 0; i < global->NUM_BARBERS; i++){
+   /*for(int i = 0; i < global->NUM_BARBERS; i++){
       allBarbers=allBarbers+i;
       log_barber(allBarbers);      
       if(global->NUM_BARBERS > 1) pdi = pfork();
@@ -111,10 +111,11 @@ static void go()
 		log_client(allClients);
       		if(global->NUM_CLIENTS > 1) pfork();
    	}
-   }
+   }*/
    
-   main_client(allClients);
-   main_barber(allBarbers);
+   pid_t x = pfork();
+   if(x == 0) main_barber(allBarbers);
+   else main_client(allClients);
 
    //if(pdi==0)
    //psem_unlink("sem_shop");

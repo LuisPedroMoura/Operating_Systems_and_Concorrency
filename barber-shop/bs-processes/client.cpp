@@ -11,10 +11,12 @@
 enum BCState
 {
    NO_BARBER_GREET,           //barber has yet to receive and greet the client
+   GREET_AVAILABLE,	          //client can get barberID
    WAITING_ON_RESERVE,        //client waiting until the barber has reserved the seat for the process
    WAITING_ON_PROCESS_START,  //client waiting until the process starts (barber has all the needed tools)
    PROCESSING,                //process running
-   PROCESS_DONE               //process has finished   
+   PROCESS_DONE,              //process has finished
+   ALL_PROCESSES_DONE         //all processes done   
 };
 
 enum ClientState
@@ -190,9 +192,8 @@ static void wandering_outside(Client* client)
    require (client != NULL, "client argument required");
    
    client->state = WANDERING_OUTSIDE;
-   spend(random_int(global->MIN_OUTSIDE_TIME_UNITS, global->MAX_OUTSIDE_TIME_UNITS));
-
    log_client(client);
+   spend(random_int(global->MIN_OUTSIDE_TIME_UNITS, global->MAX_OUTSIDE_TIME_UNITS));
 }
 
 static int vacancy_in_barber_shop(Client* client)
@@ -207,6 +208,7 @@ static int vacancy_in_barber_shop(Client* client)
    int res = 0;
 
    client->state = WAITING_BARBERSHOP_VACANCY;
+   log_client(client);
 
    for(int i = 0; i < (client_benches(client->shop))->numSeats; i++) 
      if((client_benches(client->shop))->id[i] == 0) {
@@ -214,7 +216,6 @@ static int vacancy_in_barber_shop(Client* client)
        break;
      }
 
-   log_client(client);
    return res;
 }
 
@@ -228,8 +229,8 @@ static void select_requests(Client* client)
    require (client != NULL, "client argument required");
 
    client->state = SELECTING_REQUESTS;
+   log_client(client);
    client->requests = random_int(1,7);
-
    log_client(client);
 }
 
@@ -248,14 +249,17 @@ static void wait_its_turn(Client* client)
 
    while(client->shop->numClientsInside == client_benches(client->shop)->numSeats);
    client->benchesPosition = enter_barber_shop(client->shop,client->id,client->requests);
-   log_client(client);
    
+   log_client(client);
+
    BCInterface* tmp_inter = &(client->shop->bcinterfaces[client->barberID]);
    
    while(tmp_inter->currentState == NO_BARBER_GREET);
+   
    client->barberID = greet_barber(client->shop,client->id);
-
    log_client(client);
+   
+   tmp_inter->currentState = WAITING_ON_RESERVE;
 }
 
 static void rise_from_client_benches(Client* client)
@@ -301,12 +305,22 @@ static void wait_all_services_done(Client* client)
      client->state = WAITING_SERVICE_START;
      log_client(client);  
 
-     if(is_barber_chair_service(tmp_service))
+     if(is_barber_chair_service(tmp_service)) {
        client->chairPosition = service_position(tmp_service);
-     else
+       sit_in_barber_chair(barber_chair(client->shop,client->chairPosition),client->id);
+     }
+     else {
        client->basinPosition = service_position(tmp_service);
+       sit_in_washbasin(washbasin(client->shop,client->basinPosition),client->id);
+     }
 
      log_client(client);
+     
+     BCInterface* tmp_inter = &(client->shop->bcinterfaces[client->barberID]);
+     
+     tmp_inter->currentState = WAITING_ON_PROCESS_START;
+     
+     while(tmp_inter->currentState == WAITING_ON_PROCESS_START);
 
      if(tmp_service->request == 1)
        client->state = HAVING_A_HAIRCUT;
@@ -314,6 +328,8 @@ static void wait_all_services_done(Client* client)
        client->state = HAVING_A_HAIR_WASH;
      else
        client->state = HAVING_A_SHAVE;
+   
+     while(tmp_inter->currentState != PROCESS_DONE);
    
      log_client(client);
 
@@ -324,9 +340,7 @@ static void wait_all_services_done(Client* client)
   
      log_client(client);
 
-     BCInterface* tmp_inter = &(client->shop->bcinterfaces[client->barberID]);
-
-     if(tmp_inter->currentState == PROCESS_DONE) {
+     if(tmp_inter->currentState == ALL_PROCESSES_DONE) {
        client->state = DONE;
      } 
    }

@@ -99,8 +99,11 @@ int no_more_clients(ClientBenches* benches)
 {
    require (benches != NULL, "benches argument required");
 
-   int res = 1;
-   return res;
+   for(int i=0; benches->numSeats; i++) {
+     if(benches->id[i] != 0) return 0;     
+   }    
+
+   return 1;
 }
 
 RQItem next_client_in_benches(ClientBenches* benches)

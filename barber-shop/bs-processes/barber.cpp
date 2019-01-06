@@ -11,10 +11,12 @@
 enum BCState
 {
    NO_BARBER_GREET,           //barber has yet to receive and greet the client
+   GREET_AVAILABLE,	          //client can get barberID
    WAITING_ON_RESERVE,        //client waiting until the barber has reserved the seat for the process
    WAITING_ON_PROCESS_START,  //client waiting until the process starts (barber has all the needed tools)
    PROCESSING,                //process running
-   PROCESS_DONE               //process has finished   
+   PROCESS_DONE,              //process has finished
+   ALL_PROCESSES_DONE         //all processes done   
 };
 
 enum State
@@ -29,12 +31,14 @@ enum State
    REQ_SCISSOR,
    REQ_COMB,
    REQ_RAZOR,
-   DONE
+   DONE,
+   TEST1,
+   TEST2
 };
 
 #define State_SIZE (DONE - NONE + 1)
 
-static const char* stateText[State_SIZE] =
+static const char* stateText[State_SIZE+2] =
 {
    "---------",
    "CUTTING  ",
@@ -47,6 +51,8 @@ static const char* stateText[State_SIZE] =
    "R COMB   ", // Request a comb
    "R RAZOR  ", // Request a razor
    "DONE     ",
+   "TEST1    ",
+   "TEST2    ",
 };
 
 static const char* skel = 
@@ -141,6 +147,7 @@ static void life(Barber* barber)
    require (barber != NULL, "barber argument required");
 
    sit_in_barber_bench(barber);
+   barber->shop->opened = 1;
    wait_for_client(barber);
    while(work_available(barber)) // no more possible clients and closes barbershop
    {
@@ -164,9 +171,8 @@ static void sit_in_barber_bench(Barber* barber)
    require (!seated_in_barber_bench(barber_bench(barber->shop), barber->id), "barber already seated in barber shop");
 
 	 barber->benchPosition = random_sit_in_barber_bench(barber_bench(barber->shop),barber->id);
+	 log_barber(barber);
    set_interface_state(barber->shop,barber->id,NO_BARBER_GREET);
-
-   log_barber(barber);
 }
 
 static void wait_for_client(Barber* barber)
@@ -180,14 +186,20 @@ static void wait_for_client(Barber* barber)
    require (barber != NULL, "barber argument required");
 
 	 barber->state = WAITING_CLIENTS;
-	 while(client_benches(barber->shop)->numSeats == num_available_benches_seats(client_benches(barber->shop)));
-	 // { if(no more clients need to enter) -> close shop }
+	 log_barber(barber);
+	 
+	 while(no_more_clients(client_benches(barber->shop))) {
+	   //spend(2*global->MAX_OUTSIDE_TIME_UNITS);
+	   //if(client_benches(barber->shop)->numSeats == num_available_benches_seats(client_benches(barber->shop)))
+	   //if(shop_opened(barber->shop)) close_shop(barber->shop);
+	 }
+	 
 	 RQItem queue_item = next_client_in_benches(client_benches(barber->shop));
 	 RQItem* tmp_qitem = &(queue_item);
-	 receive_and_greet_client(barber->shop,barber->id,tmp_qitem->clientID);
+	 //receive_and_greet_client(barber->shop,barber->id,tmp_qitem->clientID);
+	 receive_and_greet_client(barber->shop,barber->id,1);
 	 barber->clientID = tmp_qitem->clientID;
-
-   log_barber(barber);  // (if necessary) more than one in proper places!!!
+	 log_barber(barber);  // (if necessary) more than one in proper places!!!
 }
 
 static int work_available(Barber* barber)
@@ -251,6 +263,8 @@ static void process_resquests_from_client(Barber* barber)
 	 	 barber->reqToDo -= current_request;
      
 	 	 Service service_to_send;
+
+     set_interface_state(barber->shop,barber->id,PROCESSING);
 
 	 	 if(current_request == 1) {
 	 	 	 ensure(barber->reqToDo == 0,"Post-condition not met: reqToDo must be 0!");
@@ -343,7 +357,8 @@ static void process_resquests_from_client(Barber* barber)
      ensure(bbchair->toolsHolded == 0,"Post-condition not met: bbchair->toolsHolded must be 0!");
 	 }
 
-   release_client(barber);
+   if(barber->clientID > 0)
+     release_client(barber);
    log_barber(barber);  // (if necessary) more than one in proper places!!!
 }
 
@@ -355,7 +370,7 @@ static void release_client(Barber* barber)
 
    require (barber != NULL, "barber argument required");
 
-   done(barber);
+   client_done(barber->shop,barber->clientID);
    barber->clientID = 0;
 
    log_barber(barber);
@@ -368,7 +383,7 @@ static void done(Barber* barber)
     **/
    require (barber != NULL, "barber argument required");
 
-   client_done(barber->shop,barber->clientID);
+   set_interface_state(barber->shop,barber->id,ALL_PROCESSES_DONE);
 
    log_barber(barber);
 }
@@ -394,17 +409,19 @@ static void process_haircut_request(Barber* barber)
       set_completion_barber_chair(barber_chair(barber->shop, barber->chairPosition), complete);
    }
 
+   set_interface_state(barber->shop,barber->id,PROCESS_DONE);
+
    log_barber(barber);  // (if necessary) more than one in proper places!!!
 }
 
 static void process_hairwash_request(Barber* barber)
 {
-
+   set_interface_state(barber->shop,barber->id,PROCESS_DONE);
 }
 
 static void process_shave_request(Barber* barber)
 {
-
+   set_interface_state(barber->shop,barber->id,PROCESS_DONE);
 }
 
 static char* to_string_barber(Barber* barber)

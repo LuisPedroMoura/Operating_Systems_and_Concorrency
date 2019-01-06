@@ -18,10 +18,12 @@
 enum BCState
 {
    NO_BARBER_GREET,           //barber has yet to receive and greet the client
+   GREET_AVAILABLE,	          //client can get barberID
    WAITING_ON_RESERVE,        //client waiting until the barber has reserved the seat for the process
    WAITING_ON_PROCESS_START,  //client waiting until the process starts (barber has all the needed tools)
    PROCESSING,                //process running
-   PROCESS_DONE               //process has finished   
+   PROCESS_DONE,              //process has finished
+   ALL_PROCESSES_DONE         //all processes done   
 };
 
 static const int skel_length = 10000;
@@ -197,7 +199,7 @@ BCInterface* bc_interface_by_clientID(BarberShop* shop, int clientID)
 {
    require (shop != NULL, "shop argument required");
 
-   for(int i=0; i<MAX_BARBERS; i++) {
+   for(int i=0; i<shop->numBarbers; i++) {
      if(get_interface_service(shop,i)->clientID == clientID)
        return &shop->bcinterfaces[i];
    }
@@ -321,7 +323,7 @@ void client_done(BarberShop* shop, int clientID)
    require (shop != NULL, "shop argument required");
    require (clientID > 0, concat_3str("invalid client id (", int2str(clientID), ")"));
 
-   set_interface_state(shop,get_interface_service(shop,clientID)->barberID,PROCESS_DONE);
+   set_interface_state(shop,get_interface_service(shop,clientID)->barberID,ALL_PROCESSES_DONE);
 }
 
 int enter_barber_shop(BarberShop* shop, int clientID, int request)
@@ -337,6 +339,7 @@ int enter_barber_shop(BarberShop* shop, int clientID, int request)
    require (!is_client_inside(shop, clientID), concat_3str("client ", int2str(clientID), " already inside barber shop"));
 
    int res = random_sit_in_client_benches(&shop->clientBenches, clientID, request);
+	
    shop->clientsInside[shop->numClientsInside++] = clientID;
    return res;
 }
@@ -377,6 +380,8 @@ void receive_and_greet_client(BarberShop* shop, int barberID, int clientID)
    else if(get_interface_service(shop,barberID)->washbasin == 1) {
      set_washbasin_service(get_interface_service(shop,barberID),barberID,clientID,get_interface_service(shop,barberID)->pos);
    }
+   
+   set_interface_state(shop,barberID,GREET_AVAILABLE);
 }
 
 int greet_barber(BarberShop* shop, int clientID)
