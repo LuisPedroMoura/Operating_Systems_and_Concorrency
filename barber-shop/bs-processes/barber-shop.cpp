@@ -15,6 +15,12 @@
 
 /* TODO: change here this file to your needs */
 
+//shared memory structure
+static int shmid = 74;
+static BCInterface * bcinterfaces;
+
+const long key = 0x1171L;
+
 enum BCState
 {
    NO_BARBER_GREET,           //barber has yet to receive and greet the client
@@ -30,6 +36,8 @@ static const int skel_length = 10000;
 static char skel[skel_length];
 
 static char* to_string_barber_shop(BarberShop* shop);
+static void lock();
+static void unlock();
 
 int num_lines_barber_shop(BarberShop* shop)
 {
@@ -97,6 +105,39 @@ void init_barber_shop(BarberShop* shop, int num_barbers, int num_chairs,
       init_washbasin(shop->washbasin+i, i+1, 1+3+num_lines_barber_chair(), num_columns_tools_pot()+3+11+1+i*(num_columns_washbasin()+2));
    init_client_benches(&shop->clientBenches, num_client_benches_seats, num_client_benches, 1+3+num_lines_barber_chair()+num_lines_tools_pot(), 16);
 
+
+   /* create the shared memory */
+   shmid = shmget(key, sizeof(BCInterface), 0600 | IPC_CREAT | IPC_EXCL);
+   if (shmid == -1)
+   {
+       perror("Fail creating shared data");
+       exit(EXIT_FAILURE);
+   }
+
+   /* attach shared memory to process addressing space */ 
+   bcinterfaces = (BCInterface*)shmat(shmid, NULL, 0);
+   if (bcinterfaces == (void*)-1)
+   {
+       perror("Fail connecting to shared data");
+       exit(EXIT_FAILURE);
+   }
+
+   /* create access locker */
+    bcinterfaces->semid = semget(key, 1, 0600 | IPC_CREAT | IPC_EXCL);
+    if (bcinterfaces->semid == -1)
+    {
+        perror("Fail creating locker semaphore");
+        exit(EXIT_FAILURE);
+    }
+
+   /* unlock shared data structure */
+   unlock();
+
+   /* detach shared memory from process addressing space */
+   shmdt(bcinterfaces);
+   bcinterfaces = NULL;
+
+   bci_connect();
 }
 
 void term_barber_shop(BarberShop* shop)
@@ -186,23 +227,6 @@ ClientBenches* client_benches(BarberShop* shop)
    require (shop != NULL, "shop argument required");
 
    return &shop->clientBenches;
-}
-
-BCInterface* bc_interface_by_barberID(BarberShop* shop, int barberID)
-{
-   require (shop != NULL, "shop argument required");
-
-   return &shop->bcinterfaces[barberID];
-}
-
-BCInterface* bc_interface_by_clientID(BarberShop* shop, int clientID)
-{
-   require (shop != NULL, "shop argument required");
-
-   for(int i=0; i<shop->numBarbers; i++) {
-     if(get_interface_service(shop,i)->clientID == clientID)
-       return &shop->bcinterfaces[i];
-   }
 }
 
 int num_available_barber_chairs(BarberShop* shop)
@@ -297,9 +321,13 @@ Service wait_service_from_barber(BarberShop* shop, int barberID)
    require (shop != NULL, "shop argument required");
    require (barberID > 0, concat_3str("invalid barber id (", int2str(barberID), ")"));
    
-   while(get_interface_state(shop,barberID) == WAITING_ON_RESERVE);
-   Service res = *(get_interface_service(shop,barberID));
-   return res;
+   //WARNING
+   //while(get_interface_state(shop,barberID) == WAITING_ON_RESERVE);
+   //Service res = *(get_interface_service(shop,barberID));
+   //return res;
+
+   while(bci_get_state(barberID) == WAITING_ON_RESERVE);
+   return bci_get_service_by_barberID(barberID);
 }
 
 void inform_client_on_service(BarberShop* shop, Service service)
@@ -310,8 +338,12 @@ void inform_client_on_service(BarberShop* shop, Service service)
 
    require (shop != NULL, "shop argument required");
    Service* tmp_serv = &service;
-   set_interface_service(shop,tmp_serv->barberID,service);
-   set_interface_state(shop,tmp_serv->barberID,WAITING_ON_PROCESS_START);
+   //WARNING
+   //set_interface_service(shop,tmp_serv->barberID,service);
+   //set_interface_state(shop,tmp_serv->barberID,WAITING_ON_PROCESS_START);
+
+   bci_set_service(tmp_serv->barberID,service);
+   bci_set_state(tmp_serv->barberID,WAITING_ON_PROCESS_START);
 }
 
 void client_done(BarberShop* shop, int clientID)
@@ -323,7 +355,11 @@ void client_done(BarberShop* shop, int clientID)
    require (shop != NULL, "shop argument required");
    require (clientID > 0, concat_3str("invalid client id (", int2str(clientID), ")"));
 
-   set_interface_state(shop,get_interface_service(shop,clientID)->barberID,ALL_PROCESSES_DONE);
+   //WARNING
+   //set_interface_state(shop,get_interface_service(shop,clientID)->barberID,ALL_PROCESSES_DONE);
+   Service tmp_service = bci_get_service_by_clientID(clientID);
+   Service* tmp_spointer = &tmp_service;
+   bci_set_state(tmp_spointer->barberID,ALL_PROCESSES_DONE);
 }
 
 int enter_barber_shop(BarberShop* shop, int clientID, int request)
@@ -374,14 +410,24 @@ void receive_and_greet_client(BarberShop* shop, int barberID, int clientID)
    require (barberID > 0, concat_3str("invalid barber id (", int2str(barberID), ")"));
    require (clientID > 0, concat_3str("invalid client id (", int2str(clientID), ")"));
    
-   if(get_interface_service(shop,barberID)->barberChair == 1) {
-     set_barber_chair_service(get_interface_service(shop,barberID),barberID,clientID,get_interface_service(shop,barberID)->pos,get_interface_service(shop,barberID)->request);
+   //WARNING
+   //if(get_interface_service(shop,barberID)->barberChair == 1) {
+    // set_barber_chair_service(get_interface_service(shop,barberID),barberID,clientID,get_interface_service(shop,barberID)->pos,get_interface_service(shop,barberID)->request);
+   //}
+   //else if(get_interface_service(shop,barberID)->washbasin == 1) {
+   //  set_washbasin_service(get_interface_service(shop,barberID),barberID,clientID,get_interface_service(shop,barberID)->pos);
+   //}
+   //set_interface_state(shop,barberID,GREET_AVAILABLE);
+
+   Service tmp_srv = bci_get_service_by_barberID(barberID);
+   Service* tmp_serv = &tmp_srv;
+   if(tmp_serv->barberChair == 1) {
+     set_barber_chair_service(tmp_serv,barberID,clientID,tmp_serv->pos,tmp_serv->request);
    }
-   else if(get_interface_service(shop,barberID)->washbasin == 1) {
-     set_washbasin_service(get_interface_service(shop,barberID),barberID,clientID,get_interface_service(shop,barberID)->pos);
+   else if(tmp_serv->washbasin == 1) {
+     set_washbasin_service(tmp_serv,barberID,clientID,tmp_serv->pos);
    }
-   
-   set_interface_state(shop,barberID,GREET_AVAILABLE);
+   bci_set_state(barberID,GREET_AVAILABLE);
 }
 
 int greet_barber(BarberShop* shop, int clientID)
@@ -393,8 +439,15 @@ int greet_barber(BarberShop* shop, int clientID)
    require (shop != NULL, "shop argument required");
    require (clientID > 0, concat_3str("invalid client id (", int2str(clientID), ")"));
 
-   int res = bc_interface_by_clientID(shop,clientID)->service->barberID;
-   set_interface_state(shop,res,WAITING_ON_RESERVE);
+   //WARNING
+   //int res = bc_interface_by_clientID(shop,clientID)->service->barberID;
+   //set_interface_state(shop,res,WAITING_ON_RESERVE);
+   //return res;
+
+   Service tmp_srv = bci_get_service_by_clientID(clientID);
+   Service* tmp_serv = &tmp_srv;
+   int res = tmp_serv->barberID;
+
    return res;
 }
 
@@ -418,34 +471,172 @@ static char* to_string_barber_shop(BarberShop* shop)
    return gen_boxes(shop->internal, skel_length, skel);
 }
 
-Service* get_interface_service(BarberShop* shop, int barberID)
+static void lock()
 {
-   require (shop != NULL, "shop argument required");
-   require (barberID > 0, concat_3str("invalid barber id (", int2str(barberID), ")"));
-   
-   return bc_interface_by_barberID(shop,barberID)->service;
+    struct sembuf down = {0, -1, 0};
+    if (semop(bcinterfaces->semid, &down, 1) == -1)
+    {
+        perror("lock");
+        exit(EXIT_FAILURE);
+    }
 }
 
-int get_interface_state(BarberShop* shop, int barberID)
+static void unlock()
 {
-   require (shop != NULL, "shop argument required");
-   require (barberID > 0, concat_3str("invalid barber id (", int2str(barberID), ")"));
-   
-   return bc_interface_by_barberID(shop,barberID)->currentState;
+    struct sembuf up = {0, 1, 0};
+    if (semop(bcinterfaces->semid, &up, 1) == -1)
+    {
+        perror("unlock");
+        exit(EXIT_FAILURE);
+    }
 }
 
-void set_interface_service(BarberShop* shop, int barberID, Service service)
+void bci_connect()
 {
-   require (shop != NULL, "shop argument required");
-   require (barberID > 0, concat_3str("invalid barber id (", int2str(barberID), ")"));
-   
-   bc_interface_by_barberID(shop,barberID)->service = &service;
+    /* get access to the shared memory */
+    shmid = shmget(key, 0, 0);
+    if (shmid == -1)
+    {
+        perror("Fail connecting to shared data");
+        exit(EXIT_FAILURE);
+    }
+
+    /* attach shared memory to process addressing space */ 
+    bcinterfaces = (BCInterface*)shmat(shmid, NULL, 0);
+    if (bcinterfaces == (void*)-1)
+    {
+        perror("Fail connecting to shared data");
+        exit(EXIT_FAILURE);
+    }
 }
 
-void set_interface_state(BarberShop* shop, int barberID, int state)
+void bci_destroy()
 {
-   require (shop != NULL, "shop argument required");
-   require (barberID > 0, concat_3str("invalid barber id (", int2str(barberID), ")"));
-   
-   bc_interface_by_barberID(shop,barberID)->currentState = state;
+    /* destroy the locker semaphore */
+    semctl(bcinterfaces->semid, 0, IPC_RMID, NULL);
+
+    /* detach shared memory from process addressing space */
+    shmdt(bcinterfaces);
+    bcinterfaces = NULL;
+
+    /* ask OS to destroy the shared memory */
+    shmctl(shmid, IPC_RMID, NULL);
+    shmid = -1;
+}
+
+/* set shared data with new values */
+void bci_set_service(int barberID, Service service)
+{
+    lock();
+
+	bcinterfaces->service[barberID] = service;
+    
+    unlock();
+}
+
+/* set shared data with new values */
+void bci_set_state(int barberID, int state)
+{
+    lock();
+
+	bcinterfaces->currentState[barberID] = state;
+    
+    unlock();
+}
+
+/* increment shared data */
+void bci_client_in()
+{
+    lock();
+
+	bcinterfaces->numClientsInBench += 1;
+    
+    unlock();
+}
+
+/* decrement shared data */
+void bci_client_out()
+{
+    lock();
+
+	bcinterfaces->numClientsInBench -= 1;
+    
+    unlock();
+}
+
+/* get current values of shared data */
+Service bci_get_service_by_barberID(int barberID)
+{
+    lock();
+
+	Service tmp_service = bcinterfaces->service[barberID];
+
+    unlock();
+    return tmp_service;
+}
+
+Service bci_get_service_by_clientID(int clientID)
+{
+    lock();
+     
+        Service tmp_service;
+        for(int l=0; l < MAX_BARBERS; l++) { 
+	  Service* tmp_ls = &(bcinterfaces->service[l]);	
+	  if(tmp_ls->clientID == clientID) 
+ 	    tmp_service = bcinterfaces->service[l];
+	}
+
+    unlock();
+    return tmp_service;
+}
+
+/* get current values of shared data */
+int bci_get_state(int barberID)
+{
+    lock();
+
+	int tmp_state = bcinterfaces->currentState[barberID];
+
+    unlock();
+    return tmp_state;
+}
+
+/* get current values of shared data */
+int bci_get_client_access(int clientID)
+{
+    lock();
+
+	int tmp_access = bcinterfaces->clientAccess[clientID];
+
+    unlock();
+    return tmp_access;
+}
+
+/* get current values of shared data */
+int bci_get_num_clients_in_bench()
+{
+    lock();
+
+	int tmp_num = bcinterfaces->numClientsInBench;
+
+    unlock();
+    return tmp_num;
+}
+
+void bci_grant_client_access(int clientID) 
+{
+    lock();
+
+	bcinterfaces->clientAccess[clientID] = 1;
+
+    unlock();
+}
+
+void bci_revoke_client_access(int clientID) 
+{
+    lock();
+
+	bcinterfaces->clientAccess[clientID] = 0;
+
+    unlock();
 }

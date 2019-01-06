@@ -17,8 +17,14 @@
 
 typedef struct _BCInterface_
 {	
-   Service* service;
-   int currentState;
+   int semid;
+
+   int clientAccess[MAX_CLIENTS];
+
+   int numClientsInBench;
+
+   Service service[MAX_BARBERS];
+   int currentState[MAX_BARBERS];
 } BCInterface;
 
 typedef struct _BarberShop_
@@ -45,8 +51,6 @@ typedef struct _BarberShop_
    int numClientsInside;
    int clientsInside[MAX_CLIENTS];
 
-   BCInterface bcinterfaces[MAX_BARBERS];
-
    int opened;
 
    int logId;
@@ -69,9 +73,6 @@ Washbasin* washbasin(BarberShop* shop, int pos);
 BarberBench* barber_bench(BarberShop* shop);
 ClientBenches* client_benches(BarberShop* shop);
 
-BCInterface* bc_interface_by_barberID(BarberShop* shop, int barberID);
-BCInterface* bc_interface_by_clientID(BarberShop* shop, int clientID);
-
 int num_available_barber_chairs(BarberShop* shop);
 int reserve_random_empty_barber_chair(BarberShop* shop, int barberID);
 int num_available_washbasin(BarberShop* shop);
@@ -92,9 +93,18 @@ int greet_barber(BarberShop* shop, int clientID); // returns barberID
 int shop_opened(BarberShop* shop);
 void close_shop(BarberShop* shop); // no more outside clients accepted
 
-Service* get_interface_service(BarberShop* shop, int barberID);
-int get_interface_state(BarberShop* shop, int barberID);
-void set_interface_service(BarberShop* shop, int barberID, Service service);
-void set_interface_state(BarberShop* shop, int barberID, int state);
+void bci_connect();
+void bci_destroy();
+void bci_set_service(int barberID, Service service);
+void bci_set_state(int barberID, int state);
+void bci_client_in();
+void bci_client_out();
+Service bci_get_service_by_barberID(int barberID);
+Service bci_get_service_by_clientID(int clientID);
+int bci_get_state(int barberID);
+int bci_get_client_access(int clientID);
+int bci_get_num_clients_in_bench();
+void bci_grant_client_access(int clientID);
+void bci_revoke_client_access(int clientID);
 
 #endif

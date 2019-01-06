@@ -139,6 +139,7 @@ void* main_barber(void* args)
    Barber* barber = (Barber*)args;
    require (barber != NULL, "barber argument required");
    life(barber);
+   bci_connect();
    return NULL;
 }
 
@@ -172,7 +173,9 @@ static void sit_in_barber_bench(Barber* barber)
 
 	 barber->benchPosition = random_sit_in_barber_bench(barber_bench(barber->shop),barber->id);
 	 log_barber(barber);
-   set_interface_state(barber->shop,barber->id,NO_BARBER_GREET);
+   //WARNING
+   //set_interface_state(barber->shop,barber->id,NO_BARBER_GREET);
+   bci_set_state(barber->id,NO_BARBER_GREET);
 }
 
 static void wait_for_client(Barber* barber)
@@ -188,7 +191,7 @@ static void wait_for_client(Barber* barber)
 	 barber->state = WAITING_CLIENTS;
 	 log_barber(barber);
 	 
-	 while(no_more_clients(client_benches(barber->shop))) {
+	 while(bci_get_num_clients_in_bench() == 0) {
 	   //spend(2*global->MAX_OUTSIDE_TIME_UNITS);
 	   //if(client_benches(barber->shop)->numSeats == num_available_benches_seats(client_benches(barber->shop)))
 	   //if(shop_opened(barber->shop)) close_shop(barber->shop);
@@ -196,8 +199,11 @@ static void wait_for_client(Barber* barber)
 	 
 	 RQItem queue_item = next_client_in_benches(client_benches(barber->shop));
 	 RQItem* tmp_qitem = &(queue_item);
-	 //receive_and_greet_client(barber->shop,barber->id,tmp_qitem->clientID);
-	 receive_and_greet_client(barber->shop,barber->id,1);
+	 receive_and_greet_client(barber->shop,barber->id,tmp_qitem->clientID);
+	 
+	 bci_set_state(barber->id,GREET_AVAILABLE);
+	 bci_grant_client_access(barber->clientID);
+	 
 	 barber->clientID = tmp_qitem->clientID;
 	 log_barber(barber);  // (if necessary) more than one in proper places!!!
 }
@@ -264,7 +270,9 @@ static void process_resquests_from_client(Barber* barber)
      
 	 	 Service service_to_send;
 
-     set_interface_state(barber->shop,barber->id,PROCESSING);
+     //WARNING
+     //set_interface_state(barber->shop,barber->id,PROCESSING);
+     bci_set_state(barber->id,PROCESSING);
 
 	 	 if(current_request == 1) {
 	 	 	 ensure(barber->reqToDo == 0,"Post-condition not met: reqToDo must be 0!");
@@ -321,6 +329,8 @@ static void process_resquests_from_client(Barber* barber)
 	 	 	 ensure(barber->tools == 4,"Post-condition not met: barber->tools must be 4!");
        ensure(bbchair->toolsHolded == 4,"Post-condition not met: bbchair->toolsHolded must be 4!");
 	 	 }
+
+     log_barber(barber);
 
      if(current_request == 1) {
        barber->state = CUTTING;
@@ -383,7 +393,9 @@ static void done(Barber* barber)
     **/
    require (barber != NULL, "barber argument required");
 
-   set_interface_state(barber->shop,barber->id,ALL_PROCESSES_DONE);
+   //WARNING
+   //set_interface_state(barber->shop,barber->id,ALL_PROCESSES_DONE);
+   bci_set_state(barber->id,ALL_PROCESSES_DONE);
 
    log_barber(barber);
 }
@@ -409,19 +421,25 @@ static void process_haircut_request(Barber* barber)
       set_completion_barber_chair(barber_chair(barber->shop, barber->chairPosition), complete);
    }
 
-   set_interface_state(barber->shop,barber->id,PROCESS_DONE);
+   //WARNING
+   //set_interface_state(barber->shop,barber->id,PROCESS_DONE);
+   bci_set_state(barber->id,PROCESS_DONE);
 
    log_barber(barber);  // (if necessary) more than one in proper places!!!
 }
 
 static void process_hairwash_request(Barber* barber)
 {
-   set_interface_state(barber->shop,barber->id,PROCESS_DONE);
+   //WARNING
+   //set_interface_state(barber->shop,barber->id,PROCESS_DONE);
+   bci_set_state(barber->id,PROCESS_DONE);
 }
 
 static void process_shave_request(Barber* barber)
 {
-   set_interface_state(barber->shop,barber->id,PROCESS_DONE);
+   //WARNING
+   //set_interface_state(barber->shop,barber->id,PROCESS_DONE);
+   bci_set_state(barber->id,PROCESS_DONE);
 }
 
 static char* to_string_barber(Barber* barber)

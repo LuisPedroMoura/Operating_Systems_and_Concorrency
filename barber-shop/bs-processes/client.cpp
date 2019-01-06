@@ -133,6 +133,7 @@ void* main_client(void* args)
 {
    Client* client = (Client*)args;
    require (client != NULL, "client argument required");
+   bci_connect();
    life(client);
    return NULL;
 }
@@ -249,17 +250,20 @@ static void wait_its_turn(Client* client)
 
    while(client->shop->numClientsInside == client_benches(client->shop)->numSeats);
    client->benchesPosition = enter_barber_shop(client->shop,client->id,client->requests);
+   bci_client_in();
    
    log_client(client);
-
-   BCInterface* tmp_inter = &(client->shop->bcinterfaces[client->barberID]);
    
-   while(tmp_inter->currentState == NO_BARBER_GREET);
+   //WARNING
+   //while(tmp_inter->currentState == NO_BARBER_GREET);
+   while(bci_get_client_access(client->id) == 0);
    
    client->barberID = greet_barber(client->shop,client->id);
    log_client(client);
    
-   tmp_inter->currentState = WAITING_ON_RESERVE;
+   //WARNING
+   //tmp_inter->currentState = WAITING_ON_RESERVE;
+   bci_set_state(client->barberID,WAITING_ON_RESERVE);
 }
 
 static void rise_from_client_benches(Client* client)
@@ -274,6 +278,7 @@ static void rise_from_client_benches(Client* client)
 
    rise_client_benches(client_benches(client->shop),client->benchesPosition,client->id);
    client->benchesPosition = -1;
+   bci_client_out();
 
    log_client(client);
 }
@@ -316,11 +321,12 @@ static void wait_all_services_done(Client* client)
 
      log_client(client);
      
-     BCInterface* tmp_inter = &(client->shop->bcinterfaces[client->barberID]);
+     //WARNING
+     //tmp_inter->currentState = WAITING_ON_PROCESS_START;
+     //while(tmp_inter->currentState == WAITING_ON_PROCESS_START);
      
-     tmp_inter->currentState = WAITING_ON_PROCESS_START;
-     
-     while(tmp_inter->currentState == WAITING_ON_PROCESS_START);
+     bci_set_state(client->barberID,WAITING_ON_PROCESS_START);
+     while(bci_get_state(client->barberID) == WAITING_ON_PROCESS_START);
 
      if(tmp_service->request == 1)
        client->state = HAVING_A_HAIRCUT;
@@ -329,7 +335,9 @@ static void wait_all_services_done(Client* client)
      else
        client->state = HAVING_A_SHAVE;
    
-     while(tmp_inter->currentState != PROCESS_DONE);
+     //WARNING
+     //while(tmp_inter->currentState != PROCESS_DONE);
+     while(bci_get_state(client->barberID) != PROCESS_DONE);
    
      log_client(client);
 
@@ -340,9 +348,15 @@ static void wait_all_services_done(Client* client)
   
      log_client(client);
 
-     if(tmp_inter->currentState == ALL_PROCESSES_DONE) {
-       client->state = DONE;
-     } 
+     //WARNING
+     //if(tmp_inter->currentState == ALL_PROCESSES_DONE) {
+     //  client->state = DONE;
+     //} 
+     
+     if(bci_get_state(client->barberID) == ALL_PROCESSES_DONE) {
+        client->state = DONE;
+     }
+     
    }
 
    leave_barber_shop(client->shop,client->id);
