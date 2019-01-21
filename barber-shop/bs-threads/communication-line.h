@@ -16,9 +16,11 @@ typedef struct _CommunicationLine_
 }CommunicationLine;
 
 Message write_message(Service service);
-int read_message(CommunicationLine* commLine, int clientID);
+Message read_message(CommunicationLine* commLine, int clientID);
+Message read_message_with_barberID(CommunicationLine* commLine, int barberID);
 int send_message(CommunicationLine* commLine, Message message);
 int new_message_available(CommunicationLine* commLine, int clientID);
 int no_message_available(CommunicationLine* commLine, int clientID);
+void delete_message(CommunicationLine* commLine, int clientID);
 
 #endif

@@ -271,7 +271,6 @@ static void rise_from_client_benches(Client* client)
    client->chairPosition = -1;
    client->basinPosition = -1;
    rise_client_benches(&(client->shop->clientBenches) , client->benchesPosition, client->id);
-   // miss the access ...
 
    log_client(client);
 }
@@ -297,15 +296,22 @@ static void wait_all_services_done(Client* client)
    {
       /* Waiting for service */
       client->state = WAITING_SERVICE;
-      Service *type = &(wait_service_from_barber(client->shop, client->barberID));
+      Service service = wait_service_from_barber(client->shop, client->barberID);
       client->state = WAITING_SERVICE_START;
 
       /* Request to cut hair*/
-      if (type->request == HAIRCUT_REQ)
+      if (service.request == HAIRCUT_REQ)
       {
-         client->state = HAVING_A_HAIRCUT;
-         client->chairPosition = type->pos;
-         client->basinPosition = -1;
+    	 BarberChair* chair = client->shop->barberChair+service.pos;
+    	 sit_in_barber_chair(chair, client->id);
+    	 client->chairPosition = service.pos;
+    	 client->basinPosition = -1;
+    	 client->state = HAVING_A_HAIRCUT;
+    	 while (!barber_chair_service_finished(chair)){
+    		 cond_wait(&barberChairServiceFinished);
+    	 }
+    	 rise_from_barber_chair(chair, client->id);
+    	 cond_signal(&clientRoseFromBarberChair);
          log_client(client);
       }
       /* Resquest to shave */

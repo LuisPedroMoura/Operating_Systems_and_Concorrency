@@ -196,8 +196,9 @@ int num_available_barber_chairs(BarberShop* shop)
 
 int reserve_random_empty_barber_chair(BarberShop* shop, int barberID)
 {
-   /** TODO:
+   /**
     * function called from a barber, when reserving a empty barber chair
+    * TODO:
     **/
 
    require (shop != NULL, "shop argument required");
@@ -231,8 +232,9 @@ int num_available_washbasin(BarberShop* shop)
 
 int reserve_random_empty_washbasin(BarberShop* shop, int barberID)
 {
-   /** TODO:
+   /**
     * function called from a barber, when reserving a empty washbasin
+    * TODO:
     **/
 
    require (shop != NULL, "shop argument required");
@@ -271,11 +273,12 @@ Service wait_service_from_barber(BarberShop* shop, int barberID)
     * function called from a client, expecting to be informed of the next Service to be provided by a barber
     **/
 
-   require (shop != NULL, "shop argument required");
-   require (barberID > 0, concat_3str("invalid barber id (", int2str(barberID), ")"));
+	require (shop != NULL, "shop argument required");
+	require (barberID > 0, concat_3str("invalid barber id (", int2str(barberID), ")"));
 
-   Service res;
-   return res;
+	Message message = read_message_with_barberID(&(shop->commLine), barberID);
+	Service service = message.service;
+	return service;
 }
 
 void inform_client_on_service(BarberShop* shop, Service service)

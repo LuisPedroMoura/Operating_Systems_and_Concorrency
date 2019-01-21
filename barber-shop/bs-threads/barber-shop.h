@@ -58,11 +58,20 @@ static pthread_mutex_t clientsBenchMutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t clientWaiting = PTHREAD_COND_INITIALIZER;
 static pthread_cond_t clientReady = PTHREAD_COND_INITIALIZER;
 
-
 // Communication Line mutex and cond
 static pthread_mutex_t communicationLineMutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t messageAvailable = PTHREAD_COND_INITIALIZER;
 static pthread_cond_t messageWasRead = PTHREAD_COND_INITIALIZER;
+
+// BarberChair mutex and cond
+static pthread_cond_t barberChairAvailable = PTHREAD_COND_INITIALIZER;
+static pthread_cond_t barberChairServiceFinished = PTHREAD_COND_INITIALIZER;
+static pthread_cond_t clientRoseFromBarberChair = PTHREAD_COND_INITIALIZER;
+
+// Washbasin mutex and cond
+static pthread_cond_t washbasinAvailable = PTHREAD_COND_INITIALIZER;
+static pthread_cond_t washbasinServiceFinished = PTHREAD_COND_INITIALIZER;
+static pthread_cond_t clientRoseFromWashbasin = PTHREAD_COND_INITIALIZER;
 
 
 
