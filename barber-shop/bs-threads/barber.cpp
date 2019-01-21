@@ -204,11 +204,14 @@ static void wait_for_client(Barber* barber)
 
 static int work_available(Barber* barber)
 {
-   /** TODO:
-    * 1: find a safe way to solve the problem of barber termination - NOT DONE, I GUESS
+   /**
+    * 1: find a safe way to solve the problem of barber termination
+    ** TODO:
     *    nao posso chamar a funçao term_baber, porque ele tem de existir na funçao pai desta...
     *    nao percebi como resolver o problema...
     **/
+
+   //
 
    require (barber != NULL, "barber argument required");
 
@@ -218,8 +221,9 @@ static int work_available(Barber* barber)
 
 static void rise_from_barber_bench(Barber* barber)
 {
-   /** TODO:
+   /**
     * 1: rise from the seat of barber bench
+    ** TODO:
     **/
 
    require (barber != NULL, "barber argument required");
@@ -231,9 +235,10 @@ static void rise_from_barber_bench(Barber* barber)
    log_barber(barber);
 }
 
+
 static void process_resquests_from_client(Barber* barber)
 {
-   /** TODO:
+   /** 
     * Process one client request at a time, until all requests are fulfilled.
     * For each request:
     * 1: select the request to process (any order is acceptable)
@@ -243,31 +248,27 @@ static void process_resquests_from_client(Barber* barber)
     *    2.2: inform client on the service to be performed
     * 3: depending on the service, grab the necessary tools from the pot (if any)
     * 4: process the service (see [incomplete] process_haircut_request as an example)
-    * 3: return the used tools to the pot (if any)
-    *
+    *  4.1: return the used tools to the pot (if any)
     *
     * At the end the client must leave the barber shop
+    **TODO:
     **/
-
 
 
 	require (barber != NULL, "barber argument required");
 
-	int services[3];
-
+   //1: select the request to process (any order is acceptable)
 	if (barber->reqToDo & SHAVE_REQ) {
-		process_shave_request(barber);
-		//services[0] = SHAVE_REQ;
+      process_shave_request(barber);
 	}
 	if (barber->reqToDo & WASH_HAIR_REQ) {
-		process_wash_hair_request(barber);
-		//services[1] = WASH_HAIR_REQ;
+		process_wash_hair_request(barber);	
 	}
 	if (barber->reqToDo & HAIRCUT_REQ) {
-		process_haircut_request(barber);
-		//services[2] = HAIRCUT_REQ;
+      process_haircut_request(barber);
 	}
 
+   //At the end the client must leave the barber shop
 	release_client(barber);
 
 
@@ -297,20 +298,32 @@ static void done(Barber* barber)
 
 static void process_haircut_request(Barber* barber)
 {
-   /** TODO:
+   /** 
     * ([incomplete] example code for task completion algorithm)
+    ** TODO:
     **/
    require (barber != NULL, "barber argument required");
    require (barber->tools & SCISSOR_TOOL, "barber not holding a scissor");
    require (barber->tools & COMB_TOOL, "barber not holding a comb");
 
-   /** 2: reserve the chair/basin for the service (setting the barber's state accordingly)
-   *    2.1: set the client state to a proper value
-   *    2.2: reserve a random empty chair/basin
-   *    2.2: inform client on the service to be performed
-   * 3: depending on the service, grab the necessary tools from the pot (if any)
-   * 4: process the service (see [incomplete] process_haircut_request as an example)
-   **/
+
+   //2: reserve the chair for the service (setting the barber's state accordingly)
+   //?2.1: set the barber (client???) state to a proper value
+   barber->state = WAITING_BARBER_SEAT;
+   //2.2: reserve a random empty chair
+   reserve_barber_chair(barber->shop->barberChair,barber->id);
+   //TODO 2.2: inform client on the service to be performed
+         
+   //3: grab the necessary tools from the pot
+   barber->state = REQ_SCISSOR;
+   pick_scissor(&barber->shop->toolsPot);
+   barber->state = REQ_COMB;
+   pick_comb(&barber->shop->toolsPot);
+
+   //4: process the service
+   barber->state = CUTTING;
+   //TODO:client HAVING_A_HAIRCUT
+
 
    int steps = random_int(5,20);
    int slice = (global->MAX_WORK_TIME_UNITS-global->MIN_WORK_TIME_UNITS+steps)/steps;
@@ -329,12 +342,24 @@ static void process_haircut_request(Barber* barber)
 
 static void process_wash_hair_request(Barber* barber)
 {
-   /** TODO:
+   /**
     * ([incomplete] example code for task completion algorithm)
+    **TODO:
     **/
    require (barber != NULL, "barber argument required");
    require (barber->tools & SCISSOR_TOOL, "barber not holding a scissor");
    require (barber->tools & COMB_TOOL, "barber not holding a comb");
+
+   //2: reserve the chair for the service (setting the barber's state accordingly)
+   //?2.1: set the barber (client???) state to a proper value
+   barber->state = WAITING_WASHBASIN;
+   //2.2: reserve a random empty chair
+   reserve_washbasin(barber->shop->washbasin,barber->id);
+   //TODO 2.2: inform client on the service to be performed
+         
+   //4: process the service
+   barber->state = WASHING;
+   //TODO:client HAVING_A_HAIR_WASH
 
    int steps = random_int(5,20);
    int slice = (global->MAX_WORK_TIME_UNITS-global->MIN_WORK_TIME_UNITS+steps)/steps;
@@ -353,13 +378,30 @@ static void process_wash_hair_request(Barber* barber)
 
 static void process_shave_request(Barber* barber)
 {
-   /** TODO:
+   /**
     * ([incomplete] example code for task completion algorithm)
+    **TODO:
     **/
    require (barber != NULL, "barber argument required");
    require (barber->tools & SCISSOR_TOOL, "barber not holding a scissor");
    require (barber->tools & COMB_TOOL, "barber not holding a comb");
 
+   //2: reserve the chair for the service (setting the barber's state accordingly)
+   //?2.1: set the barber (client???) state to a proper value
+   barber->state = WAITING_BARBER_SEAT;
+   //2.2: reserve a random empty chair
+   reserve_barber_chair(barber->shop->barberChair,barber->id);
+   //TODO 2.2: inform client on the service to be performed
+         
+   //3: grab the necessary tools from the pot
+   barber->state = REQ_RAZOR;
+   pick_razor(&barber->shop->toolsPot);
+
+   //4: process the service
+   barber->state = SHAVING;
+   //TODO:client HAVING_A_SHAVE
+
+   
    int steps = random_int(5,20);
    int slice = (global->MAX_WORK_TIME_UNITS-global->MIN_WORK_TIME_UNITS+steps)/steps;
    int complete = 0;
@@ -371,7 +413,7 @@ static void process_shave_request(Barber* barber)
          complete = 100;
       set_completion_barber_chair(barber_chair(barber->shop, barber->chairPosition), complete);
    }
-
+   
    log_barber(barber);  // (if necessary) more than one in proper places!!!
 }
 
