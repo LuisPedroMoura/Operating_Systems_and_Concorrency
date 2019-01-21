@@ -171,8 +171,9 @@ static void sit_in_barber_bench(Barber* barber)
    require (num_seats_available_barber_bench(barber_bench(barber->shop)) > 0, "seat not available in barber shop");
    require (!seated_in_barber_bench(barber_bench(barber->shop), barber->id), "barber already seated in barber shop");
 
-	 barber->benchPosition = random_sit_in_barber_bench(barber_bench(barber->shop),barber->id);
-	 log_barber(barber);
+   barber->benchPosition = random_sit_in_barber_bench(barber_bench(barber->shop),barber->id); 
+   log_barber(barber);
+   
    //WARNING
    //set_interface_state(barber->shop,barber->id,NO_BARBER_GREET);
    bci_set_state(barber->id,NO_BARBER_GREET);
@@ -197,11 +198,19 @@ static void wait_for_client(Barber* barber)
 	   //if(shop_opened(barber->shop)) close_shop(barber->shop);
 	 }
 	 
+	 //bci_get_syncBenches(barber->shop->clientBenches);
+
 	 RQItem queue_item = next_client_in_benches(client_benches(barber->shop));
 	 RQItem* tmp_qitem = &(queue_item);
+
+         printf("\n\n\n BARBER: wait_for_client in barber.cpp -> clientID = %d \n\n\n",tmp_qitem->clientID);
+
 	 receive_and_greet_client(barber->shop,barber->id,tmp_qitem->clientID);
 	 
 	 bci_set_state(barber->id,GREET_AVAILABLE);
+	 
+	 printf("\n\n\n BARBER: wait_for_client in barber.cpp -> clientID = %d \n\n\n",barber->clientID);
+	 
 	 bci_grant_client_access(barber->clientID);
 	 
 	 barber->clientID = tmp_qitem->clientID;
@@ -382,6 +391,8 @@ static void release_client(Barber* barber)
 
    client_done(barber->shop,barber->clientID);
    barber->clientID = 0;
+   
+   bci_unset_clientID(barber->id);
 
    log_barber(barber);
 }

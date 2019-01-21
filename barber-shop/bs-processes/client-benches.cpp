@@ -5,6 +5,7 @@
 #include "box.h"
 #include "logger.h"
 #include "client-benches.h"
+#include "barber-shop.h"
 
 static const int skel_length = (MAX_CLIENT_BENCHES_SEATS*12*3+6)*4;
 
@@ -110,6 +111,8 @@ RQItem next_client_in_benches(ClientBenches* benches)
 {
    require (benches != NULL, "benches argument required");
 
+   bci_get_syncBenches(benches);
+
    RQItem res;
 
    if (!empty_client_queue(&benches->queue))
@@ -119,6 +122,8 @@ RQItem next_client_in_benches(ClientBenches* benches)
    else
       res = empty_item();
 
+   RQItem* tmp_res = &res;
+   printf("\n\n\n BARBER: next_client_in_benches in client-benches.cpp -> clientID = %d \n\n\n",tmp_res->clientID);
    return res;
 }
 

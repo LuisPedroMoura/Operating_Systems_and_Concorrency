@@ -144,18 +144,18 @@ static void life(Client* client)
 
    int i = 0;
    notify_client_birth(client);
-   while(i < client->num_trips_to_barber)
-   {
+   //while(i < client->num_trips_to_barber)
+   //{
       wandering_outside(client);
       if (vacancy_in_barber_shop(client))
       {
          select_requests(client);
          wait_its_turn(client);
-         rise_from_client_benches(client);
-         wait_all_services_done(client);
+         //rise_from_client_benches(client);
+         //wait_all_services_done(client);
          i++;
       }
-   }
+   //}
    notify_client_death(client);
 }
 
@@ -248,7 +248,7 @@ static void wait_its_turn(Client* client)
    client->state = WAITING_ITS_TURN;
    log_client(client);
 
-   while(client->shop->numClientsInside == client_benches(client->shop)->numSeats);
+   while(bci_get_num_clients_in_bench() == client_benches(client->shop)->numSeats);
    client->benchesPosition = enter_barber_shop(client->shop,client->id,client->requests);
    bci_client_in();
    
@@ -359,6 +359,7 @@ static void wait_all_services_done(Client* client)
      
    }
 
+   bci_unset_barberID(client->id);
    leave_barber_shop(client->shop,client->id);
 
    log_client(client); // more than one in proper places!!!

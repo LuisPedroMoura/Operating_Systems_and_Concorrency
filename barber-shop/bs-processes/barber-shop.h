@@ -21,6 +21,11 @@ typedef struct _BCInterface_
 
    int clientAccess[MAX_CLIENTS];
 
+   ClientBenches syncBenches;
+
+   int barberIDs[MAX_BARBERS];
+   int clientIDs[MAX_CLIENTS];
+
    int numClientsInBench;
 
    Service service[MAX_BARBERS];
@@ -97,13 +102,21 @@ void bci_connect();
 void bci_destroy();
 void bci_set_service(int barberID, Service service);
 void bci_set_state(int barberID, int state);
+void bci_set_clientID(int barberID, int clientID);
+void bci_set_barberID(int barberID, int clientID);
+void bci_set_syncBenches(ClientBenches clientBenches);
+void bci_unset_clientID(int barberID);
+void bci_unset_barberID(int clientID);
 void bci_client_in();
 void bci_client_out();
-Service bci_get_service_by_barberID(int barberID);
-Service bci_get_service_by_clientID(int clientID);
+void bci_get_service_by_barberID(int barberID,Service* service);
+void bci_get_service_by_clientID(int clientID,Service* service);
 int bci_get_state(int barberID);
 int bci_get_client_access(int clientID);
 int bci_get_num_clients_in_bench();
+int bci_get_barberID(int clientID);
+int bci_get_clientID(int barberID);
+void bci_get_syncBenches(ClientBenches* clientBenches);
 void bci_grant_client_access(int clientID);
 void bci_revoke_client_access(int clientID);
 
