@@ -8,6 +8,7 @@
 #include "logger.h"
 #include "barber-shop.h"
 #include "barber.h"
+#include "comunication-line.h"
 
 enum State
 {
@@ -270,21 +271,29 @@ static void process_resquests_from_client(Barber* barber)
 
 static void release_client(Barber* barber)
 {
-   /** TODO:
+   /**
     * 1: notify client the all the services are done
+    * TODO:
     **/
 
    require (barber != NULL, "barber argument required");
+
+   Service service;
+   Message message = write_message(service);
+   send_message(&(barber->shop->commLine), message);
 
    log_barber(barber);
 }
 
 static void done(Barber* barber)
 {
-   /** TODO:
+   /**
     * 1: set the barber state to DONE
+    * TODO:
     **/
    require (barber != NULL, "barber argument required");
+
+   barber->state = DONE;
 
    log_barber(barber);
 }

@@ -280,12 +280,16 @@ Service wait_service_from_barber(BarberShop* shop, int barberID)
 
 void inform_client_on_service(BarberShop* shop, Service service)
 {
-   /** TODO:
+   /**
     * function called from a barber, expecting to inform a client of its next service
+    * TODO:
     **/
 
    require (shop != NULL, "shop argument required");
 
+   Message message = write_message(service);
+   send_message(&(shop->commLine), message);
+   cond_signal(&messageAvailable);
 }
 
 void client_done(BarberShop* shop, int clientID)
@@ -301,8 +305,9 @@ void client_done(BarberShop* shop, int clientID)
 
 int enter_barber_shop(BarberShop* shop, int clientID, int request)
 {
-   /** TODO:
+   /**
     * Function called from a client when entering the barbershop
+    * TODO:
     **/
 
    require (shop != NULL, "shop argument required");
@@ -337,21 +342,29 @@ void leave_barber_shop(BarberShop* shop, int clientID)
 
 void receive_and_greet_client(BarberShop* shop, int barberID, int clientID)
 {
-   /** TODO:
+   /**
     * function called from a barber, when receiving a new client
     * it must send the barber ID to the client
+    * TODO:
     **/
 
    require (shop != NULL, "shop argument required");
    require (barberID > 0, concat_3str("invalid barber id (", int2str(barberID), ")"));
    require (clientID > 0, concat_3str("invalid client id (", int2str(clientID), ")"));
 
+   Service service;
+   service.barberID = barberID;
+   service.clientID = clientID;
+   Message message = write_message(service);
+   send_message(&(shop->commLine), message);
+   cond_signal(&messageAvailable);
 }
 
 int greet_barber(BarberShop* shop, int clientID)
 {
-   /** TODO:
+   /**
     * function called from a client, expecting to receive its barber's ID
+    * TODO:
     **/
 
    require (shop != NULL, "shop argument required");
@@ -362,7 +375,7 @@ int greet_barber(BarberShop* shop, int clientID)
 
    Message message = read_message(&(shop->commLine), clientID);
    int barberID = message.service.barberID;
-   return barberID
+   return barberID;
 }
 
 int shop_opened(BarberShop* shop)

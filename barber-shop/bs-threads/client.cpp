@@ -234,8 +234,8 @@ static void wait_its_turn(Client* client)
    /**
     * 1: set the client state to WAITING_ITS_TURN
     * 2: enter barbershop (if necessary waiting for an empty seat)
-    * TODO:
     * 3. "handshake" with assigned barber (greet_barber)
+    * TODO:
     **/
 
    require (client != NULL, "client argument required");
@@ -257,8 +257,9 @@ static void wait_its_turn(Client* client)
 
 static void rise_from_client_benches(Client* client)
 {
-   /** TODO:
+   /**
     * 1: (exactly what the name says)
+    * TODO:
     **/
 
    require (client != NULL, "client argument required");
@@ -335,6 +336,7 @@ static void wait_all_services_done(Client* client)
    }
 
    leave_barber_shop(client->shop, client->id);
+
    log_client(client); // more than one in proper places!!!
 }
 
