@@ -171,26 +171,35 @@ static void notify_client_death(Client* client)
 
 static void wandering_outside(Client* client)
 {
-   /** TODO:
+   /**
     * 1: set the client state to WANDERING_OUTSIDE
     * 2. random a time interval [global->MIN_OUTSIDE_TIME_UNITS, global->MAX_OUTSIDE_TIME_UNITS]
+    *  TODO:
     **/
 
-   require (client != NULL, "client argument required");
+	require (client != NULL, "client argument required");
 
-   log_client(client);
+	client->state = WANDERING_OUTSIDE;
+
+	spend(random_int(global->MIN_OUTSIDE_TIME_UNITS, global->MAX_OUTSIDE_TIME_UNITS));
+
+	log_client(client);
 }
 
 static int vacancy_in_barber_shop(Client* client)
 {
-   /** TODO:
+   /**
     * 1: set the client state to WAITING_BARBERSHOP_VACANCY
-    * 2: check if there is an empty seat in the client benches (at this instante, later on it may fail)
+    * 2: check if there is an empty seat in the client benches (at this instant, later on it may fail)
+    * TODO:
     **/
 
    require (client != NULL, "client argument required");
 
+   client->state = WAITING_BARBERSHOP_VACANCY;
+
    int res = 0;
+   res = num_available_benches_seats(&(client->shop->clientBenches)); // any value greater than 0 is True
 
    log_client(client);
    return res;
@@ -198,25 +207,49 @@ static int vacancy_in_barber_shop(Client* client)
 
 static void select_requests(Client* client)
 {
-   /** TODO:
+   /**
     * 1: set the client state to SELECTING_REQUESTS
     * 2: choose a random combination of requests
+    * TODO:
     **/
 
-   require (client != NULL, "client argument required");
+	require (client != NULL, "client argument required");
 
-   log_client(client);
+	client->state = SELECTING_REQUESTS;
+
+	int res = 0;
+	while (res == 0) {
+		int h = (rand() <= global->PROB_REQUEST_HAIRCUT) * HAIRCUT_REQ;
+		int w = (rand() <= global->PROB_REQUEST_WASHHAIR) * WASH_HAIR_REQ;
+		int s = (rand() <= global->PROB_REQUEST_SHAVE) * SHAVE_REQ;
+		client->requests = h+w+s;
+	}
+
+	log_client(client);
 }
 
 static void wait_its_turn(Client* client)
 {
-   /** TODO:
+   /**
     * 1: set the client state to WAITING_ITS_TURN
     * 2: enter barbershop (if necessary waiting for an empty seat)
+    * TODO:
     * 3. "handshake" with assigned barber (greet_barber)
     **/
 
    require (client != NULL, "client argument required");
+
+   //* 1: set the client state to WAITING_ITS_TURN
+   client->state = WAITING_ITS_TURN;
+
+   //* 2: enter barbershop (if necessary waiting for an empty seat)
+   enter_barber_shop(client->shop, client->id, client->requests);
+
+   //* 3. "handshake" with assigned barber (greet_barber)
+   int barberId;
+   barberId = greet_barber(client->shop, client->id);
+   client->barberID = barberId;
+
 
    log_client(client);
 }

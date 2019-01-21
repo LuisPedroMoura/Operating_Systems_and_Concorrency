@@ -83,12 +83,12 @@ int empty_barber_bench(BarberBench* bench)
 int num_seats_available_barber_bench(BarberBench* bench)
 {
    require (bench != NULL, "bench argument required");
-
+   printf("\nbench: %d\n", bench->numSeats);
    int res = 0;
    for(int pos = 0; pos < bench->numSeats ; pos++)
       if (bench->id[pos] == 0)
          res++;
-
+   printf("res: %d\n", res);
    return res;
 }
 

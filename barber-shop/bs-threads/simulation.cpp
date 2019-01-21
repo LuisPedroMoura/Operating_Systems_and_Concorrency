@@ -12,6 +12,7 @@
 #include <getopt.h>
 #include <string.h>
 #include <time.h>
+#include "include/thread.h"
 #include "dbc.h"
 #include "global.h"
 #include "utils.h"
@@ -72,31 +73,78 @@ int main(int argc, char* argv[])
  */
 static void go()
 {
-   /* TODO: change this function to your needs */
 
-   require (allBarbers != NULL, "list of barbers data structures not created");
-   require (allClients != NULL, "list of clients data structures not created");
+	/* TODO: change this function to your needs */
 
-   launch_logger();
-   char* descText;
-   descText = (char*)"Barbers:";
-   send_log(logIdBarbersDesc, (char*)descText);
-   descText = (char*)"Clients:";
-   send_log(logIdClientsDesc, (char*)descText);
-   show_barber_shop(shop);
-   for(int i = 0; i < global->NUM_BARBERS; i++)
-      log_barber(allBarbers+i);
-   for(int i = 0; i < global->NUM_CLIENTS; i++)
-      log_client(allClients+i);
+	require (allBarbers != NULL, "list of barbers data structures not created");
+	require (allClients != NULL, "list of clients data structures not created");
+
+	launch_logger();
+	char* descText;
+	descText = (char*)"Barbers:";
+	send_log(logIdBarbersDesc, (char*)descText);
+	descText = (char*)"Clients:";
+	send_log(logIdClientsDesc, (char*)descText);
+	show_barber_shop(shop);
+	for(int i = 0; i < global->NUM_BARBERS; i++)
+		log_barber(allBarbers+i);
+	for(int i = 0; i < global->NUM_CLIENTS; i++)
+		log_client(allClients+i);
+
+	/* launching the barbers */
+	pthread_t bthr[global->NUM_BARBERS];
+	for (int i = 0; i < global->NUM_BARBERS; i++)
+	{
+		if (pthread_create(&bthr[i], NULL, main_barber, &allBarbers[i]) != 0)
+		{
+			fprintf(stderr, "barber %d\n", i);
+			perror("error on launching the barber thread");
+			exit(EXIT_FAILURE);
+		}
+	}
+
+	/* launching the clients */
+	pthread_t cthr[global->NUM_CLIENTS];
+	for (int i = 0; i < global->NUM_CLIENTS; i++)
+	{
+		if (pthread_create(&cthr[i], NULL, main_client, &allClients[i]) != 0)
+		{
+			fprintf(stderr, "client %d\n", i);
+			perror("error on launching the client thread");
+			exit(EXIT_FAILURE);
+		}
+	}
+
+	/* wait for threads to conclude */
+	for (int i = 0; i < global->NUM_BARBERS; i++)
+	{
+		if (pthread_join(bthr[i], NULL) != 0)
+		{
+			fprintf(stderr, "barber %d\n", i);
+			perror("error on waiting for a thread to conclude");
+			exit(EXIT_FAILURE);
+		}
+	}
+	for (int i = 0; i < global->NUM_CLIENTS; i++)
+	{
+		if (pthread_join(cthr[i], NULL) != 0)
+		{
+			fprintf(stderr, "client %d\n", i);
+			perror("error on waiting for a thread to conclude");
+			exit(EXIT_FAILURE);
+		}
+	}
 
 }
 
 /**
- * synchronize with the termination of all active entities (barbers and clients), 
+ * synchronize with the termination of all active entities (barbers and clients),
  */
 static void finish()
 {
-   /* TODO: change this function to your needs */
+	/* TODO: change this function to your needs */
+
+
 
    term_logger();
 }

@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
+#include "include/thread.h"
 #include "dbc.h"
 #include "utils.h"
 #include "box.h"
@@ -8,13 +9,13 @@
 #include "global.h"
 #include "barber-shop.h"
 
+
 /* TODO: take a careful look to all the non static (public) functions, to check
  * if a proper synchronization is needed.
  */
 
 
 /* TODO: change here this file to your needs */
-
 
 
 static const int skel_length = 10000;
