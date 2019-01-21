@@ -245,25 +245,12 @@ static void wait_its_turn(Client* client)
 
    //* 2: enter barbershop (if necessary waiting for an empty seat)
    enter_barber_shop(client->shop, client->id, client->requests);
-
-   Service service;
-   set_clientID(&service, client->id);
-
-   Message message = write_message(service);
-   send_message(&(client->shop->commLine), message);
-
-
-   signal...
+   cond_signal(&clientWaiting);
 
    //* 3. "handshake" with assigned barber (greet_barber)
-   while(...){
-	   cond_wait(&messageAvailableToClient, &communicationLineMutex);
-   }
-
    int barberId;
    barberId = greet_barber(client->shop, client->id);
    client->barberID = barberId;
-
 
    log_client(client);
 }

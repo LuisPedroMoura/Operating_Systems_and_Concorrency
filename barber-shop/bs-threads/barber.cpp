@@ -282,7 +282,7 @@ static void release_client(Barber* barber)
 static void done(Barber* barber)
 {
    /** TODO:
-    * 1: set the client state to DONE
+    * 1: set the barber state to DONE
     **/
    require (barber != NULL, "barber argument required");
 

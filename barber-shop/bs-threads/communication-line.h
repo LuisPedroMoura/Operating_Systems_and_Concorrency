@@ -7,7 +7,7 @@
 typedef struct _Message_
 {
 	Service service;
-	int notRead = 0;
+	int newMessage = 0;
 }Message;
 
 typedef struct _CommunicationLine_
@@ -16,7 +16,9 @@ typedef struct _CommunicationLine_
 }CommunicationLine;
 
 Message write_message(Service service);
-int read_message(CommunicationLine* commLine, Message message);
+int read_message(CommunicationLine* commLine, int clientID);
 int send_message(CommunicationLine* commLine, Message message);
+int new_message_available(CommunicationLine* commLine, int clientID);
+int no_message_available(CommunicationLine* commLine, int clientID);
 
 #endif

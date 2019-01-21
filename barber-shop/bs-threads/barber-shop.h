@@ -56,11 +56,14 @@ static pthread_cond_t barberBenchNotEmpty = PTHREAD_COND_INITIALIZER;
 // client Bench mutex and cond
 static pthread_mutex_t clientsBenchMutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t clientWaiting = PTHREAD_COND_INITIALIZER;
+static pthread_cond_t clientReady = PTHREAD_COND_INITIALIZER;
+
 
 // Communication Line mutex and cond
 static pthread_mutex_t communicationLineMutex = PTHREAD_MUTEX_INITIALIZER;
-static pthread_cond_t messageAvailableToClient = PTHREAD_COND_INITIALIZER;
-static pthread_cond_t messageAvailableToBarber = PTHREAD_COND_INITIALIZER;
+static pthread_cond_t messageAvailable = PTHREAD_COND_INITIALIZER;
+static pthread_cond_t messageWasRead = PTHREAD_COND_INITIALIZER;
+
 
 
 int num_lines_barber_shop(BarberShop* shop);

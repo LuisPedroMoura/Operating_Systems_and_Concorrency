@@ -8,6 +8,7 @@
 #include "logger.h"
 #include "global.h"
 #include "barber-shop.h"
+#include "communication-line.h"
 
 
 /* TODO: take a careful look to all the non static (public) functions, to check
@@ -355,9 +356,13 @@ int greet_barber(BarberShop* shop, int clientID)
 
    require (shop != NULL, "shop argument required");
    require (clientID > 0, concat_3str("invalid client id (", int2str(clientID), ")"));
+   while (no_message_available(&(shop->commLine), clientID)){
+   	   cond_wait(&messageAvailable, &communicationLineMutex);
+   }
 
-   int res = 0;
-   return res;
+   Message message = read_message(&(shop->commLine), clientID);
+   int barberID = message.service.barberID;
+   return barberID
 }
 
 int shop_opened(BarberShop* shop)
