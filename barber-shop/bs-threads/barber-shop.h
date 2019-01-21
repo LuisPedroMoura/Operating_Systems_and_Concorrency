@@ -14,6 +14,7 @@
 #include "barber-bench.h"
 #include "service.h"
 #include "client-benches.h"
+#include "communication-line.h"
 
 typedef struct _BarberShop_
 {
@@ -38,6 +39,8 @@ typedef struct _BarberShop_
 
    int numClientsInside;
    int clientsInside[MAX_CLIENTS];
+
+   CommunicationLine commLine;
 
    int opened;
 
