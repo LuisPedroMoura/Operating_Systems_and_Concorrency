@@ -265,12 +265,19 @@ static void rise_from_client_benches(Client* client)
    require (client != NULL, "client argument required");
    require (seated_in_client_benches(client_benches(client->shop), client->id), concat_3str("client ",int2str(client->id)," not seated in benches"));
 
+   // Client stands on his/her feet
+   client->benchesPosition = -1;
+   client->chairPosition = -1;
+   client->basinPosition = -1;
+   rise_client_benches(&(client->shop->clientBenches) , client->benchesPosition, client->id);
+   // miss the access ...
+
    log_client(client);
 }
 
 static void wait_all_services_done(Client* client)
 {
-   /** TODO:
+   /**
     * Expect the realization of one request at a time, until all requests are fulfilled.
     * For each request:
     * 1: set the client state to WAITING_SERVICE
@@ -279,12 +286,55 @@ static void wait_all_services_done(Client* client)
     * 4: sit in proper position in destination (chair/basin depending on the service selected)
     * 5: set the client state to the active service
     * 6: rise from destination
-    *
+    * TODO
     * At the end the client must leave the barber shop
     **/
 
    require (client != NULL, "client argument required");
 
+   while (client->state != DONE)
+   {
+      /* Waiting for service */
+      client->state = WAITING_SERVICE;
+      Service *type = &(wait_service_from_barber(client->shop, client->barberID));
+      client->state = WAITING_SERVICE_START;
+
+      /* Request to cut hair*/
+      if (type->request == HAIRCUT_REQ)
+      {
+         client->state = HAVING_A_HAIRCUT;
+         client->chairPosition = type->pos;
+         client->basinPosition = -1;
+         log_client(client);
+      }
+      /* Resquest to shave */
+      else if (type->request == SHAVE_REQ)
+      {
+         client->state = HAVING_A_SHAVE;
+         client->chairPosition = type->pos;
+         client->basinPosition = -1;
+         log_client(client);
+      }
+      /* Request to wash hair */
+      else if (type->request == WASH_HAIR_REQ) 
+      {
+         client->state = HAVING_A_HAIR_WASH;
+         client->chairPosition = -1;
+         client->basinPosition = type->pos;
+         log_client(client);
+      }
+      /* When no other services available*/
+      else 
+      {
+         client->state = DONE;
+      }
+
+      /* rise from any destination */
+      client->chairPosition = -1;
+      client->basinPosition = -1;
+   }
+
+   leave_barber_shop(client->shop, client->id);
    log_client(client); // more than one in proper places!!!
 }
 
