@@ -250,6 +250,7 @@ static void wait_its_turn(Client* client)
 
    while(bci_get_num_clients_in_bench() == client_benches(client->shop)->numSeats);
    client->benchesPosition = enter_barber_shop(client->shop,client->id,client->requests);
+   bci_set_syncBenches(*client_benches(client->shop));
    bci_client_in();
    
    log_client(client);
