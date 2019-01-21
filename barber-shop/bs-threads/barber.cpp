@@ -306,6 +306,7 @@ static void process_haircut_request(Barber* barber)
    barber->state = WAITING_BARBER_SEAT;
    //2.2: reserve a random empty chair
    reserve_barber_chair(barber->shop->barberChair,barber->id);
+   sit_in_barber_chair(barber->shop->barberChair,barber->clientID);
    //TODO 2.2: inform client on the service to be performed
          
    //3: grab the necessary tools from the pot
@@ -331,6 +332,9 @@ static void process_haircut_request(Barber* barber)
       set_completion_barber_chair(barber_chair(barber->shop, barber->chairPosition), complete);
    }
 
+   rise_from_barber_chair(barber->shop->barberChair,barber->clientID);
+   release_barber_chair(barber->shop->barberChair,barber->clientID);
+   
    log_barber(barber);  // (if necessary) more than one in proper places!!!
 }
 
@@ -349,8 +353,10 @@ static void process_wash_hair_request(Barber* barber)
    barber->state = WAITING_WASHBASIN;
    //2.2: reserve a random empty chair
    reserve_washbasin(barber->shop->washbasin,barber->id);
+   sit_in_washbasin(barber->shop->washbasin, barber->clientID);
+   
    //TODO 2.2: inform client on the service to be performed
-         
+
    //4: process the service
    barber->state = WASHING;
    //TODO:client HAVING_A_HAIR_WASH
@@ -366,6 +372,9 @@ static void process_wash_hair_request(Barber* barber)
          complete = 100;
       set_completion_barber_chair(barber_chair(barber->shop, barber->chairPosition), complete);
    }
+
+   rise_from_washbasin(barber->shop->washbasin, barber->clientID);
+   release_washbasin(barber->shop->washbasin, barber->clientID);
 
    log_barber(barber);  // (if necessary) more than one in proper places!!!
 }
@@ -385,6 +394,7 @@ static void process_shave_request(Barber* barber)
    barber->state = WAITING_BARBER_SEAT;
    //2.2: reserve a random empty chair
    reserve_barber_chair(barber->shop->barberChair,barber->id);
+   sit_in_barber_chair(barber->shop->barberChair,barber->clientID);
    //TODO 2.2: inform client on the service to be performed
          
    //3: grab the necessary tools from the pot
@@ -407,7 +417,10 @@ static void process_shave_request(Barber* barber)
          complete = 100;
       set_completion_barber_chair(barber_chair(barber->shop, barber->chairPosition), complete);
    }
-   
+
+   rise_from_barber_chair(barber->shop->barberChair,barber->clientID);
+   release_barber_chair(barber->shop->barberChair,barber->clientID);
+
    log_barber(barber);  // (if necessary) more than one in proper places!!!
 }
 
