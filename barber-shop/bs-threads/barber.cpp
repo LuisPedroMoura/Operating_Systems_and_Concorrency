@@ -62,14 +62,7 @@ static void process_haircut_request(Barber* barber);
 
 static char* to_string_barber(Barber* barber);
 
-// barber Bench mutex and cond
-static pthread_mutex_t barberBenchMutex = PTHREAD_MUTEX_INITIALIZER;
-static pthread_cond_t barberBenchNotFull = PTHREAD_COND_INITIALIZER;
-static pthread_cond_t barberBenchNotEmpty = PTHREAD_COND_INITIALIZER;
 
-// client Bench mutex and cond
-static pthread_mutex_t clientsBenchMutex = PTHREAD_MUTEX_INITIALIZER;
-static pthread_cond_t clientWaiting = PTHREAD_COND_INITIALIZER;
 
 size_t sizeof_barber()
 {
@@ -154,14 +147,15 @@ static void life(Barber* barber)
 
 static void sit_in_barber_bench(Barber* barber)
 {
-   /** TODO:
+   /**
     * 1: sit in a random empty seat in barber bench (always available)
+    * TODO:
     **/
 	require (barber != NULL, "barber argument required");
 	require (num_seats_available_barber_bench(barber_bench(barber->shop)) > 0, "seat not available in barber shop");
 	require (!seated_in_barber_bench(barber_bench(barber->shop), barber->id), "barber already seated in barber shop");
 
-	mutex_lock(&barberBenchMutex);
+	barber->shop->mutex_lock(&barberBenchMutex);
 	while (num_seats_available_barber_bench(&(barber->shop->barberBench)) == 0)
 	{
 	  cond_wait(&barberBenchNotFull, &barberBenchMutex);

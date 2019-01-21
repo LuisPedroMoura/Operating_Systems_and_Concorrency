@@ -18,6 +18,7 @@
 /* TODO: change here this file to your needs */
 
 
+
 static const int skel_length = 10000;
 static char skel[skel_length];
 

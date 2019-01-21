@@ -2,23 +2,30 @@
 
 #include "dbc.h"
 #include "global.h"
+#include "service.h"
 
 #define nClients global->NUM_CLIENTS
 
-
-int read_communication(CommunicationLine* commLine, int clientID)
+Message write_message(Service service)
 {
-	require (clientID != NULL, "clientID argument required");
-	require (clientID >= 0 && clientID < nClients, "Invalid clientID argument");
+	Message message;
+	message.service = service;
+	message.notRead = 1;
+	return message;
+}
+int read_message(CommunicationLine* commLine, Message message)
+{
+	require (message != NULL, "service argument required");
+	require (message.service.clientID < nClients, "Invalid clientID");
 
-	return commLine[clientID];
+	message.notRead = 0;
+	return commLine->commArray[message.service.clientID];
 }
 
-void write_communication(CommunicationLine* commLine, int clientID, int message)
+void send_message(CommunicationLine* commLine, Message message)
 {
-	require (clientID != NULL, "clientID argument required");
-	require (clientID >= 0 && clientID < nClients, "Invalid clientID argument");
-	require (message != NULL, "message argument required");
+	require (message != NULL, "clientID argument required");
+	require (message.service.clientID < nClients, "Invalid clientID");
 
-	commLine[clientID] = message;
+	commLine->commArray[message.service.clientID] = message;
 }

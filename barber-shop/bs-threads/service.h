@@ -19,6 +19,7 @@ typedef struct _Service_
 
 void set_barber_chair_service(Service* service, int barber_id, int client_id, int pos, int request);
 void set_washbasin_service(Service* service, int barber_id, int client_id, int pos);
+void set_clientID(Service* service, int clientID);
 int is_barber_chair_service(Service* service);
 int is_washbasin_service(Service* service);
 int service_barber_id(Service* service);

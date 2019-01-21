@@ -2,13 +2,21 @@
 #define COMMUNICATION_LINE_H
 
 #include "global.h"
+#include "service.h"
+
+typedef struct _Message_
+{
+	Service service;
+	int notRead = 0;
+}Message;
 
 typedef struct _CommunicationLine_
 {
-	int commLine[global->NUM_CLIENTS];
+	Message commArray[global->NUM_CLIENTS];
 }CommunicationLine;
 
-int read_communication(int clientID);
-int write_communication(int clientID, int message);
+Message write_message(Service service);
+int read_message(CommunicationLine* commLine, Message message);
+int send_message(CommunicationLine* commLine, Message message);
 
 #endif

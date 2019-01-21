@@ -33,6 +33,14 @@ void set_washbasin_service(Service* service, int barber_id, int client_id, int p
    service->request = WASH_HAIR_REQ;
 }
 
+void set_clientID(Service* service, int client_id)
+{
+	require (service != NULL, "service argument required");
+	require (client_id > 0, concat_3str("invalid client id (", int2str(client_id), ")"));
+
+	service->clientID = client_id;
+}
+
 int is_barber_chair_service(Service* service)
 {
    require (service != NULL, "service argument required");
