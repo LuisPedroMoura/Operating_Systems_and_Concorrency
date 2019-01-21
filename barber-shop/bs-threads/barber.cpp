@@ -199,12 +199,15 @@ static void wait_for_client(Barber* barber)
 static int work_available(Barber* barber)
 {
    /** TODO:
-    * 1: find a safe way to solve the problem of barber termination
+    * 1: find a safe way to solve the problem of barber termination - NOT DONE, I GUESS
+    *    nao posso chamar a funçao term_baber, porque ele tem de existir na funçao pai desta...
+    *    nao percebi como resolver o problema...
     **/
 
    require (barber != NULL, "barber argument required");
 
-   return 1;
+   //ha clientes no banco dos clientes
+   return !no_more_clients(&barber->shop->clientBenches);
 }
 
 static void rise_from_barber_bench(Barber* barber)
@@ -216,6 +219,7 @@ static void rise_from_barber_bench(Barber* barber)
    require (barber != NULL, "barber argument required");
    require (seated_in_barber_bench(barber_bench(barber->shop), barber->id), "barber not seated in barber shop");
 
+   //1: rise from the seat of barber bench
    rise_barber_bench(&(barber->shop->barberBench), barber->benchPosition);
 
    log_barber(barber);
