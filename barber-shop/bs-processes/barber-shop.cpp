@@ -19,7 +19,7 @@
 static int shmid = 74;
 static BCInterface * bcinterfaces;
 
-const long key = 0x2074L;
+const long key = 0x2080L;
 
 enum BCState
 {
@@ -367,14 +367,10 @@ void client_done(BarberShop* shop, int clientID)
    require (shop != NULL, "shop argument required");
    require (clientID > 0, concat_3str("invalid client id (", int2str(clientID), ")"));
 
-   //WARNING
-   //set_interface_state(shop,get_interface_service(shop,clientID)->barberID,ALL_PROCESSES_DONE);
    Service tmp_service;
    bci_get_service_by_clientID(clientID,&tmp_service);
 
    Service* tmp_servicek = &tmp_service;
-   //printf("\n\n\n BARBER: client_done in barber-shop.cpp -> barberID = %d \n\n\n",tmp_servicek->barberID);
-   //printf("\n\n\n BARBER: client_done in barber-shop.cpp -> clientID = %d \n\n\n",tmp_servicek->clientID);
 
    bci_set_state(tmp_servicek->barberID,ALL_PROCESSES_DONE);
 }
