@@ -11,10 +11,14 @@
 enum BCState
 {
    NO_BARBER_GREET,           //barber has yet to receive and greet the client
-   GREET_AVAILABLE,	          //client can get barberID
+   GREET_AVAILABLE,	      //client can get barberID
    WAITING_ON_RESERVE,        //client waiting until the barber has reserved the seat for the process
    WAITING_ON_PROCESS_START,  //client waiting until the process starts (barber has all the needed tools)
+   WAITING_ON_CLIENT_SIT,     //barber waiting on client to sit
+   CLIENT_SEATED,	      //client has sat down
    PROCESSING,                //process running
+   WAITING_ON_CLIENT_RISE,    //barber waiting for client to leave the spot
+   CLIENT_RISEN,              //client left the spot
    PROCESS_DONE,              //process has finished
    ALL_PROCESSES_DONE         //all processes done   
 };
@@ -144,18 +148,18 @@ static void life(Client* client)
 
    int i = 0;
    notify_client_birth(client);
-   //while(i < client->num_trips_to_barber)
-   //{
+   while(i < client->num_trips_to_barber)
+   {
       wandering_outside(client);
       if (vacancy_in_barber_shop(client))
       {
          select_requests(client);
          wait_its_turn(client);
-         //rise_from_client_benches(client);
-         //wait_all_services_done(client);
+         rise_from_client_benches(client);
+         wait_all_services_done(client);
          i++;
       }
-   //}
+   }
    notify_client_death(client);
 }
 
@@ -233,6 +237,7 @@ static void select_requests(Client* client)
    log_client(client);
    client->requests = random_int(1,7);
    log_client(client);
+   bci_set_request(client->id,client->requests);
 }
 
 static void wait_its_turn(Client* client)
@@ -248,6 +253,7 @@ static void wait_its_turn(Client* client)
    client->state = WAITING_ITS_TURN;
    log_client(client);
 
+   //WILL NEED A SEMAPHORE
    while(bci_get_num_clients_in_bench() == client_benches(client->shop)->numSeats);
    client->benchesPosition = enter_barber_shop(client->shop,client->id,client->requests);
    bci_set_syncBenches(*client_benches(client->shop));
@@ -255,16 +261,14 @@ static void wait_its_turn(Client* client)
    
    log_client(client);
    
-   //WARNING
-   //while(tmp_inter->currentState == NO_BARBER_GREET);
    while(bci_get_client_access(client->id) == 0);
    
    client->barberID = greet_barber(client->shop,client->id);
    log_client(client);
    
-   //WARNING
-   //tmp_inter->currentState = WAITING_ON_RESERVE;
    bci_set_state(client->barberID,WAITING_ON_RESERVE);
+   
+   while(bci_get_state(client->barberID) == WAITING_ON_RESERVE);
 }
 
 static void rise_from_client_benches(Client* client)
@@ -278,6 +282,7 @@ static void rise_from_client_benches(Client* client)
    require (seated_in_client_benches(client_benches(client->shop), client->id), concat_3str("client ",int2str(client->id)," not seated in benches"));
 
    rise_client_benches(client_benches(client->shop),client->benchesPosition,client->id);
+   bci_set_syncBenches(*client_benches(client->shop));
    client->benchesPosition = -1;
    bci_client_out();
 
@@ -309,22 +314,32 @@ static void wait_all_services_done(Client* client)
      Service* tmp_service = &(given_service);
 
      client->state = WAITING_SERVICE_START;
-     log_client(client);  
 
      if(is_barber_chair_service(tmp_service)) {
+       client->chairPosition = tmp_service->pos ;
+       bci_get_syncBBChair(barber_chair(client->shop,client->chairPosition),client->barberID);
+       BarberChair* tmp_bbc16 = barber_chair(client->shop,client->chairPosition);
+       printf("\n\n\n CLIENT: get syncbbchair 16-> client: %d barber: %d \n\n\n",tmp_bbc16->clientID,tmp_bbc16->barberID); 
+
        client->chairPosition = service_position(tmp_service);
        sit_in_barber_chair(barber_chair(client->shop,client->chairPosition),client->id);
+       BarberChair* bbchair8 = barber_chair(client->shop,client->chairPosition);
+       bci_set_syncBBChair(*bbchair8,client->barberID);
+       BarberChair* tmp_bbc17 = barber_chair(client->shop,client->chairPosition);
+       printf("\n\n\n CLIENT: set syncbbchair 17 -> client: %d barber: %d \n\n\n",tmp_bbc17->clientID,tmp_bbc17->barberID); 
      }
      else {
+       client->basinPosition = tmp_service->pos;
+       bci_get_syncWashbasin(washbasin(client->shop,client->basinPosition),client->barberID);
        client->basinPosition = service_position(tmp_service);
        sit_in_washbasin(washbasin(client->shop,client->basinPosition),client->id);
+       Washbasin* tmp_wsh4 = washbasin(client->shop,client->basinPosition);
+       bci_set_syncWashbasin(*tmp_wsh4,client->barberID);
      }
 
+     bci_set_state(client->barberID,CLIENT_SEATED);
+
      log_client(client);
-     
-     //WARNING
-     //tmp_inter->currentState = WAITING_ON_PROCESS_START;
-     //while(tmp_inter->currentState == WAITING_ON_PROCESS_START);
      
      bci_set_state(client->barberID,WAITING_ON_PROCESS_START);
      while(bci_get_state(client->barberID) == WAITING_ON_PROCESS_START);
@@ -335,25 +350,38 @@ static void wait_all_services_done(Client* client)
        client->state = HAVING_A_HAIR_WASH;
      else
        client->state = HAVING_A_SHAVE;
-   
-     //WARNING
-     //while(tmp_inter->currentState != PROCESS_DONE);
+
+     while(bci_get_state(client->barberID) != WAITING_ON_CLIENT_RISE);
+     
+     if(tmp_service->request == 1 or tmp_service->request == 4) {
+       bci_get_syncBBChair(barber_chair(client->shop,client->chairPosition),client->barberID);
+       BarberChair* tmp_bbc18 = barber_chair(client->shop,client->chairPosition);
+       printf("\n\n\n CLIENT: get syncbbchair 18 -> client: %d barber: %d \n\n\n",tmp_bbc18->clientID,tmp_bbc18->barberID); 
+
+       rise_from_barber_chair(barber_chair(client->shop,client->chairPosition),client->id);
+       BarberChair* bbchair9 = barber_chair(client->shop,client->chairPosition);
+       bci_set_syncBBChair(*bbchair9,client->barberID);
+       BarberChair* tmp_bbc19 = barber_chair(client->shop,client->chairPosition);
+       printf("\n\n\n CLIENT: set syncbbchair 19 -> client: %d barber: %d \n\n\n",tmp_bbc19->clientID,tmp_bbc19->barberID); 
+
+       client->chairPosition = -1;
+     }
+     else {
+       bci_get_syncWashbasin(washbasin(client->shop,client->basinPosition),client->barberID);
+       rise_from_washbasin(washbasin(client->shop,client->basinPosition),client->id);
+       Washbasin* tmp_wsh3 = washbasin(client->shop,client->basinPosition);
+       bci_set_syncWashbasin(*tmp_wsh3,client->barberID);
+       client->basinPosition = -1; 
+     }
+
+     bci_set_state(client->barberID,CLIENT_RISEN);
+
      while(bci_get_state(client->barberID) != PROCESS_DONE);
    
-     log_client(client);
-
-     if(is_barber_chair_service(&given_service))
-       client->chairPosition = -1;
-     else
-       client->basinPosition = -1;    
+     log_client(client);   
   
      log_client(client);
 
-     //WARNING
-     //if(tmp_inter->currentState == ALL_PROCESSES_DONE) {
-     //  client->state = DONE;
-     //} 
-     
      if(bci_get_state(client->barberID) == ALL_PROCESSES_DONE) {
         client->state = DONE;
      }
