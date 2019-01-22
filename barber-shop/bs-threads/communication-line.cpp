@@ -1,7 +1,6 @@
-#include "communication-line.h"
-
 #include "dbc.h"
 #include "global.h"
+#include "communication-line.h"
 #include "service.h"
 
 #define nClients global->NUM_CLIENTS

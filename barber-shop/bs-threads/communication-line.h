@@ -12,6 +12,7 @@ typedef struct _Message_
 
 typedef struct _CommunicationLine_
 {
+	//Message* commArray = new Message[global->NUM_CLIENTS];
 	Message commArray[global->NUM_CLIENTS];
 }CommunicationLine;
 

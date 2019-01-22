@@ -8,7 +8,7 @@
 #include "logger.h"
 #include "barber-shop.h"
 #include "barber.h"
-#include "comunication-line.h"
+#include "communication-line.h"
 
 enum State
 {
@@ -185,7 +185,7 @@ static void wait_for_client(Barber* barber)
 	barber->state = WAITING_CLIENTS;
 
 	// se clientes acabarem, conseguimos fechar a loja???
-	while (next_client_in_benches(&(barber->shop->clientBenches)) == empty_item()){
+	while (next_client_in_benches(&(barber->shop->clientBenches)).benchPos == -1){
 	   cond_wait(&clientWaiting, &clientsBenchMutex);
     }
 

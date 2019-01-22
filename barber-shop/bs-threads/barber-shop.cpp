@@ -276,7 +276,7 @@ Service wait_service_from_barber(BarberShop* shop, int barberID)
 	require (shop != NULL, "shop argument required");
 	require (barberID > 0, concat_3str("invalid barber id (", int2str(barberID), ")"));
 
-	while(no_message_available(&(shop->commLine), clientID));
+	//while(no_message_available(&(shop->commLine), clientID));
 	Message message = read_message_with_barberID(&(shop->commLine), barberID);
 	Service service = message.service;
 	return service;

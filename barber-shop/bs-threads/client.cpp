@@ -356,7 +356,7 @@ static void update_client_with_service(Client* client, Service service)
 		client->state = HAVING_A_SHAVE;
 	}
 	else if(service.request == WASH_HAIR_REQ){
-		client->state == HAVING_A_HAIR_WASH;
+		client->state = HAVING_A_HAIR_WASH;
 	}
 }
 
