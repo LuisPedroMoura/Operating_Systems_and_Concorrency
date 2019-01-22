@@ -5,7 +5,7 @@
 
 OBJS=global.o \
      barber-chair.o washbasin.o tools-pot.o barber-bench.o client-benches.o barber-shop.o \
-     service.o client-queue.o barber.o client.o
+     service.o client-queue.o barber.o client.o communication-line.o
 
 TARGETS_OBJS=simulation.o
 

@@ -123,7 +123,7 @@ RQItem next_client_in_benches(ClientBenches* benches)
    }
    else
       res = empty_item();
-
+   printf("next client in benches - returns: %d\n", res.benchPos);
    return res;
 }
 

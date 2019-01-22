@@ -5,6 +5,26 @@
 
 #define nClients global->NUM_CLIENTS
 
+static Message empty = {0,-1};
+
+Message empty_message()
+{
+   return empty;
+}
+
+int is_empty(Message message)
+{
+	return message.newMessage == -1;
+}
+
+void init_communication_line(CommunicationLine* commLine, int numClients){
+
+	commLine->commArray = new Message[numClients];
+	for (int i = 0; i < numClients; i++){
+		commLine->commArray[i] = empty_message();
+	}
+}
+
 Message write_message(Service service)
 {
 	Message message;
@@ -15,8 +35,7 @@ Message write_message(Service service)
 
 Message read_message(CommunicationLine* commLine, int clientID)
 {
-	require (clientID != NULL, "clientID argument required");
-	require (clientID >= 0 && clientID < nClients, "Invalid clientID");
+	require (clientID > 0, concat_3str("invalid client id (", int2str(clientID), ")"));
 
 	commLine->commArray[clientID].newMessage = 0;
 	return commLine->commArray[clientID];
@@ -24,45 +43,36 @@ Message read_message(CommunicationLine* commLine, int clientID)
 
 Message read_message_with_barberID(CommunicationLine* commLine, int barberID)
 {
-	require (barberID != NULL, "clientID argument required");
-	require (barberID >= 0 && barberID < nClients, "Invalid clientID");
+	require (barberID > 0, concat_3str("invalid barber id (", int2str(barberID), ")"));
+
 	int size = sizeof(commLine->commArray) / sizeof(Service);
 	for (int i = 0; i < size; i++){
 		if (commLine->commArray[i].service.barberID == barberID){
 			return commLine->commArray[i];
 		}
 	}
-	return NULL;
+	return empty_message();
 }
 
 void send_message(CommunicationLine* commLine, Message message)
 {
-	require (message != NULL, "message argument required");
-	require (message.service.clientID < nClients, "Invalid clientID in message argument");
+	require (!is_empty(message), "message argument required");
+	require (message.service.clientID > 0, "Invalid clientID in message argument");
 
 	commLine->commArray[message.service.clientID] = message;
+
 }
 
 void delete_message(CommunicationLine* commLine, int clientID)
 {
-	require (clientID != NULL, "clientID argument required");
-	require (clientID >= 0 && clientID < nClients, "Invalid clientID");
+	require (clientID > 0, concat_3str("invalid client id (", int2str(clientID), ")"));
 
-	commLine->commArray[clientID] = NULL;
-}
-
-int new_message_available(CommunicationLine* commLine, int clientID)
-{
-	require (clientID != NULL, "clientID argument required");
-	require (clientID >= 0 && clientID < nClients, "Invalid clientID");
-
-	return commLine->commArray[clientID].newMessage;
+	commLine->commArray[clientID] = empty_message();
 }
 
 int no_message_available(CommunicationLine* commLine, int clientID)
 {
-	require (clientID != NULL, "clientID argument required");
-	require (clientID >= 0 && clientID < nClients, "Invalid clientID");
+	require (clientID > 0, concat_3str("invalid client id (", int2str(clientID), ")"));
 
-	return !new_message_available(commLine, clientID);
+	return !commLine->commArray[clientID].newMessage || is_empty(commLine->commArray[clientID]);
 }

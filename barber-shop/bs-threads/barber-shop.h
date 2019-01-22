@@ -46,32 +46,44 @@ typedef struct _BarberShop_
 
    int logId;
    char* internal;
+
+   // Barber Shop Mutex and cond
+   pthread_mutex_t barberShopMutex = PTHREAD_MUTEX_INITIALIZER;
+
+   // barber Bench mutex and cond
+   pthread_mutex_t barberBenchMutex = PTHREAD_MUTEX_INITIALIZER;
+   pthread_cond_t barberBenchNotFull = PTHREAD_COND_INITIALIZER;
+   pthread_cond_t barberBenchNotEmpty = PTHREAD_COND_INITIALIZER;
+
+   // client Bench mutex and cond
+   pthread_mutex_t clientsBenchMutex = PTHREAD_MUTEX_INITIALIZER;
+   pthread_cond_t clientWaiting = PTHREAD_COND_INITIALIZER;
+   pthread_cond_t clientReady = PTHREAD_COND_INITIALIZER;
+   pthread_cond_t clientSeatAvailable = PTHREAD_COND_INITIALIZER;
+
+
+   // Communication Line mutex and cond
+   pthread_mutex_t communicationLineMutex = PTHREAD_MUTEX_INITIALIZER;
+   pthread_cond_t messageAvailable = PTHREAD_COND_INITIALIZER;
+   pthread_cond_t messageWasRead = PTHREAD_COND_INITIALIZER;
+
+   // BarberChair mutex and cond
+   pthread_cond_t barberChairAvailable = PTHREAD_COND_INITIALIZER;
+   pthread_cond_t barberChairServiceFinished = PTHREAD_COND_INITIALIZER;
+   pthread_cond_t clientRoseFromBarberChair = PTHREAD_COND_INITIALIZER;
+   pthread_cond_t clientSatInBarberChair = PTHREAD_COND_INITIALIZER;
+   pthread_cond_t clientReadyForShave = PTHREAD_COND_INITIALIZER;
+
+
+   // Washbasin mutex and cond
+   pthread_cond_t washbasinAvailable = PTHREAD_COND_INITIALIZER;
+   pthread_cond_t washbasinServiceFinished = PTHREAD_COND_INITIALIZER;
+   pthread_cond_t clientRoseFromWashbasin = PTHREAD_COND_INITIALIZER;
+   pthread_cond_t clientSatInWashbasin = PTHREAD_COND_INITIALIZER;
+
 } BarberShop;
 
-// barber Bench mutex and cond
-static pthread_mutex_t barberBenchMutex = PTHREAD_MUTEX_INITIALIZER;
-static pthread_cond_t barberBenchNotFull = PTHREAD_COND_INITIALIZER;
-static pthread_cond_t barberBenchNotEmpty = PTHREAD_COND_INITIALIZER;
 
-// client Bench mutex and cond
-static pthread_mutex_t clientsBenchMutex = PTHREAD_MUTEX_INITIALIZER;
-static pthread_cond_t clientWaiting = PTHREAD_COND_INITIALIZER;
-static pthread_cond_t clientReady = PTHREAD_COND_INITIALIZER;
-
-// Communication Line mutex and cond
-static pthread_mutex_t communicationLineMutex = PTHREAD_MUTEX_INITIALIZER;
-static pthread_cond_t messageAvailable = PTHREAD_COND_INITIALIZER;
-static pthread_cond_t messageWasRead = PTHREAD_COND_INITIALIZER;
-
-// BarberChair mutex and cond
-static pthread_cond_t barberChairAvailable = PTHREAD_COND_INITIALIZER;
-static pthread_cond_t barberChairServiceFinished = PTHREAD_COND_INITIALIZER;
-static pthread_cond_t clientRoseFromBarberChair = PTHREAD_COND_INITIALIZER;
-
-// Washbasin mutex and cond
-static pthread_cond_t washbasinAvailable = PTHREAD_COND_INITIALIZER;
-static pthread_cond_t washbasinServiceFinished = PTHREAD_COND_INITIALIZER;
-static pthread_cond_t clientRoseFromWashbasin = PTHREAD_COND_INITIALIZER;
 
 
 

@@ -12,15 +12,16 @@ typedef struct _Message_
 
 typedef struct _CommunicationLine_
 {
-	//Message* commArray = new Message[global->NUM_CLIENTS];
-	Message commArray[global->NUM_CLIENTS];
+	Message* commArray;
 }CommunicationLine;
 
+Message empty_message();
+int is_empty(Message message);
+void init_communication_line(CommunicationLine* commLine, int numClients);
 Message write_message(Service service);
 Message read_message(CommunicationLine* commLine, int clientID);
 Message read_message_with_barberID(CommunicationLine* commLine, int barberID);
-int send_message(CommunicationLine* commLine, Message message);
-int new_message_available(CommunicationLine* commLine, int clientID);
+void send_message(CommunicationLine* commLine, Message message);
 int no_message_available(CommunicationLine* commLine, int clientID);
 void delete_message(CommunicationLine* commLine, int clientID);
 
