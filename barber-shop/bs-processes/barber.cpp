@@ -147,8 +147,8 @@ static void life(Barber* barber)
 {
    require (barber != NULL, "barber argument required");
 
-   sit_in_barber_bench(barber);
    barber->shop->opened = 1;
+   sit_in_barber_bench(barber);
    wait_for_client(barber);
    while(work_available(barber)) // no more possible clients and closes barbershop
    {
@@ -198,12 +198,12 @@ static void wait_for_client(Barber* barber)
 	   //if(shop_opened(barber->shop)) close_shop(barber->shop);
 	 }
 	 
-	 //bci_get_syncBenches(barber->shop->clientBenches);
+	 bci_get_syncBenches(client_benches(barber->shop));
 
 	 RQItem queue_item = next_client_in_benches(client_benches(barber->shop));
 	 RQItem* tmp_qitem = &(queue_item);
 
-         printf("\n\n\n BARBER: wait_for_client in barber.cpp -> clientID = %d \n\n\n",tmp_qitem->clientID);
+         //printf("\n\n\n BARBER: wait_for_client in barber.cpp -> clientID = %d \n\n\n",tmp_qitem->clientID);
 
 	 receive_and_greet_client(barber->shop,barber->id,tmp_qitem->clientID);
 	 
@@ -211,11 +211,10 @@ static void wait_for_client(Barber* barber)
 	 
          barber->clientID = tmp_qitem->clientID;
 
-	 printf("\n\n\n BARBER: wait_for_client in barber.cpp -> clientID = %d \n\n\n",barber->clientID);
+	 //printf("\n\n\n BARBER: wait_for_client in barber.cpp -> clientID = %d \n\n\n",barber->clientID);
 	 
 	 bci_grant_client_access(barber->clientID);
 	 
-	 barber->clientID = tmp_qitem->clientID;
 	 log_barber(barber);  // (if necessary) more than one in proper places!!!
 }
 
@@ -227,7 +226,7 @@ static int work_available(Barber* barber)
 
    require (barber != NULL, "barber argument required");
 
-	 if(shop_opened(barber->shop))
+	 if(barber->clientID > 0)
 	 	 return 1;
 
    return 0;
@@ -268,30 +267,15 @@ static void process_resquests_from_client(Barber* barber)
 
    require (barber != NULL, "barber argument required");
 
-	 int current_request = 0;
-	 while(barber->reqToDo > 0) {
-	 	 if(barber->reqToDo >= 4)
-	 	 	 current_request = 4;
-	 	 else if(barber->reqToDo >= 2)
-	 	 	 current_request = 2;
-	 	 else
-	 	 	 current_request = 1;
-	 	 
-	 	 barber->reqToDo -= current_request;
-     
-	 	 Service service_to_send;
-
-     //WARNING
-     //set_interface_state(barber->shop,barber->id,PROCESSING);
-     bci_set_state(barber->id,PROCESSING);
-
-	 	 if(current_request == 1) {
-	 	 	 ensure(barber->reqToDo == 0,"Post-condition not met: reqToDo must be 0!");
+   while(bci_get_request(barber->clientID) > 0) {
+      barber->reqToDo = bci_get_next_request(barber->clientID);
+      
+      if(barber->reqToDo == 1) {
 	 	 	 while(num_available_barber_chairs(barber->shop) == 0);
 	 	 	 barber->chairPosition = reserve_random_empty_barber_chair(barber->shop,barber->id);
        barber->state = CUTTING;
 	 	 }
-	 	 else if(current_request == 2) {
+	 	 else if(barber->reqToDo == 2) {
 	 	 	 while(num_available_washbasin(barber->shop) == 0);
 	 	 	 barber->basinPosition = reserve_random_empty_washbasin(barber->shop,barber->id);
 	 	 	 barber->state = WASHING;
@@ -301,19 +285,21 @@ static void process_resquests_from_client(Barber* barber)
 	 	 	 barber->chairPosition = reserve_random_empty_barber_chair(barber->shop,barber->id);
 	 	 	 barber->state = SHAVING;
 	 	 }
-
-     log_barber(barber);
-
-	 	 if(current_request == 1 || current_request == 4)
-	 	 	 set_barber_chair_service(&service_to_send,barber->id,barber->clientID,barber->chairPosition,current_request);
+      
+     log_barber(barber); 
+     bci_set_state(barber->id,PROCESSING); 
+      
+     Service service_to_send; 
+     if(barber->reqToDo == 1 || barber->reqToDo == 4)
+	 	 	 set_barber_chair_service(&service_to_send,barber->id,barber->clientID,barber->chairPosition,barber->reqToDo);
 	 	 else
-	 	 	 set_washbasin_service(&service_to_send,barber->id,barber->clientID,barber->basinPosition);
-
-	 	 inform_client_on_service(barber->shop,service_to_send);
-
+	 	 	 set_washbasin_service(&service_to_send,barber->id,barber->clientID,barber->basinPosition); 
+      
+     inform_client_on_service(barber->shop,service_to_send); 
+     
      BarberChair* bbchair = barber_chair(barber->shop,barber->chairPosition);
 
-	 	 if(current_request == 1) {
+	 	 if(barber->reqToDo == 1) {
        barber->state = REQ_SCISSOR;
        log_barber(barber);
        while((tools_pot(barber->shop))->availScissors == 0);
@@ -330,7 +316,7 @@ static void process_resquests_from_client(Barber* barber)
 	 	 	 ensure(barber->tools == 3,"Post-condition not met: barber->tools must be 3!");
        ensure(bbchair->toolsHolded == 3,"Post-condition not met: bbchair->toolsHolded must be 3!");
 	 	 }
-	 	 else if(current_request == 4) {
+	 	 else if(barber->reqToDo == 4) {
        barber->state = REQ_RAZOR;
        log_barber(barber);
        while((tools_pot(barber->shop))->availRazors == 0);
@@ -340,15 +326,13 @@ static void process_resquests_from_client(Barber* barber)
 	 	 	 ensure(barber->tools == 4,"Post-condition not met: barber->tools must be 4!");
        ensure(bbchair->toolsHolded == 4,"Post-condition not met: bbchair->toolsHolded must be 4!");
 	 	 }
-
-     log_barber(barber);
-
-     if(current_request == 1) {
+	 	 
+	 	 if(barber->reqToDo == 1) {
        barber->state = CUTTING;
        log_barber(barber);
        process_haircut_request(barber);
      }
-     else if(current_request == 2) {
+     else if(barber->reqToDo == 2) {
        barber->state = WASHING;
        log_barber(barber);
        process_hairwash_request(barber);
@@ -358,8 +342,8 @@ static void process_resquests_from_client(Barber* barber)
        log_barber(barber);
        process_shave_request(barber);
      }
-
-     if(current_request == 1) {
+	 	 
+	 	 if(barber->reqToDo == 1) {
        return_scissor(tools_pot(barber->shop));
        barber->tools -= 1;
        bbchair->toolsHolded -= 1;
@@ -368,7 +352,7 @@ static void process_resquests_from_client(Barber* barber)
        barber->tools -= 2;
        bbchair->toolsHolded -= 2;
      }
-     else if(current_request == 4) {
+     else if(barber->reqToDo == 4) {
        return_razor(tools_pot(barber->shop));
        barber->tools -= 4;
        bbchair->toolsHolded -= 4;
@@ -376,11 +360,12 @@ static void process_resquests_from_client(Barber* barber)
 
      ensure(barber->tools == 0,"Post-condition not met: barber->tools must be 0!");
      ensure(bbchair->toolsHolded == 0,"Post-condition not met: bbchair->toolsHolded must be 0!");
-	 }
+	 	 
+	 	 bci_did_request(barber->clientID);
+   }
 
-   if(barber->clientID > 0)
-     release_client(barber);
-   log_barber(barber);  // (if necessary) more than one in proper places!!!
+   release_client(barber);
+   log_barber(barber);
 }
 
 static void release_client(Barber* barber)

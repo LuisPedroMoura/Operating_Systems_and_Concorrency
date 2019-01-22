@@ -19,7 +19,7 @@
 static int shmid = 74;
 static BCInterface * bcinterfaces;
 
-const long key = 0x206EL;
+const long key = 0x2074L;
 
 enum BCState
 {
@@ -332,8 +332,8 @@ Service wait_service_from_barber(BarberShop* shop, int barberID)
    bci_get_service_by_barberID(barberID,&tmp_servicerin);
 
    Service* tmp_servicerinno = &tmp_servicerin;
-   printf("\n\n\n CLIENT: wait_service_from_barber in barber-shop.cpp -> barberID = %d \n\n\n",tmp_servicerinno->barberID);
-   printf("\n\n\n CLIENT: wait_service_from_barber in barber-shop.cpp -> clientID = %d \n\n\n",tmp_servicerinno->clientID);
+   //printf("\n\n\n CLIENT: wait_service_from_barber in barber-shop.cpp -> barberID = %d \n\n\n",tmp_servicerinno->barberID);
+   //printf("\n\n\n CLIENT: wait_service_from_barber in barber-shop.cpp -> clientID = %d \n\n\n",tmp_servicerinno->clientID);
 
    return tmp_servicerin;
 }
@@ -351,8 +351,8 @@ void inform_client_on_service(BarberShop* shop, Service service)
    //set_interface_state(shop,tmp_serv->barberID,WAITING_ON_PROCESS_START);
 
    Service* tmp_sreviec = &(service);
-   printf("\n\n\n BARBER: inform_client_on_service in barber-shop.cpp -> barberID = %d \n\n\n",tmp_sreviec->barberID);
-   printf("\n\n\n BARBER: inform_client_on_service in barber-shop.cpp -> clientID = %d \n\n\n",tmp_sreviec->clientID);
+   //printf("\n\n\n BARBER: inform_client_on_service in barber-shop.cpp -> barberID = %d \n\n\n",tmp_sreviec->barberID);
+   //printf("\n\n\n BARBER: inform_client_on_service in barber-shop.cpp -> clientID = %d \n\n\n",tmp_sreviec->clientID);
 
    bci_set_service(tmp_serv->barberID,service);
    bci_set_state(tmp_serv->barberID,WAITING_ON_PROCESS_START);
@@ -373,8 +373,8 @@ void client_done(BarberShop* shop, int clientID)
    bci_get_service_by_clientID(clientID,&tmp_service);
 
    Service* tmp_servicek = &tmp_service;
-   printf("\n\n\n BARBER: client_done in barber-shop.cpp -> barberID = %d \n\n\n",tmp_servicek->barberID);
-   printf("\n\n\n BARBER: client_done in barber-shop.cpp -> clientID = %d \n\n\n",tmp_servicek->clientID);
+   //printf("\n\n\n BARBER: client_done in barber-shop.cpp -> barberID = %d \n\n\n",tmp_servicek->barberID);
+   //printf("\n\n\n BARBER: client_done in barber-shop.cpp -> clientID = %d \n\n\n",tmp_servicek->clientID);
 
    bci_set_state(tmp_servicek->barberID,ALL_PROCESSES_DONE);
 }
@@ -439,10 +439,6 @@ void receive_and_greet_client(BarberShop* shop, int barberID, int clientID)
    //set_interface_state(shop,barberID,GREET_AVAILABLE);
 
    bci_get_syncBenches(&(shop->clientBenches));
-
-   printf("\n\n\n BARBER: receive_and_greet_client in barber-shop.cpp -> bench = %d 1 \n\n\n",client_benches(shop)->id[0]);
-   printf("\n\n\n BARBER: receive_and_greet_client in barber-shop.cpp -> bench = %d 2\n\n\n",client_benches(shop)->id[1]);
-   printf("\n\n\n BARBER: receive_and_greet_client in barber-shop.cpp -> bench = %d 3\n\n\n",client_benches(shop)->id[2]);
 
    bci_set_clientID(barberID,clientID);
    bci_set_barberID(barberID,clientID);
@@ -565,11 +561,6 @@ void bci_set_service(int barberID, Service service)
     lock();
 
 	bcinterfaces->service[barberID-1] = service;
-    
-        for(int i = 0; i < MAX_BARBERS; i++) {
-          Service* tmp_s = &(bcinterfaces->service[barberID-1]);
-          printf("\n\n\nbci_set_service_by_barberID: service -> %d %d %d\n\n\n",tmp_s->clientID,tmp_s->barberID,i);
-        }
 
     unlock();
 }
@@ -609,6 +600,29 @@ void bci_set_syncBenches(ClientBenches clientBenches)
     lock();
 
         bcinterfaces->syncBenches = clientBenches;
+
+    unlock();
+}
+
+void bci_set_request(int clientID,int request)
+{
+    lock();
+
+	bcinterfaces->clientRequests[clientID-1] = request;
+
+    unlock();
+}
+
+void bci_did_request(int clientID)
+{
+    lock();
+
+	if(bcinterfaces->clientRequests[clientID-1] >= 4)
+	   bcinterfaces->clientRequests[clientID-1] -= 4;
+	else if(bcinterfaces->clientRequests[clientID-1] >= 2)
+	   bcinterfaces->clientRequests[clientID-1] -= 2;
+	else
+	   bcinterfaces->clientRequests[clientID-1] -= 1;
 
     unlock();
 }
@@ -665,11 +679,6 @@ void bci_get_service_by_barberID(int barberID,Service* service)
     lock();
 
 	*service = bcinterfaces->service[barberID-1];
-
-        for(int i = 0; i < MAX_BARBERS; i++) {
-          Service* tmp_s = &(bcinterfaces->service[barberID-1]);
-          printf("\n\n\nbci_get_service_by_barberID: service -> %d %d %d\n\n\n",tmp_s->clientID,tmp_s->barberID,i);
-        }
 
     unlock();
 }
@@ -757,6 +766,32 @@ void bci_get_syncBenches(ClientBenches* clientBenches)
         *clientBenches = bcinterfaces->syncBenches;
 
     unlock();
+}
+
+int bci_get_request(int clientID)
+{
+    lock();
+
+	int tmp_req = bcinterfaces->clientRequests[clientID-1]; 
+
+    unlock();
+    return tmp_req;
+}
+
+int bci_get_next_request(int clientID)
+{
+    lock();
+
+	int tmp_nreq = 0;
+	if(bcinterfaces->clientRequests[clientID-1] >= 4)
+	   tmp_nreq = 4;
+	else if(bcinterfaces->clientRequests[clientID-1] >= 2)
+	   tmp_nreq = 2;
+	else
+	   tmp_nreq = 1;
+
+    unlock();
+    return tmp_nreq;
 }
 
 void bci_grant_client_access(int clientID) 
