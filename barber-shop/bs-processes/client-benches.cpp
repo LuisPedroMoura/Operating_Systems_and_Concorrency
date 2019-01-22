@@ -122,8 +122,6 @@ RQItem next_client_in_benches(ClientBenches* benches)
    else
       res = empty_item();
 
-   RQItem* tmp_res = &res;
-   //printf("\n\n\n BARBER: next_client_in_benches in client-benches.cpp -> clientID = %d \n\n\n",tmp_res->clientID);
    return res;
 }
 

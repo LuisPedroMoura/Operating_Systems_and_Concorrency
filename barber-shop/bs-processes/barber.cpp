@@ -15,6 +15,8 @@ enum BCState
    WAITING_ON_RESERVE,        //client waiting until the barber has reserved the seat for the process
    WAITING_ON_PROCESS_START,  //client waiting until the process starts (barber has all the needed tools)
    PROCESSING,                //process running
+   WAITING_ON_CLIENT_RISE,    //barber waiting for client to leave the spot
+   CLIENT_RISEN,              //client left the spot
    PROCESS_DONE,              //process has finished
    ALL_PROCESSES_DONE         //all processes done   
 };
@@ -187,7 +189,7 @@ static void wait_for_client(Barber* barber)
    log_barber(barber);
 	 
    while(bci_get_num_clients_in_bench() == 0) {
-     spend(2*global->MAX_OUTSIDE_TIME_UNITS);
+     spend(1.1*global->MAX_OUTSIDE_TIME_UNITS);
      if(bci_get_num_clients_in_bench() == 0) close_shop(barber->shop);
    }
 	 
@@ -262,19 +264,22 @@ static void process_resquests_from_client(Barber* barber)
      if(barber->reqToDo == 1) {
        while(num_available_barber_chairs(barber->shop) == 0);
        barber->chairPosition = reserve_random_empty_barber_chair(barber->shop,barber->id);
-       barber->state = CUTTING;
+       BarberChair* tmp_bbc1 = barber_chair(barber->shop,barber->chairPosition);
+       bci_set_syncBBChair(*tmp_bbc1,barber->id);
      }
      else if(barber->reqToDo == 2) {
        while(num_available_washbasin(barber->shop) == 0);
        barber->basinPosition = reserve_random_empty_washbasin(barber->shop,barber->id);
-       barber->state = WASHING;
+       Washbasin* tmp_wsh = washbasin(barber->shop,barber->chairPosition);
+       bci_set_syncWashbasin(*tmp_wsh,barber->id);
      }
      else {
        while(num_available_barber_chairs(barber->shop) == 0);
        barber->chairPosition = reserve_random_empty_barber_chair(barber->shop,barber->id);
-       barber->state = SHAVING;
+       BarberChair* tmp_bbc2 = barber_chair(barber->shop,barber->chairPosition);
+       bci_set_syncBBChair(*tmp_bbc2,barber->id);
      }
-      
+ 
      log_barber(barber); 
      bci_set_state(barber->id,PROCESSING); 
       
@@ -285,8 +290,6 @@ static void process_resquests_from_client(Barber* barber)
        set_washbasin_service(&service_to_send,barber->id,barber->clientID,barber->basinPosition); 
       
      inform_client_on_service(barber->shop,service_to_send); 
-     
-     BarberChair* bbchair = barber_chair(barber->shop,barber->chairPosition);
 
      if(barber->reqToDo == 1) {
        barber->state = REQ_SCISSOR;
@@ -294,16 +297,22 @@ static void process_resquests_from_client(Barber* barber)
        while((tools_pot(barber->shop))->availScissors == 0);
        pick_scissor(tools_pot(barber->shop));
        barber->tools += 1;
-       bbchair->toolsHolded += 1;
+
+       bci_get_syncBBChair(barber_chair(barber->shop,barber->chairPosition),barber->id);
+       BarberChair* bbchair1 = barber_chair(barber->shop,barber->chairPosition);
+       bbchair1->toolsHolded += 1;
+       bci_set_syncBBChair(*bbchair1,barber->id);
 
        barber->state = REQ_COMB;
        log_barber(barber);
        while((tools_pot(barber->shop))->availCombs == 0);
        pick_comb(tools_pot(barber->shop));
        barber->tools += 2;
-       bbchair->toolsHolded += 2;
-       ensure(barber->tools == 3,"Post-condition not met: barber->tools must be 3!");
-       ensure(bbchair->toolsHolded == 3,"Post-condition not met: bbchair->toolsHolded must be 3!");
+
+       bci_get_syncBBChair(barber_chair(barber->shop,barber->chairPosition),barber->id);
+       BarberChair* bbchair2 = barber_chair(barber->shop,barber->chairPosition);
+       bbchair2->toolsHolded += 2;
+       bci_set_syncBBChair(*bbchair2,barber->id);
      }
      else if(barber->reqToDo == 4) {
        barber->state = REQ_RAZOR;
@@ -311,11 +320,16 @@ static void process_resquests_from_client(Barber* barber)
        while((tools_pot(barber->shop))->availRazors == 0);
        pick_razor(tools_pot(barber->shop));
        barber->tools += 4;
-       bbchair->toolsHolded += 4;
-       ensure(barber->tools == 4,"Post-condition not met: barber->tools must be 4!");
-       ensure(bbchair->toolsHolded == 4,"Post-condition not met: bbchair->toolsHolded must be 4!");
+
+       bci_get_syncBBChair(barber_chair(barber->shop,barber->chairPosition),barber->id);
+       BarberChair* bbchair3 = barber_chair(barber->shop,barber->chairPosition);
+       bbchair3->toolsHolded += 4;
+       bci_set_syncBBChair(*bbchair3,barber->id);
      }
-	 	 
+	 	
+     //WAIT FOR SIT
+     while(bci_get_state(barber->id) != WAITING_ON_PROCESS_START);
+ 
      if(barber->reqToDo == 1) {
        barber->state = CUTTING;
        log_barber(barber);
@@ -331,29 +345,54 @@ static void process_resquests_from_client(Barber* barber)
        log_barber(barber);
        process_shave_request(barber);
      }
-	 
-     barber->chairPosition = -1;
-     barber->basinPosition = -1;
 
-     log_barber(barber);
+     bci_set_state(barber->id,WAITING_ON_CLIENT_RISE);
+     while(bci_get_state(barber->id) == WAITING_ON_CLIENT_RISE);
 	 
      if(barber->reqToDo == 1) {
        return_scissor(tools_pot(barber->shop));
        barber->tools -= 1;
-       bbchair->toolsHolded -= 1;
+
+       bci_get_syncBBChair(barber_chair(barber->shop,barber->chairPosition),barber->id);
+       BarberChair* bbchair4 = barber_chair(barber->shop,barber->chairPosition);
+       bbchair4->toolsHolded -= 1;
+       bci_set_syncBBChair(*bbchair4,barber->id);
 
        return_comb(tools_pot(barber->shop));
        barber->tools -= 2;
-       bbchair->toolsHolded -= 2;
+
+       bci_get_syncBBChair(barber_chair(barber->shop,barber->chairPosition),barber->id);
+       BarberChair* bbchair5 = barber_chair(barber->shop,barber->chairPosition);
+       bbchair5->toolsHolded -= 2;
+       bci_set_syncBBChair(*bbchair5,barber->id);
      }
      else if(barber->reqToDo == 4) {
        return_razor(tools_pot(barber->shop));
        barber->tools -= 4;
-       bbchair->toolsHolded -= 4;
+
+       bci_get_syncBBChair(barber_chair(barber->shop,barber->chairPosition),barber->id);
+       BarberChair* bbchair6 = barber_chair(barber->shop,barber->chairPosition);
+       bbchair6->toolsHolded -= 4;
+       bci_set_syncBBChair(*bbchair6,barber->id);
      }
 
-     ensure(barber->tools == 0,"Post-condition not met: barber->tools must be 0!");
-     ensure(bbchair->toolsHolded == 0,"Post-condition not met: bbchair->toolsHolded must be 0!");
+     if(barber->reqToDo == 1 or barber->reqToDo == 4) {
+       bci_get_syncBBChair(barber_chair(barber->shop,barber->chairPosition),barber->id);
+       release_barber_chair(barber_chair(barber->shop,barber->chairPosition), barber->id);
+       bci_get_syncBBChair(barber_chair(barber->shop,barber->chairPosition),barber->id);
+       BarberChair* bbchair7 = barber_chair(barber->shop,barber->chairPosition);
+       bci_set_syncBBChair(*bbchair7,barber->id);
+       barber->chairPosition = -1;
+     }
+     else {
+       bci_get_syncWashbasin(washbasin(barber->shop,barber->basinPosition),barber->id);
+       release_washbasin(washbasin(barber->shop,barber->basinPosition),barber->id);
+       Washbasin* tmp_wsh2 = washbasin(barber->shop,barber->basinPosition);
+       bci_set_syncWashbasin(*tmp_wsh2,barber->id);
+       barber->basinPosition = -1;
+     }
+
+     log_barber(barber);
 	 	 
      bci_did_request(barber->clientID);
    }
@@ -409,7 +448,6 @@ static void process_haircut_request(Barber* barber)
        complete = 100;
      }
      set_completion_barber_chair(barber_chair(barber->shop, barber->chairPosition), complete);
-     log_barber_chair(barber_chair(barber->shop,barber->chairPosition));
    }
 
    bci_set_state(barber->id,PROCESS_DONE);
@@ -430,7 +468,6 @@ static void process_hairwash_request(Barber* barber)
        complete = 100;
      }
      set_completion_washbasin(washbasin(barber->shop, barber->basinPosition), complete);
-     log_washbasin(washbasin(barber->shop,barber->basinPosition));
    }
 
    bci_set_state(barber->id,PROCESS_DONE);
@@ -452,7 +489,6 @@ static void process_shave_request(Barber* barber)
        complete = 100;
      }
      set_completion_barber_chair(barber_chair(barber->shop, barber->chairPosition), complete);
-     log_barber_chair(barber_chair(barber->shop,barber->chairPosition));
    }
 
    bci_set_state(barber->id,PROCESS_DONE);

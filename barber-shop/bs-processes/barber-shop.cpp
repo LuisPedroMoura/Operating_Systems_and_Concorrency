@@ -19,7 +19,7 @@
 static int shmid = 74;
 static BCInterface * bcinterfaces;
 
-const long key = 0x2080L;
+const long key = 0x208BL;
 
 enum BCState
 {
@@ -28,6 +28,8 @@ enum BCState
    WAITING_ON_RESERVE,        //client waiting until the barber has reserved the seat for the process
    WAITING_ON_PROCESS_START,  //client waiting until the process starts (barber has all the needed tools)
    PROCESSING,                //process running
+   WAITING_ON_CLIENT_RISE,    //barber waiting for client to leave the spot
+   CLIENT_RISEN,              //client left the spot
    PROCESS_DONE,              //process has finished
    ALL_PROCESSES_DONE         //all processes done   
 };
@@ -331,10 +333,6 @@ Service wait_service_from_barber(BarberShop* shop, int barberID)
    Service tmp_servicerin;
    bci_get_service_by_barberID(barberID,&tmp_servicerin);
 
-   Service* tmp_servicerinno = &tmp_servicerin;
-   //printf("\n\n\n CLIENT: wait_service_from_barber in barber-shop.cpp -> barberID = %d \n\n\n",tmp_servicerinno->barberID);
-   //printf("\n\n\n CLIENT: wait_service_from_barber in barber-shop.cpp -> clientID = %d \n\n\n",tmp_servicerinno->clientID);
-
    return tmp_servicerin;
 }
 
@@ -346,13 +344,6 @@ void inform_client_on_service(BarberShop* shop, Service service)
 
    require (shop != NULL, "shop argument required");
    Service* tmp_serv = &service;
-   //WARNING
-   //set_interface_service(shop,tmp_serv->barberID,service);
-   //set_interface_state(shop,tmp_serv->barberID,WAITING_ON_PROCESS_START);
-
-   Service* tmp_sreviec = &(service);
-   //printf("\n\n\n BARBER: inform_client_on_service in barber-shop.cpp -> barberID = %d \n\n\n",tmp_sreviec->barberID);
-   //printf("\n\n\n BARBER: inform_client_on_service in barber-shop.cpp -> clientID = %d \n\n\n",tmp_sreviec->clientID);
 
    bci_set_service(tmp_serv->barberID,service);
    bci_set_state(tmp_serv->barberID,WAITING_ON_PROCESS_START);
@@ -600,6 +591,24 @@ void bci_set_syncBenches(ClientBenches clientBenches)
     unlock();
 }
 
+void bci_set_syncBBChair(BarberChair bbChair, int barberID)
+{
+    lock();
+
+        bcinterfaces->syncBBChairs[barberID-1] = bbChair;
+
+    unlock();
+}
+
+void bci_set_syncWashbasin(Washbasin basin, int barberID)
+{
+    lock();
+
+        bcinterfaces->syncWashbasins[barberID-1] = basin;
+
+    unlock();
+}
+
 void bci_set_request(int clientID,int request)
 {
     lock();
@@ -762,6 +771,24 @@ void bci_get_syncBenches(ClientBenches* clientBenches)
         *clientBenches = bcinterfaces->syncBenches;
 
     unlock();
+}
+
+void bci_get_syncBBChair(BarberChair* bbChair, int barberID)
+{
+    lock();
+
+        *bbChair = bcinterfaces->syncBBChairs[barberID-1];
+
+    unlock(); 
+}
+
+void bci_get_syncWashbasin(Washbasin* basin, int barberID)
+{
+    lock();
+
+        *basin = bcinterfaces->syncWashbasins[barberID-1];
+
+    unlock(); 
 }
 
 int bci_get_request(int clientID)
