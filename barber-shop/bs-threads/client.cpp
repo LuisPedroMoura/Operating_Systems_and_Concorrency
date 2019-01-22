@@ -60,6 +60,8 @@ static void wait_its_turn(Client* client);
 static void rise_from_client_benches(Client* client);
 static void wait_all_services_done(Client* client);
 
+static void update_client_with_service(Client* client, Service service);
+
 static char* to_string_client(Client* client);
 
 size_t sizeof_client()
@@ -263,7 +265,6 @@ static void rise_from_client_benches(Client* client)
     **/
 
    require (client != NULL, "client argument required");
-   require (client != NULL, "client argument required");
    require (seated_in_client_benches(client_benches(client->shop), client->id), concat_3str("client ",int2str(client->id)," not seated in benches"));
 
    // Client stands on his/her feet
@@ -290,60 +291,73 @@ static void wait_all_services_done(Client* client)
     * At the end the client must leave the barber shop
     **/
 
-   require (client != NULL, "client argument required");
+	require (client != NULL, "client argument required");
 
-   while (client->state != DONE)
-   {
-      /* Waiting for service */
-      client->state = WAITING_SERVICE;
-      Service service = wait_service_from_barber(client->shop, client->barberID);
-      client->state = WAITING_SERVICE_START;
+	while (client->state != DONE)
+	{
+		/* Waiting for service */
+		client->state = WAITING_SERVICE;
+		Service service = wait_service_from_barber(client->shop, client->barberID);
+		client->state = WAITING_SERVICE_START;
 
-      /* Request to cut hair*/
-      if (service.request == HAIRCUT_REQ)
-      {
-    	 BarberChair* chair = client->shop->barberChair+service.pos;
-    	 sit_in_barber_chair(chair, client->id);
-    	 client->chairPosition = service.pos;
-    	 client->basinPosition = -1;
-    	 client->state = HAVING_A_HAIRCUT;
-    	 while (!barber_chair_service_finished(chair)){
-    		 cond_wait(&barberChairServiceFinished);
-    	 }
-    	 rise_from_barber_chair(chair, client->id);
-    	 cond_signal(&clientRoseFromBarberChair);
-         log_client(client);
-      }
-      /* Resquest to shave */
-      else if (type->request == SHAVE_REQ)
-      {
-         client->state = HAVING_A_SHAVE;
-         client->chairPosition = type->pos;
-         client->basinPosition = -1;
-         log_client(client);
-      }
-      /* Request to wash hair */
-      else if (type->request == WASH_HAIR_REQ) 
-      {
-         client->state = HAVING_A_HAIR_WASH;
-         client->chairPosition = -1;
-         client->basinPosition = type->pos;
-         log_client(client);
-      }
-      /* When no other services available*/
-      else 
-      {
-         client->state = DONE;
-      }
+		/* Request to cut hair OR Resquest to shave*/
+		if (service.request == HAIRCUT_REQ || service.request == SHAVE_REQ)
+		{
+			BarberChair* chair = client->shop->barberChair+service.pos;
+			sit_in_barber_chair(chair, client->id);
+			update_client_with_service(client, service);
+			while (!barber_chair_service_finished(chair));
+			rise_from_barber_chair(chair, client->id);
+			cond_signal(&clientRoseFromBarberChair);
 
-      /* rise from any destination */
-      client->chairPosition = -1;
-      client->basinPosition = -1;
-   }
+			log_client(client);
+		}
+		/* Request to wash hair */
+		else if (service.request == WASH_HAIR_REQ)
+		{
+			Washbasin* basin = client->shop->washbasin+service.pos;
+			sit_in_washbasin(basin, client->id);
+			update_client_with_service(client, service);
+			while (!washbasin_service_finished(basin));
+			rise_from_washbasin(basin, client->id);
+			cond_signal(&clientRoseFromWashbasin);
 
-   leave_barber_shop(client->shop, client->id);
+			log_client(client);
+		}
 
-   log_client(client); // more than one in proper places!!!
+	}
+
+	while(no_message_available(&(client->shop->commLine), client->id));
+
+	leave_barber_shop(client->shop, client->id);
+
+	log_client(client); // more than one in proper places!!!
+}
+
+static void update_client_with_service(Client* client, Service service)
+{
+	require (client != NULL, "client argument required");
+	require (!(service.barberChair && service.washbasin), "only one service must be active");
+
+	client->chairPosition = -1;
+	client->basinPosition = -1;
+	if (service.barberChair){
+		client->chairPosition = service.pos;
+	}
+	else if (service.washbasin){
+		client->basinPosition = service.pos;
+	}
+
+	client->state = -1;
+	if (service.request == HAIRCUT_REQ){
+		client->state = HAVING_A_HAIRCUT;
+	}
+	else if(service.request == SHAVE_REQ){
+		client->state = HAVING_A_SHAVE;
+	}
+	else if(service.request == WASH_HAIR_REQ){
+		client->state == HAVING_A_HAIR_WASH;
+	}
 }
 
 

@@ -276,6 +276,7 @@ Service wait_service_from_barber(BarberShop* shop, int barberID)
 	require (shop != NULL, "shop argument required");
 	require (barberID > 0, concat_3str("invalid barber id (", int2str(barberID), ")"));
 
+	while(no_message_available(&(shop->commLine), clientID));
 	Message message = read_message_with_barberID(&(shop->commLine), barberID);
 	Service service = message.service;
 	return service;
@@ -289,6 +290,7 @@ void inform_client_on_service(BarberShop* shop, Service service)
     **/
 
    require (shop != NULL, "shop argument required");
+   require (service.barberChair || service.washbasin, "only one request per service can be active");
 
    Message message = write_message(service);
    send_message(&(shop->commLine), message);
@@ -304,6 +306,11 @@ void client_done(BarberShop* shop, int clientID)
    require (shop != NULL, "shop argument required");
    require (clientID > 0, concat_3str("invalid client id (", int2str(clientID), ")"));
 
+   Service service;
+   service.clientID = clientID;
+   Message message = write_message(service);
+   send_message(&(shop->commLine), message);
+   cond_signal(&messageAvailable);
 }
 
 int enter_barber_shop(BarberShop* shop, int clientID, int request)

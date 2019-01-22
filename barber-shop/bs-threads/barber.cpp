@@ -192,7 +192,6 @@ static void wait_for_client(Barber* barber)
 	RQItem requests = next_client_in_benches(&(barber->shop->clientBenches));
 	barber->reqToDo = requests.request;
 	barber->clientID = requests.clientID;
-	int clientBenchPos = requests.benchPos;
 
 	receive_and_greet_client(barber->shop, barber->id, barber->clientID);
 
@@ -269,19 +268,19 @@ static void process_resquests_from_client(Barber* barber)
 		if (barber->reqToDo & HAIRCUT_REQ){
 			set_barber_chair_service(&service, barber->id, barber->clientID, chairPos, HAIRCUT_REQ);
 			inform_client_on_service(barber->shop, service);
+			while(!barber_chair_with_a_client(chair));
 			process_haircut_request(barber);
 		}
 		if (barber->reqToDo & SHAVE_REQ){
 			set_barber_chair_service(&service, barber->id, barber->clientID, chairPos, SHAVE_REQ);
 			inform_client_on_service(barber->shop, service);
+			while(!barber_chair_with_a_client(chair));
 			process_shave_request(barber);
 		}
 
 		barber_chair_service_finished(chair);
 		cond_signal(&barberChairServiceFinished);
-		while (barber_chair_with_a_client(chair)){
-		   cond_signal(&clientRoseFromBarberChair);
-		}
+		while (barber_chair_with_a_client(chair));
 		release_barber_chair(chair,barber->id);
 		cond_signal(&barberChairAvailable);
 
@@ -298,22 +297,22 @@ static void process_resquests_from_client(Barber* barber)
 		Service service;
 		set_washbasin_service(&service, barber->id, barber->clientID, basinPos);
 		inform_client_on_service(barber->shop, service);
+		while(!washbasin_with_a_client(basin));
 		process_wash_hair_request(barber);
 
 		washbasin_service_finished(basin);
 		cond_signal(&washbasinServiceFinished);
-		while (washbasin_with_a_client(basin)){
-		   cond_signal(&clientRoseFromWashbasin);
-		}
+		while (washbasin_with_a_client(basin));
 		release_washbasin(basin, barber->clientID);
 		cond_signal(&washbasinAvailable);
 	}
 
-
-   //At the end the client must leave the barber shop
+	// services are finished
 	release_client(barber);
 
-   log_barber(barber);  // (if necessary) more than one in proper places!!!
+	//At the end the client must leave the barber shop
+
+	log_barber(barber);  // (if necessary) more than one in proper places!!!
 }
 
 
@@ -326,10 +325,9 @@ static void release_client(Barber* barber)
 
    require (barber != NULL, "barber argument required");
 
-   barber->clientID = -1;
    Service service;
-   Message message = write_message(service);
-   send_message(&(barber->shop->commLine), message);
+   inform_client_on_service(barber->shop, service);
+   barber->clientID = -1;
 
    log_barber(barber);
 }
