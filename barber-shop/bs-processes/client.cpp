@@ -11,7 +11,6 @@
 enum BCState
 {
    NO_BARBER_GREET,           //barber has yet to receive and greet the client
-   GREET_AVAILABLE,	      //client can get barberID
    WAITING_ON_RESERVE,        //client waiting until the barber has reserved the seat for the process
    RESERVED,                  //chair reserved
    SERVICE_INFO_AVAILABLE,    //client has been informed
@@ -269,7 +268,7 @@ static void wait_its_turn(Client* client)
    
    bci_set_state(client->barberID,WAITING_ON_RESERVE);
    
-   while(bci_get_state(client->barberID) == WAITING_ON_RESERVE);
+   while(bci_get_state(client->barberID) < RESERVED);
 }
 
 static void rise_from_client_benches(Client* client)
@@ -308,11 +307,18 @@ static void wait_all_services_done(Client* client)
    require (client != NULL, "client argument required");
 
    while(client->state != DONE) {
+ 
+     printf("\n\n\n\nCLIENT: I ENTERED THIS FUNCTION\n\n\n\n");    
+ 
      client->state = WAITING_SERVICE;
      log_client(client);
 
+     while(bci_get_state(client->barberID) < SERVICE_INFO_AVAILABLE);
+
      Service given_service = wait_service_from_barber(client->shop,client->barberID);
      Service* tmp_service = &(given_service);
+
+     printf("\n\n\n\n Client: I did do wait \n\n\n\n");
 
      client->state = WAITING_SERVICE_START;
 
@@ -333,11 +339,17 @@ static void wait_all_services_done(Client* client)
        bci_set_syncWashbasin(*tmp_wsh4,client->barberID);
      }
 
+     printf("\n\n\n\nCLIENT: I PASSED HERE 1\n\n\n\n");
+
+     while(bci_get_state(client->barberID) < WAITING_ON_CLIENT_SIT);
+
      bci_set_state(client->barberID,CLIENT_SEATED);
 
+     printf("\n\n\n\nCLIENT: I PASSED HERE 2\n\n\n\n");
+
      log_client(client);
-     
-     while(bci_get_state(client->barberID) != PROCESSING);
+
+     while(bci_get_state(client->barberID) < PROCESSING);
 
      if(tmp_service->request == 1)
        client->state = HAVING_A_HAIRCUT;
@@ -348,7 +360,7 @@ static void wait_all_services_done(Client* client)
 
      log_client(client);
 
-     while(bci_get_state(client->barberID) != WAITING_ON_CLIENT_RISE);
+     while(bci_get_state(client->barberID) < WAITING_ON_CLIENT_RISE);
      
      if(tmp_service->request == 1 or tmp_service->request == 4) {
        bci_get_syncBBChair(barber_chair(client->shop,client->chairPosition),client->barberID);
@@ -371,10 +383,15 @@ static void wait_all_services_done(Client* client)
    
      log_client(client);   
 
+     printf("\n\n\n\nCLIENT: GONNA SEE IF I STOP OR CONTINUE\n\n\n\n"); 
+
      if(bci_get_state(client->barberID) == ALL_PROCESSES_DONE) {
         client->state = DONE;
      }
-     
+     else {
+        bci_set_state(client->barberID,WAITING_ON_RESERVE);
+     }
+     log_client(client);   
    }
 
    bci_unset_barberID(client->id);

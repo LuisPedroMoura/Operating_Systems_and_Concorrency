@@ -19,12 +19,11 @@
 static int shmid = 74;
 static BCInterface * bcinterfaces;
 
-const long key = 0x20B2L;
+const long key = 0x20D6L;
 
 enum BCState
 {
    NO_BARBER_GREET,           //barber has yet to receive and greet the client
-   GREET_AVAILABLE,	      //client can get barberID
    WAITING_ON_RESERVE,        //client waiting until the barber has reserved the seat for the process
    RESERVED,                  //chair reserved
    SERVICE_INFO_AVAILABLE,    //client has been informed
@@ -143,6 +142,7 @@ void init_barber_shop(BarberShop* shop, int num_barbers, int num_chairs,
    bcinterfaces = NULL;
 
    bci_connect();
+   bci_open_shop();
 }
 
 void term_barber_shop(BarberShop* shop)
@@ -326,8 +326,6 @@ Service wait_service_from_barber(BarberShop* shop, int barberID)
    require (shop != NULL, "shop argument required");
    require (barberID > 0, concat_3str("invalid barber id (", int2str(barberID), ")"));
 
-   while(bci_get_state(barberID) < SERVICE_INFO_AVAILABLE);
-
    Service tmp_servicerin;
    bci_get_service_by_barberID(barberID,&tmp_servicerin);
 
@@ -344,7 +342,6 @@ void inform_client_on_service(BarberShop* shop, Service service)
    Service* tmp_serv = &service;
 
    bci_set_service(tmp_serv->barberID,service);
-   bci_set_state(tmp_serv->barberID,SERVICE_INFO_AVAILABLE);
 }
 
 void client_done(BarberShop* shop, int clientID)
@@ -361,7 +358,7 @@ void client_done(BarberShop* shop, int clientID)
 
    Service* tmp_servicek = &tmp_service;
 
-   bci_set_state(tmp_servicek->barberID,ALL_PROCESSES_DONE);
+   //bci_set_state(tmp_servicek->barberID,ALL_PROCESSES_DONE);
 }
 
 int enter_barber_shop(BarberShop* shop, int clientID, int request)
@@ -442,7 +439,7 @@ void receive_and_greet_client(BarberShop* shop, int barberID, int clientID)
    //printf("\n\n\n BARBER: receive_and_greet_client in barber-shop.cpp -> clientID2 = %d \n\n\n",tmp_nService->clientID);
 
    //bci_set_service(barberID,*tmp_nService);
-   bci_set_state(barberID,GREET_AVAILABLE);
+   
 }
 
 int greet_barber(BarberShop* shop, int clientID)
@@ -471,13 +468,13 @@ int shop_opened(BarberShop* shop)
 {
    require (shop != NULL, "shop argument required");
 
-   return shop->opened;
+   return bci_get_shop_status();;
 }
 
 void close_shop(BarberShop* shop)
 {
    require (shop != NULL, "shop argument required");
-   require (shop_opened(shop), "barber shop already closed");
+   require (bci_get_shop_status(), "barber shop already closed");
  
    shop->opened = 0;
 }
@@ -612,6 +609,24 @@ void bci_set_request(int clientID,int request)
     lock();
 
 	bcinterfaces->clientRequests[clientID-1] = request;
+
+    unlock();
+}
+
+void bci_open_shop()
+{
+    lock();
+
+	bcinterfaces->shopOpen = 1;
+
+    unlock();
+}
+
+void bci_close_shop()
+{
+    lock();
+
+	bcinterfaces->shopOpen = 0;
 
     unlock();
 }
@@ -813,6 +828,16 @@ int bci_get_next_request(int clientID)
 
     unlock();
     return tmp_nreq;
+}
+
+int bci_get_shop_status()
+{
+    lock();
+
+        int state = bcinterfaces->shopOpen;
+
+    unlock();
+    return state;
 }
 
 void bci_grant_client_access(int clientID) 
