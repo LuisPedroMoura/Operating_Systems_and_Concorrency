@@ -146,7 +146,6 @@ static void life(Barber* barber)
 		wait_for_client(barber);
 	}
 	done(barber);
-	//printf("BARBER HAS DEFINITELY DIED!\n");
 }
 
 static void sit_in_barber_bench(Barber* barber)
@@ -183,23 +182,27 @@ static void wait_for_client(Barber* barber)
 	barber->state = WAITING_CLIENTS;
 	//printf("--------------------------------------------BARBER LIFE - BEGIN WAIT FOR CLIENT\n");
 
-	mutex_lock(&barber->shop->barberShopMutex);
+	//mutex_lock(&barber->shop->barberShopMutex);
 
 	if (barber->shop->opened){
 
+		mutex_lock(&barber->shop->clientsBenchMutex);
+
 		while (no_more_clients(&(barber->shop->clientBenches)) ){
 			//printf("--------------------------------------------BARBER - waiting for client\n");
-			cond_wait(&barber->shop->clientWaiting, &barber->shop->barberShopMutex);
+			cond_wait(&barber->shop->clientWaiting, &barber->shop->clientsBenchMutex);
 		}
 
 		RQItem requests = next_client_in_benches(&(barber->shop->clientBenches));
 		barber->reqToDo = requests.request;
 		barber->clientID = requests.clientID;
-
+		
+		mutex_unlock(&barber->shop->clientsBenchMutex);
+		
 		receive_and_greet_client(barber->shop, barber->id, barber->clientID);
 	}
 
-	mutex_unlock(&barber->shop->barberShopMutex);
+	//mutex_unlock(&barber->shop->barberShopMutex);
 
 	//printf("--------------------------------------------BARBER LIFE - WAIT FOR CLIENT\n");
 	log_barber(barber);  // (if necessary) more than one in proper places!!!
@@ -210,7 +213,6 @@ static int work_available(Barber* barber)
 	/**
 	 * TODO:
 	 * 1: find a safe way to solve the problem of barber termination
-	 **
 	 **/
 
 	require (barber != NULL, "barber argument required");
@@ -225,12 +227,8 @@ static int work_available(Barber* barber)
 	if (barber->clientID > 0){
 		return 1;
 	}
-	else{
-		return 0;
-	}
 
-
-
+	return 0;
 }
 
 static void rise_from_barber_bench(Barber* barber)
@@ -242,7 +240,7 @@ static void rise_from_barber_bench(Barber* barber)
 
 	require (barber != NULL, "barber argument required");
 	require (seated_in_barber_bench(barber_bench(barber->shop), barber->id), "barber not seated in barber shop");
-	//printf("--------------------------barber - before rise from barberChair\n");
+	
 	rise_barber_bench(&(barber->shop->barberBench), barber->benchPosition);
 	barber->benchPosition = -1;
 	//printf("--------------------------------------------BARBER LIFE - RISE FROM BARBER BENCH\n");

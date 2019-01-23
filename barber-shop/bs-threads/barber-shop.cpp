@@ -373,8 +373,8 @@ void receive_and_greet_client(BarberShop* shop, int barberID, int clientID)
 	service.barberID = barberID;
 	service.clientID = clientID;
 	Message message = write_message(service);
-	send_message(&(shop->commLine), message);
-	cond_signal(&shop->messageAvailable);
+	send_message(&(shop->commLine), message, &shop->messagesMutex[clientID]);
+	cond_signal(&shop->messageAvailable[clientID]);
 
 }
 

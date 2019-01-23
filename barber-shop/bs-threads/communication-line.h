@@ -19,7 +19,7 @@ Message empty_message(int clientID);
 int is_empty(Message message);
 void init_communication_line(CommunicationLine* commLine);
 Message write_message(Service service);
-Message read_message(CommunicationLine* commLine, int clientID, pthread_mutex_t* mutex, pthread_cond_t messageAvailable);
+Message read_message(CommunicationLine* commLine, int clientID, pthread_mutex_t* mutex, pthread_cond_t* messageAvailable);
 void send_message(CommunicationLine* commLine, Message message, pthread_mutex_t* mutex);
 int no_message_available(CommunicationLine* commLine, int clientID);
 void delete_message(CommunicationLine* commLine, int clientID, pthread_mutex_t* mutex);
