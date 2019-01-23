@@ -90,7 +90,14 @@ void init_barber_shop(BarberShop* shop, int num_barbers, int num_chairs,
 	for (int i = 0; i < num_basins; i++)
 		init_washbasin(shop->washbasin+i, i+1, 1+3+num_lines_barber_chair(), num_columns_tools_pot()+3+11+1+i*(num_columns_washbasin()+2));
 	init_client_benches(&shop->clientBenches, num_client_benches_seats, num_client_benches, 1+3+num_lines_barber_chair()+num_lines_tools_pot(), 16);
-	init_communication_line(&shop->commLine, global->NUM_CLIENTS);
+	init_communication_line(&shop->commLine);
+
+	for(int i=0; i<MAX_CLIENTS; i++){
+		shop->messageAvailable[i] = PTHREAD_COND_INITIALIZER;
+	}
+	for(int i=0; i<MAX_CLIENTS; i++){
+		shop->messagesMutex[i] = PTHREAD_MUTEX_INITIALIZER;
+	}
 }
 
 void term_barber_shop(BarberShop* shop)
