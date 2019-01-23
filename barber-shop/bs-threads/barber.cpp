@@ -146,14 +146,15 @@ static void life(Barber* barber)
 		wait_for_client(barber);
 	}
 	done(barber);
+	printf("BARBER HAS DEFINITELY DIED!\n");
 }
 
 static void sit_in_barber_bench(Barber* barber)
 {
-   /**
-    * 1: sit in a random empty seat in barber bench (always available)
-    ** TODO:
-    **/
+	/**
+	 * 1: sit in a random empty seat in barber bench (always available)
+	 ** TODO:
+	 **/
 	require (barber != NULL, "barber argument required");
 	require (num_seats_available_barber_bench(barber_bench(barber->shop)) > 0, "seat not available in barber shop");
 	require (!seated_in_barber_bench(barber_bench(barber->shop), barber->id), "barber already seated in barber shop");
@@ -164,29 +165,30 @@ static void sit_in_barber_bench(Barber* barber)
 	barber->benchPosition = seatPos;
 
 	//mutex_unlock(&barber->shop->barberBenchMutex);
-	printf("--------------------------------------------BARBER LIFE - SIT IN BARBER BENCH\n");
+	//printf("--------------------------------------------BARBER LIFE - SIT IN BARBER BENCH\n");
 	log_barber(barber);
 }
 
 static void wait_for_client(Barber* barber)
 {
-   /**
-    * 1: set the barber state to WAITING_CLIENTS
-    * 2: get next client from client benches (if empty, wait) (also, it may be required to check for simulation termination)
-    * 3: receive and greet client (receive its requested services, and give back the barber's id)
-    ** TODO:
-    **/
+	/**
+	 * 1: set the barber state to WAITING_CLIENTS
+	 * 2: get next client from client benches (if empty, wait) (also, it may be required to check for simulation termination)
+	 * 3: receive and greet client (receive its requested services, and give back the barber's id)
+	 ** TODO:
+	 **/
 
 	require (barber != NULL, "barber argument required");
 
 	barber->state = WAITING_CLIENTS;
-	printf("--------------------------------------------BARBER LIFE - BEGIN WAIT FOR CLIENT\n");
-	// se clientes acabarem, conseguimos fechar a loja???
+	//printf("--------------------------------------------BARBER LIFE - BEGIN WAIT FOR CLIENT\n");
+
 	mutex_lock(&barber->shop->barberShopMutex);
 
 	if (barber->shop->opened){
 
 		while (no_more_clients(&(barber->shop->clientBenches)) ){
+			//printf("--------------------------------------------BARBER - waiting for client\n");
 			cond_wait(&barber->shop->clientWaiting, &barber->shop->barberShopMutex);
 		}
 
@@ -199,7 +201,7 @@ static void wait_for_client(Barber* barber)
 
 	mutex_unlock(&barber->shop->barberShopMutex);
 
-	printf("--------------------------------------------BARBER LIFE - WAIT FOR CLIENT\n");
+	//printf("--------------------------------------------BARBER LIFE - WAIT FOR CLIENT\n");
 	log_barber(barber);  // (if necessary) more than one in proper places!!!
 }
 
@@ -212,9 +214,11 @@ static int work_available(Barber* barber)
 	 **/
 
 	require (barber != NULL, "barber argument required");
-	printf("--------------------------------------------BARBER LIFE - WORK AVAILABLE\n");
+	//printf("--------------------------------------------BARBER LIFE - WORK AVAILABLE\n");
 
 	if (!(barber->shop->opened)){
+		rise_barber_bench(&barber->shop->barberBench, barber->benchPosition);
+		barber->benchPosition = -1;
 		return 0;
 	}
 
@@ -238,10 +242,10 @@ static void rise_from_barber_bench(Barber* barber)
 
 	require (barber != NULL, "barber argument required");
 	require (seated_in_barber_bench(barber_bench(barber->shop), barber->id), "barber not seated in barber shop");
-	printf("--------------------------barber - before rise from barberChair\n");
+	//printf("--------------------------barber - before rise from barberChair\n");
 	rise_barber_bench(&(barber->shop->barberBench), barber->benchPosition);
 	barber->benchPosition = -1;
-	printf("--------------------------------------------BARBER LIFE - RISE FROM BARBER BENCH\n");
+	//printf("--------------------------------------------BARBER LIFE - RISE FROM BARBER BENCH\n");
 	log_barber(barber);
 }
 
@@ -265,7 +269,7 @@ static void process_resquests_from_client(Barber* barber)
 	 **/
 
 	require (barber != NULL, "barber argument required");
-	printf("--------------------------barber - going to process requests\n");
+	//printf("--------------------------barber - going to process requests\n");
 
 	mutex_lock(&barber->shop->barberShopMutex);
 
@@ -279,10 +283,10 @@ static void process_resquests_from_client(Barber* barber)
 		int chairPos = reserve_random_empty_barber_chair(barber->shop, barber->id);
 		BarberChair* chair = barber->shop->barberChair+chairPos;
 		barber->chairPosition = chairPos;
-		printf("--------------------------barber - reserved barber chair\n");
+		//printf("--------------------------barber - reserved barber chair\n");
 
 		if (barber->reqToDo & HAIRCUT_REQ){
-			printf("--------------------------barber - going to cut client hair\n");
+			//printf("--------------------------barber - going to cut client hair\n");
 			set_barber_chair_service(&service, barber->id, barber->clientID, chairPos, HAIRCUT_REQ);
 			inform_client_on_service(barber->shop, service);
 
@@ -292,7 +296,7 @@ static void process_resquests_from_client(Barber* barber)
 
 			process_haircut_request(barber);
 			cond_signal(&barber->shop->barberChairServiceFinished);
-			printf("--------------------------barber - cut client hair\n");
+			//printf("--------------------------barber - cut client hair\n");
 
 		}
 
@@ -301,18 +305,18 @@ static void process_resquests_from_client(Barber* barber)
 			set_barber_chair_service(&service, barber->id, barber->clientID, chairPos, SHAVE_REQ);
 			inform_client_on_service(barber->shop, service);
 
-			printf("--------------------------barber - informed client on shave\n");
+			//printf("--------------------------barber - informed client on shave\n");
 
 			if(barber_chair_with_a_client(chair)){
 				cond_wait(&barber->shop->clientReadyForShave, &barber->shop->barberShopMutex);
-				printf("--------------------------barber - client ready for shave\n");
+				//printf("--------------------------barber - client ready for shave\n");
 			}
 			while(!barber_chair_with_a_client(chair)){
 				cond_wait(&barber->shop->clientSatInBarberChair, &barber->shop->barberShopMutex);
 			}
 
 			process_shave_request(barber);
-			printf("--------------------------barber - shaved client\n");
+			//printf("--------------------------barber - shaved client\n");
 			cond_signal(&barber->shop->barberChairServiceFinished);
 
 		}
@@ -320,7 +324,7 @@ static void process_resquests_from_client(Barber* barber)
 		while (barber_chair_with_a_client(chair)){
 			cond_wait(&barber->shop->clientRoseFromBarberChair, &barber->shop->barberShopMutex);
 		}
-		printf("--------------------------barber - client got up\n");
+		//printf("--------------------------barber - client got up\n");
 		release_barber_chair(chair,barber->id);
 		cond_signal(&barber->shop->barberChairAvailable);
 
@@ -336,7 +340,7 @@ static void process_resquests_from_client(Barber* barber)
 		Washbasin* basin = barber->shop->washbasin+basinPos;
 		barber->basinPosition = basinPos;
 		set_washbasin_service(&service, barber->id, barber->clientID, basinPos);
-		printf("--------------------------barber - inform wash\n");
+		//printf("--------------------------barber - inform wash\n");
 		inform_client_on_service(barber->shop, service);
 
 		while(!washbasin_with_a_client(basin)){
@@ -352,43 +356,61 @@ static void process_resquests_from_client(Barber* barber)
 		cond_signal(&barber->shop->washbasinAvailable);
 	}
 
+	barber->state = NONE;
 	// services are finished
-	if (barber->shop->opened == 0){
-		printf("--------------------------barber - shop closed, barber going to die\n");
-		term_barber(barber);
-	}
+	//	if (barber->shop->opened == 0){
+	//		//printf("--------------------------barber - shop closed, barber going to die\n");
+	//		term_barber(barber);
+	//	}
+
+	//printf("--------------------------------------------BARBER LIFE - PROCESS REQUESTS FROM CLIENT\n");
 	mutex_unlock(&barber->shop->barberShopMutex);
 
 	//At the end the client must leave the barber shop
-	printf("--------------------------------------------BARBER LIFE - PROCESS REQUESTS FROM CLIENT\n");
+
 	log_barber(barber);  // (if necessary) more than one in proper places!!!
 }
 
 
 static void release_client(Barber* barber)
 {
-   /**
-    * 1: notify client the all the services are done
-    ** TODO:
-    **/
+	/**
+	 * 1: notify client the all the services are done
+	 ** TODO:
+	 **/
 
 	require (barber != NULL, "barber argument required");
-	printf("--------------------------------------------BARBER LIFE - RELEASE CLIENT %d\n", barber->clientID);
+
+	mutex_lock(&barber->shop->barberShopMutex);
+
+	//printf("--------------------------------------------BARBER LIFE - RELEASE CLIENT %d\n", barber->clientID);
 	client_done(barber->shop, barber->clientID);
+	cond_signal(&barber->shop->messageAvailable);
+	while (is_client_inside(barber->shop, barber->clientID)){
+		//printf("--------------------------barber - waiting for client to signal he is leaving\n");
+		cond_wait(&barber->shop->clientLeft, &barber->shop->barberShopMutex);
+	}
 	barber->clientID = -1;
-	printf("--------------------------------------------BARBER LIFE - RELEASE CLIENT\n");
+
+	//printf("--------------------------------------------BARBER LIFE - RELEASE CLIENT\n");
+
+	mutex_unlock(&barber->shop->barberShopMutex);
 	log_barber(barber);
 }
 
 static void done(Barber* barber)
 {
-   /**
-    * 1: set the barber state to DONE
-    ** TODO:
-    **/
-   require (barber != NULL, "barber argument required");
+	/**
+	 * 1: set the barber state to DONE
+	 ** TODO:
+	 **/
+	require (barber != NULL, "barber argument required");
+
+	printf("--------------------------------------------BARBER LIFE - ENTERING - DONE\n");
 
 	barber->state = DONE;
+
+	printf("--------------------------------------------BARBER LIFE - EXITING - DONE\n");
 
 	log_barber(barber);
 }
@@ -431,6 +453,10 @@ static void process_haircut_request(Barber* barber)
 		set_completion_barber_chair(barber_chair(barber->shop, barber->chairPosition), complete);
 	}
 
+	return_scissor(&barber->shop->toolsPot);
+	return_comb(&barber->shop->toolsPot);
+	barber->tools = NO_TOOLS;
+
 	log_barber(barber);  // (if necessary) more than one in proper places!!!
 }
 
@@ -465,6 +491,9 @@ static void process_shave_request(Barber* barber)
 			complete = 100;
 		set_completion_barber_chair(barber_chair(barber->shop, barber->chairPosition), complete);
 	}
+
+	return_razor(&barber->shop->toolsPot);
+	barber->tools = NO_TOOLS;
 
 	log_barber(barber);  // (if necessary) more than one in proper places!!!
 }

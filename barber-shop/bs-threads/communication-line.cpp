@@ -12,6 +12,7 @@ Message empty_message(int clientID)
 {
 	Message message = empty;
 	message.service.clientID = clientID;
+	message.newMessage = 1;
 	return message;
 }
 

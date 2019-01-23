@@ -309,7 +309,7 @@ void client_done(BarberShop* shop, int clientID)
 
 	Message message = empty_message(clientID);
 	send_message(&(shop->commLine), message);
-	cond_signal(&shop->messageAvailable);
+	//cond_signal(&shop->messageAvailable);
 }
 
 int enter_barber_shop(BarberShop* shop, int clientID, int request)

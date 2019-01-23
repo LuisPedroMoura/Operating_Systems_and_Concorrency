@@ -135,7 +135,7 @@ static void life(Client* client)
 
 	int i = 0;
 	notify_client_birth(client);
-	printf("++++++++++++++++++++++++++++++CLIENT IS BORN, comes %d\n", client->num_trips_to_barber);
+	//printf("++++++++++++++++++++++++++++++CLIENT IS BORN, comes %d\n", client->num_trips_to_barber);
 	while(i < client->num_trips_to_barber)
 	{
 		wandering_outside(client);
@@ -148,7 +148,7 @@ static void life(Client* client)
 			i++;
 		}
 	}
-	printf("+++++++++++++++++++++++++++++CLIENT DIES! MUAHAHAH\n");
+	//printf("+++++++++++++++++++++++++++++CLIENT DIES! MUAHAHAH\n");
 	notify_client_death(client);
 }
 
@@ -173,6 +173,8 @@ static void notify_client_death(Client* client)
 
 	require (client != NULL, "client argument required");
 
+	term_client(client);
+
 	log_client(client);
 }
 
@@ -189,7 +191,7 @@ static void wandering_outside(Client* client)
 	client->state = WANDERING_OUTSIDE;
 
 	spend(random_int(global->MIN_OUTSIDE_TIME_UNITS, global->MAX_OUTSIDE_TIME_UNITS));
-	printf("--------------------------------------------CLIENT LIFE - WANDERING OUTSIDE\n");
+	//printf("--------------------------------------------CLIENT LIFE - WANDERING OUTSIDE\n");
 	log_client(client);
 }
 
@@ -209,7 +211,7 @@ static int vacancy_in_barber_shop(Client* client)
 	res = num_available_benches_seats(&(client->shop->clientBenches)); // any value greater than 0 is True
 
 	log_client(client);
-	printf("--------------------------------------------CLIENT LIFE - VACANCY IN BARBER SHOP\n");
+	//printf("--------------------------------------------CLIENT LIFE - VACANCY IN BARBER SHOP\n");
 	return res;
 }
 
@@ -227,14 +229,15 @@ static void select_requests(Client* client)
 
 	int res = 0;
 	while (res == 0) {
-		printf("%d\n", client->id);
-		int h = ( ((rand() / (RAND_MAX))*100) <= global->PROB_REQUEST_HAIRCUT) * HAIRCUT_REQ;
-		int w = ( ((rand() / (RAND_MAX))*100) <= global->PROB_REQUEST_WASHHAIR) * WASH_HAIR_REQ;
-		int s = ( ((rand() / (RAND_MAX))*100) <= global->PROB_REQUEST_SHAVE) * SHAVE_REQ;
+		//printf("%d\n", client->id);
+
+		int h = ( (int)((double)rand() / (double)RAND_MAX *100) <= global->PROB_REQUEST_HAIRCUT) * HAIRCUT_REQ;
+		int w = ( (int)((double)rand() / (double)RAND_MAX *100) <= global->PROB_REQUEST_WASHHAIR) * HAIRCUT_REQ;
+		int s = ( (int)((double)rand() / (double)RAND_MAX *100) <= global->PROB_REQUEST_SHAVE) * HAIRCUT_REQ;
 		res = h+w+s;
 	}
 	client->requests = res;
-	printf("--------------------------------------------CLIENT LIFE - SELECT REQUESTS\n");
+	//printf("--------------------------------------------CLIENT LIFE - SELECT REQUESTS\n");
 	log_client(client);
 }
 
@@ -274,7 +277,7 @@ static void wait_its_turn(Client* client)
 	client->barberID = barberId;
 
 	mutex_unlock(&client->shop->barberShopMutex);
-	printf("--------------------------------------------CLIENT LIFE - WAIT ITS TURN\n");
+	//printf("--------------------------------------------CLIENT LIFE - WAIT ITS TURN\n");
 	log_client(client);
 }
 
@@ -294,7 +297,7 @@ static void rise_from_client_benches(Client* client)
 	client->chairPosition = -1;
 	client->basinPosition = -1;
 	cond_signal(&client->shop->clientSeatAvailable);
-	printf("--------------------------------------------CLIENT LIFE - RISE FROM CLIENT BENCH\n");
+	//printf("--------------------------------------------CLIENT LIFE - RISE FROM CLIENT BENCH\n");
 	log_client(client);
 }
 
@@ -321,13 +324,14 @@ static void wait_all_services_done(Client* client)
 	{
 
 		/* Waiting for service */
-		printf("--------------------------client - in waiting service\n");
+		//printf("--------------------------client - in waiting service\n");
 		client->state = WAITING_SERVICE;
 		while(no_message_available(&client->shop->commLine, client->id)){
 			cond_wait(&client->shop->messageAvailable, &client->shop->barberShopMutex);
 		}
+		//printf("--------------------------client - got message, will act\n");
 		Service service = wait_service_from_barber(client->shop, client->id);
-		printf("service %d\n", service.request);
+		//printf("service %d\n", service.request);
 		client->state = WAITING_SERVICE_START;
 
 		/* Request to cut hair OR Resquest to shave*/
@@ -348,12 +352,12 @@ static void wait_all_services_done(Client* client)
 			}
 
 			client->shop->barberChair[client->chairPosition].completionPercentage = 0;
-			printf("--------------------------client - had haircut\n");
+			//printf("--------------------------client - had haircut\n");
 			log_client(client);
 		}
 
 		else if (service.request == SHAVE_REQ){
-			printf("--------------------------client - gonna have a shave\n");
+			//printf("--------------------------client - gonna have a shave\n");
 			BarberChair* chair;
 			if (client->requests & HAIRCUT_REQ){
 				chair = client->shop->barberChair+service.pos;
@@ -374,13 +378,13 @@ static void wait_all_services_done(Client* client)
 			rise_from_barber_chair(chair, client->id);
 			client->chairPosition = -1;
 			cond_signal(&client->shop->clientRoseFromBarberChair);
-			printf("--------------------------client - had a shave\n");
+			//printf("--------------------------client - had a shave\n");
 			log_client(client);
 		}
 
 		else if (service.request == WASH_HAIR_REQ)
 		{
-			printf("--------------------------client - gonna have a wash\n");
+			//printf("--------------------------client - gonna have a wash\n");
 			Washbasin* basin = client->shop->washbasin+service.pos;
 			sit_in_washbasin(basin, client->id);
 			update_client_with_service(client, service);
@@ -390,20 +394,22 @@ static void wait_all_services_done(Client* client)
 			}
 			rise_from_washbasin(basin, client->id);
 			cond_signal(&client->shop->clientRoseFromWashbasin);
-			printf("--------------------------client - had a wash\n");
+			//printf("--------------------------client - had a wash\n");
 			log_client(client);
 		}
 
-		else{
+		else {
+			//printf("--------------------------client - got informed he may leave\n");
 			update_client_with_service(client, service);
 		}
 
 	}
 
 	leave_barber_shop(client->shop, client->id);
+	cond_signal(&client->shop->clientLeft);
 	// 'E necessário repôr os valores originais do cliente???
 
-	printf("--------------------------------------------CLIENT LIFE - WAIT ALL SERVICES DONE\n");
+	//printf("--------------------------------------------CLIENT LIFE - WAIT ALL SERVICES DONE\n");
 
 	mutex_unlock(&client->shop->barberShopMutex);
 
@@ -417,6 +423,8 @@ static void update_client_with_service(Client* client, Service service)
 
 	client->chairPosition = -1;
 	client->basinPosition = -1;
+	client->state = -1;
+
 	if (service.barberChair){
 		client->chairPosition = service.pos;
 	}
@@ -427,7 +435,7 @@ static void update_client_with_service(Client* client, Service service)
 		client->state = DONE;
 	}
 
-	client->state = -1;
+
 	if (service.request == HAIRCUT_REQ){
 		client->state = HAVING_A_HAIRCUT;
 	}

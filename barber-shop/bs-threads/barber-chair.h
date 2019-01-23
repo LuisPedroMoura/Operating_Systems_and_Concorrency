@@ -19,6 +19,7 @@ typedef struct _BarberChair_
 } BarberChair;
 
 // tools mask:
+#define NO_TOOLS	 0
 #define SCISSOR_TOOL 1
 #define COMB_TOOL    2
 #define RAZOR_TOOL   4

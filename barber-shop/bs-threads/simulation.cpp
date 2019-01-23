@@ -103,6 +103,8 @@ static void go()
 		}
 	}
 
+//	printf("--------------------------------------------SIMULATION - LAUNCHED ALL BARBERS\n");
+
 	/* launching the clients */
 	pthread_t cthr[global->NUM_CLIENTS];
 	for (int i = 0; i < global->NUM_CLIENTS; i++)
@@ -114,10 +116,11 @@ static void go()
 			exit(EXIT_FAILURE);
 		}
 	}
-
+//	printf("--------------------------------------------SIMULATION - LAUNCHED ALL CLIENTS\n");
 	/* wait for threads to conclude */
 	for (int i = 0; i < global->NUM_CLIENTS; i++)
 	{
+//		printf("--------------------------------------------SIMULATION - JOINING CLIENTS\n");
 		if (pthread_join(cthr[i], NULL) != 0)
 		{
 			fprintf(stderr, "client %d\n", i);
@@ -126,10 +129,12 @@ static void go()
 		}
 	}
 
-	shop->opened = 0;
+	close_shop(shop);
+//	printf("--------------------------------------------SIMULATION - CLOSED THE SHOP\n");
 
 	for (int i = 0; i < global->NUM_BARBERS; i++)
 	{
+//		printf("--------------------------------------------SIMULATION - JOINING BARBER\n");
 		if (pthread_join(bthr[i], NULL) != 0)
 		{
 			fprintf(stderr, "barber %d\n", i);
@@ -137,6 +142,8 @@ static void go()
 			exit(EXIT_FAILURE);
 		}
 	}
+
+//	printf("--------------------------------------------SIMULATION - THE END\n");
 
 
 }
@@ -151,7 +158,7 @@ static void finish()
 
 
 
-   term_logger();
+   //term_logger();
 }
 
 static void initSimulation()
