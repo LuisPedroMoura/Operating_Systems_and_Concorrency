@@ -19,7 +19,7 @@
 static int shmid = 74;
 static BCInterface * bcinterfaces;
 
-const long key = 0x20D6L;
+const long key = 0x20EBL;
 
 enum BCState
 {
@@ -356,7 +356,7 @@ void client_done(BarberShop* shop, int clientID)
    Service tmp_service;
    bci_get_service_by_clientID(clientID,&tmp_service);
 
-   Service* tmp_servicek = &tmp_service;
+   //Service* tmp_servicek = &tmp_service;
 
    //bci_set_state(tmp_servicek->barberID,ALL_PROCESSES_DONE);
 }
@@ -476,6 +476,7 @@ void close_shop(BarberShop* shop)
    require (shop != NULL, "shop argument required");
    require (bci_get_shop_status(), "barber shop already closed");
  
+   bci_destroy();
    shop->opened = 0;
 }
 

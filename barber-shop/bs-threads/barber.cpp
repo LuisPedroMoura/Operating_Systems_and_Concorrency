@@ -146,7 +146,7 @@ static void life(Barber* barber)
 		wait_for_client(barber);
 	}
 	done(barber);
-	printf("BARBER HAS DEFINITELY DIED!\n");
+	//printf("BARBER HAS DEFINITELY DIED!\n");
 }
 
 static void sit_in_barber_bench(Barber* barber)
@@ -406,11 +406,9 @@ static void done(Barber* barber)
 	 **/
 	require (barber != NULL, "barber argument required");
 
-	printf("--------------------------------------------BARBER LIFE - ENTERING - DONE\n");
-
 	barber->state = DONE;
 
-	printf("--------------------------------------------BARBER LIFE - EXITING - DONE\n");
+	//printf("--------------------------------------------BARBER LIFE - EXITING - DONE\n");
 
 	log_barber(barber);
 }

@@ -336,14 +336,14 @@ static void process_resquests_from_client(Barber* barber)
 	 
      log_barber(barber);
 
-     printf("\n\n\n\nBARBER: I HAZ TOOLS\n\n\n\n");
+     //printf("\n\n\n\nBARBER: I HAZ TOOLS\n\n\n\n");
 
      //WAIT FOR SIT
      if(bci_get_state(barber->id) < CLIENT_SEATED)
        bci_set_state(barber->id,WAITING_ON_CLIENT_SIT);
      while(bci_get_state(barber->id) < CLIENT_SEATED);
  
-     printf("\n\n\n\nBARBER: I KNOW HE SAT\n\n\n\n");
+     //printf("\n\n\n\nBARBER: I KNOW HE SAT\n\n\n\n");
 
      bci_set_state(barber->id,PROCESSING);
 
@@ -421,7 +421,7 @@ static void process_resquests_from_client(Barber* barber)
 	 	 
      bci_did_request(barber->clientID);
 
-     printf("\n\n\n\nBARBER: I PASSED HERE YO\n\n\n\n");
+     //printf("\n\n\n\nBARBER: I PASSED HERE YO\n\n\n\n");
 
      if(bci_get_request(barber->id) == 0) {
        bci_set_state(barber->id,ALL_PROCESSES_DONE);

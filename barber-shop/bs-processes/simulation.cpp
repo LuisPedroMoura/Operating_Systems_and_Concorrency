@@ -22,10 +22,10 @@
 #include "client.h"
 #include "process.h"
 
-static sem_t sem_shop;
-static sem_t sem_tools_box;
-static sem_t sem_washbasin;
-static sem_t sem_barber_chair;
+//static sem_t sem_shop;
+//static sem_t sem_tools_box;
+//static sem_t sem_washbasin;
+//static sem_t sem_barber_chair;
 
 
 static BarberShop *shop;
@@ -96,8 +96,32 @@ static void go()
    descText = (char*)"Clients:";
    send_log(logIdClientsDesc, (char*)descText);
    show_barber_shop(shop);
+
+   /*
    pid_t pdi = 0;
- 
+   pid_t x = pfork();
+   int i = 0;
+   if(x == 0){
+     while(i<global->NUM_CLIENTS){
+       pdi = pfork();
+       if(pdi!=0) break;
+       else i++;
+     }
+     log_client(allClients+i);
+     main_client(allClients+i);
+   }
+   else{
+     while(i<global->NUM_BARBERS){
+       pdi = pfork();
+       if(pdi!=0) break;
+       else i++;
+     }
+     log_barber(allBarbers+i);
+     main_barber(allBarbers+i);
+   }
+   */ 
+
+
    /*for(int i = 0; i < global->NUM_BARBERS; i++){
       allBarbers=allBarbers+i;
       log_barber(allBarbers);      

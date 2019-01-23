@@ -308,7 +308,7 @@ static void wait_all_services_done(Client* client)
 
    while(client->state != DONE) {
  
-     printf("\n\n\n\nCLIENT: I ENTERED THIS FUNCTION\n\n\n\n");    
+     //printf("\n\n\n\nCLIENT: I ENTERED THIS FUNCTION\n\n\n\n");    
  
      client->state = WAITING_SERVICE;
      log_client(client);
@@ -318,7 +318,7 @@ static void wait_all_services_done(Client* client)
      Service given_service = wait_service_from_barber(client->shop,client->barberID);
      Service* tmp_service = &(given_service);
 
-     printf("\n\n\n\n Client: I did do wait \n\n\n\n");
+     //printf("\n\n\n\n Client: I did do wait \n\n\n\n");
 
      client->state = WAITING_SERVICE_START;
 
@@ -339,13 +339,13 @@ static void wait_all_services_done(Client* client)
        bci_set_syncWashbasin(*tmp_wsh4,client->barberID);
      }
 
-     printf("\n\n\n\nCLIENT: I PASSED HERE 1\n\n\n\n");
+     //printf("\n\n\n\nCLIENT: I PASSED HERE 1\n\n\n\n");
 
      while(bci_get_state(client->barberID) < WAITING_ON_CLIENT_SIT);
 
      bci_set_state(client->barberID,CLIENT_SEATED);
 
-     printf("\n\n\n\nCLIENT: I PASSED HERE 2\n\n\n\n");
+     //printf("\n\n\n\nCLIENT: I PASSED HERE 2\n\n\n\n");
 
      log_client(client);
 
@@ -383,7 +383,7 @@ static void wait_all_services_done(Client* client)
    
      log_client(client);   
 
-     printf("\n\n\n\nCLIENT: GONNA SEE IF I STOP OR CONTINUE\n\n\n\n"); 
+     //printf("\n\n\n\nCLIENT: GONNA SEE IF I STOP OR CONTINUE\n\n\n\n"); 
 
      if(bci_get_state(client->barberID) == ALL_PROCESSES_DONE) {
         client->state = DONE;
