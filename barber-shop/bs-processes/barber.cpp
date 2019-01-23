@@ -11,7 +11,6 @@
 enum BCState
 {
    NO_BARBER_GREET,           //barber has yet to receive and greet the client
-   GREET_AVAILABLE,	      //client can get barberID
    WAITING_ON_RESERVE,        //client waiting until the barber has reserved the seat for the process
    RESERVED,                  //chair reserved
    SERVICE_INFO_AVAILABLE,    //client has been informed
@@ -203,8 +202,6 @@ static void wait_for_client(Barber* barber)
 
    receive_and_greet_client(barber->shop,barber->id,tmp_qitem->clientID);
  
-   bci_set_state(barber->id,GREET_AVAILABLE);
- 
    barber->clientID = tmp_qitem->clientID;
  
    bci_grant_client_access(barber->clientID);
@@ -298,7 +295,8 @@ static void process_resquests_from_client(Barber* barber)
      else
        set_washbasin_service(&service_to_send,barber->id,barber->clientID,barber->basinPosition); 
       
-     inform_client_on_service(barber->shop,service_to_send); 
+     inform_client_on_service(barber->shop,service_to_send);
+     bci_set_state(barber->id,SERVICE_INFO_AVAILABLE); 
 
      if(barber->reqToDo == 1) {
        barber->state = REQ_SCISSOR;
@@ -338,11 +336,15 @@ static void process_resquests_from_client(Barber* barber)
 	 
      log_barber(barber);
 
+     printf("\n\n\n\nBARBER: I HAZ TOOLS\n\n\n\n");
+
      //WAIT FOR SIT
      if(bci_get_state(barber->id) < CLIENT_SEATED)
        bci_set_state(barber->id,WAITING_ON_CLIENT_SIT);
      while(bci_get_state(barber->id) < CLIENT_SEATED);
  
+     printf("\n\n\n\nBARBER: I KNOW HE SAT\n\n\n\n");
+
      bci_set_state(barber->id,PROCESSING);
 
      if(barber->reqToDo == 1) {
@@ -372,7 +374,7 @@ static void process_resquests_from_client(Barber* barber)
      }
 
      bci_set_state(barber->id,WAITING_ON_CLIENT_RISE);
-     while(bci_get_state(barber->id) == WAITING_ON_CLIENT_RISE);
+     while(bci_get_state(barber->id) < CLIENT_RISEN);
 	 
      barber->state = DONE;
 
@@ -415,14 +417,17 @@ static void process_resquests_from_client(Barber* barber)
        barber->basinPosition = -1;
      }
 
-     bci_set_state(barber->id,PROCESS_DONE);
-
      log_barber(barber);
 	 	 
      bci_did_request(barber->clientID);
 
+     printf("\n\n\n\nBARBER: I PASSED HERE YO\n\n\n\n");
+
      if(bci_get_request(barber->id) == 0) {
        bci_set_state(barber->id,ALL_PROCESSES_DONE);
+     }
+     else {
+       bci_set_state(barber->id,PROCESS_DONE);
      }
    }
 
@@ -438,6 +443,7 @@ static void release_client(Barber* barber)
    require (barber != NULL, "barber argument required");
 
    client_done(barber->shop,barber->clientID);
+   bci_set_state(barber->id,ALL_PROCESSES_DONE);
    barber->clientID = 0;
    
    bci_unset_clientID(barber->id);
@@ -485,11 +491,11 @@ static void process_hairwash_request(Barber* barber)
    require (barber != NULL, "barber argument required");
 
    int steps = random_int(5,20);
-   int washes = (global->MAX_WORK_TIME_UNITS-global->MIN_WORK_TIME_UNITS+steps)/steps;
+   int wash = (global->MAX_WORK_TIME_UNITS-global->MIN_WORK_TIME_UNITS+steps)/steps;
    int complete = 0;
    while(complete < 100)
    {
-     spend(washes);
+     spend(wash);
      complete += 100/steps;
      if (complete > 100) {
        complete = 100;
