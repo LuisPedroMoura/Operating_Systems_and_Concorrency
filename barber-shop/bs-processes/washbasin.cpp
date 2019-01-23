@@ -95,7 +95,6 @@ int complete_washbasin(Washbasin* basin)
 {
    require (basin != NULL, "basin argument required");
 
-   printf("\n\n\n client: %d barber: %d\n\n\n",basin->clientID, basin->barberID);
    int res = basin->barberID > 0 && basin->clientID > 0;
    return res;
 }

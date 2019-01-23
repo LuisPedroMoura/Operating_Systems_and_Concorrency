@@ -14,9 +14,10 @@ enum BCState
    GREET_AVAILABLE,	      //client can get barberID
    WAITING_ON_RESERVE,        //client waiting until the barber has reserved the seat for the process
    RESERVED,                  //chair reserved
-   WAITING_ON_PROCESS_START,  //client waiting until the process starts (barber has all the needed tools)
+   SERVICE_INFO_AVAILABLE,    //client has been informed
    WAITING_ON_CLIENT_SIT,     //barber waiting on client to sit
    CLIENT_SEATED,	      //client has sat down
+   PROCESSING,		      //process started
    WAITING_ON_CLIENT_RISE,    //barber waiting for client to leave the spot
    CLIENT_RISEN,              //client left the spot
    PROCESS_DONE,              //process has finished
@@ -261,6 +262,11 @@ static void process_resquests_from_client(Barber* barber)
    require (barber != NULL, "barber argument required");
 
    while(bci_get_request(barber->clientID) > 0) {
+     bci_set_state(barber->id,WAITING_ON_RESERVE);
+
+     barber->state = WAITING_CLIENTS;
+     log_barber(barber);
+
      barber->reqToDo = bci_get_next_request(barber->clientID);
 
      if(barber->reqToDo == 1) {
@@ -333,6 +339,8 @@ static void process_resquests_from_client(Barber* barber)
      bci_set_state(barber->id,WAITING_ON_CLIENT_SIT);
      while(bci_get_state(barber->id) != CLIENT_SEATED);
  
+     bci_set_state(barber->id,PROCESSING);
+
      if(barber->reqToDo == 1) {
        barber->state = CUTTING;
        log_barber(barber);
@@ -403,9 +411,15 @@ static void process_resquests_from_client(Barber* barber)
        barber->basinPosition = -1;
      }
 
+     bci_set_state(barber->id,PROCESS_DONE);
+
      log_barber(barber);
 	 	 
      bci_did_request(barber->clientID);
+
+     if(barber->reqToDo == 1) {
+       bci_set_state(barber->id,ALL_PROCESSES_DONE);
+     }
    }
 
    log_barber(barber);
@@ -460,8 +474,6 @@ static void process_haircut_request(Barber* barber)
      }
      set_completion_barber_chair(barber_chair(barber->shop, barber->chairPosition), complete);
    }
-
-   bci_set_state(barber->id,PROCESS_DONE);
 }
 
 static void process_hairwash_request(Barber* barber)
@@ -480,8 +492,6 @@ static void process_hairwash_request(Barber* barber)
      }
      set_completion_washbasin(washbasin(barber->shop, barber->basinPosition), complete);
    }
-
-   bci_set_state(barber->id,PROCESS_DONE);
 }
 
 static void process_shave_request(Barber* barber)
@@ -501,8 +511,6 @@ static void process_shave_request(Barber* barber)
      }
      set_completion_barber_chair(barber_chair(barber->shop, barber->chairPosition), complete);
    }
-
-   bci_set_state(barber->id,PROCESS_DONE);
 }
 
 static char* to_string_barber(Barber* barber)

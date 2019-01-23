@@ -14,9 +14,10 @@ enum BCState
    GREET_AVAILABLE,	      //client can get barberID
    WAITING_ON_RESERVE,        //client waiting until the barber has reserved the seat for the process
    RESERVED,                  //chair reserved
-   WAITING_ON_PROCESS_START,  //client waiting until the process starts (barber has all the needed tools)
+   SERVICE_INFO_AVAILABLE,    //client has been informed
    WAITING_ON_CLIENT_SIT,     //barber waiting on client to sit
    CLIENT_SEATED,	      //client has sat down
+   PROCESSING,		      //process started
    WAITING_ON_CLIENT_RISE,    //barber waiting for client to leave the spot
    CLIENT_RISEN,              //client left the spot
    PROCESS_DONE,              //process has finished
@@ -336,8 +337,7 @@ static void wait_all_services_done(Client* client)
 
      log_client(client);
      
-     bci_set_state(client->barberID,WAITING_ON_PROCESS_START);
-     while(bci_get_state(client->barberID) == WAITING_ON_PROCESS_START);
+     while(bci_get_state(client->barberID) != PROCESSING);
 
      if(tmp_service->request == 1)
        client->state = HAVING_A_HAIRCUT;
@@ -346,20 +346,15 @@ static void wait_all_services_done(Client* client)
      else
        client->state = HAVING_A_SHAVE;
 
-     //printf("\n\n\nCLIENT: wait_all_services_done -> waiting\n\n\n");
+     log_client(client);
+
      while(bci_get_state(client->barberID) != WAITING_ON_CLIENT_RISE);
      
      if(tmp_service->request == 1 or tmp_service->request == 4) {
        bci_get_syncBBChair(barber_chair(client->shop,client->chairPosition),client->barberID);
-       BarberChair* tmp_bbc18 = barber_chair(client->shop,client->chairPosition);
-       //printf("\n\n\n CLIENT: get syncbbchair 18 -> client: %d barber: %d \n\n\n",tmp_bbc18->clientID,tmp_bbc18->barberID); 
-
        rise_from_barber_chair(barber_chair(client->shop,client->chairPosition),client->id);
        BarberChair* bbchair9 = barber_chair(client->shop,client->chairPosition);
        bci_set_syncBBChair(*bbchair9,client->barberID);
-       BarberChair* tmp_bbc19 = barber_chair(client->shop,client->chairPosition);
-       //printf("\n\n\n CLIENT: set syncbbchair 19 -> client: %d barber: %d \n\n\n",tmp_bbc19->clientID,tmp_bbc19->barberID); 
-
        client->chairPosition = -1;
      }
      else {
@@ -372,7 +367,7 @@ static void wait_all_services_done(Client* client)
 
      bci_set_state(client->barberID,CLIENT_RISEN);
 
-     while(bci_get_state(client->barberID) != PROCESS_DONE);
+     while(bci_get_state(client->barberID) < PROCESS_DONE);
    
      log_client(client);   
 
