@@ -318,16 +318,10 @@ static void wait_all_services_done(Client* client)
      if(is_barber_chair_service(tmp_service)) {
        client->chairPosition = tmp_service->pos ;
        bci_get_syncBBChair(barber_chair(client->shop,client->chairPosition),client->barberID);
-       BarberChair* tmp_bbc16 = barber_chair(client->shop,client->chairPosition);
-       //printf("\n\n\n CLIENT: get syncbbchair 16-> client: %d barber: %d \n\n\n",tmp_bbc16->clientID,tmp_bbc16->barberID); 
-       printf("\n\n\n\n\nI got here %d\n\n\n\n\n",tmp_bbc16->id);
-
        client->chairPosition = service_position(tmp_service);
        sit_in_barber_chair(barber_chair(client->shop,client->chairPosition),client->id);
        BarberChair* bbchair8 = barber_chair(client->shop,client->chairPosition);
-       bci_set_syncBBChair(*bbchair8,client->barberID);
-       BarberChair* tmp_bbc17 = barber_chair(client->shop,client->chairPosition);
-       //printf("\n\n\n CLIENT: set syncbbchair 17 -> client: %d barber: %d \n\n\n",tmp_bbc17->clientID,tmp_bbc17->barberID); 
+       bci_set_syncBBChair(*bbchair8,client->barberID); 
      }
      else {
        client->basinPosition = tmp_service->pos;

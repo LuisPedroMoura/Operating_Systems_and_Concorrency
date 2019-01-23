@@ -116,8 +116,6 @@ int complete_barber_chair(BarberChair* chair)
 {
    require (chair != NULL, "chair argument required");
 
-   printf("\n\n\n client: %d barber: %d\n\n\n",chair->clientID, chair->barberID);
-
    int res = chair->barberID > 0 && chair->clientID > 0;
    return res;
 }
@@ -225,8 +223,6 @@ void set_completion_barber_chair(BarberChair* chair, int completionPercentage)
    require (chair != NULL, "chair argument required");
    require (completionPercentage >= 0 && completionPercentage <= 100, concat_3str("invalid percentage (", int2str(completionPercentage), ")"));
    require ((chair->toolsHolded & 0x7) != 0, "barber not holding tools");
-   
-   printf("\n\n\n\n\nBARBER: set_completion_barber_chair in barber_chair.cpp -> client=%d barber=%d\n\n\n\n\n",chair->clientID,chair->barberID);
    require (complete_barber_chair(chair), "barber chair is not complete");
 
    chair->completionPercentage = completionPercentage;

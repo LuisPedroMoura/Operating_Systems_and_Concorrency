@@ -301,15 +301,9 @@ static void process_resquests_from_client(Barber* barber)
        barber->tools += 1;
 
        bci_get_syncBBChair(barber_chair(barber->shop,barber->chairPosition),barber->id);
-       BarberChair* tmp_bbc1 = barber_chair(barber->shop,barber->chairPosition);
-       //printf("\n\n\n BARBER: get syncbbchair 1 -> client: %d barber: %d \n\n\n",tmp_bbc1->clientID,tmp_bbc1->barberID);
-
        BarberChair* bbchair1 = barber_chair(barber->shop,barber->chairPosition);
        bbchair1->toolsHolded += 1;
-       
        bci_set_syncBBChair(*bbchair1,barber->id);
-       BarberChair* tmp_bbc2 = barber_chair(barber->shop,barber->chairPosition);
-       //printf("\n\n\n BARBER: set syncbbchair 2 -> client: %d barber: %d \n\n\n",tmp_bbc2->clientID,tmp_bbc2->barberID);
 
        barber->state = REQ_COMB;
        log_barber(barber);
@@ -318,15 +312,9 @@ static void process_resquests_from_client(Barber* barber)
        barber->tools += 2;
 
        bci_get_syncBBChair(barber_chair(barber->shop,barber->chairPosition),barber->id);
-       BarberChair* tmp_bbc3 = barber_chair(barber->shop,barber->chairPosition);
-       //printf("\n\n\n BARBER: get syncbbchair 3 -> client: %d barber: %d \n\n\n",tmp_bbc3->clientID,tmp_bbc3->barberID);
-
        BarberChair* bbchair2 = barber_chair(barber->shop,barber->chairPosition);
        bbchair2->toolsHolded += 2;
-
        bci_set_syncBBChair(*bbchair2,barber->id);
-       BarberChair* tmp_bbc4 = barber_chair(barber->shop,barber->chairPosition);
-       //printf("\n\n\n BARBER: set syncbbchair 4 -> client: %d barber: %d \n\n\n",tmp_bbc4->clientID,tmp_bbc4->barberID);
      }
      else if(barber->reqToDo == 4) {
        barber->state = REQ_RAZOR;
@@ -336,24 +324,14 @@ static void process_resquests_from_client(Barber* barber)
        barber->tools += 4;
 
        bci_get_syncBBChair(barber_chair(barber->shop,barber->chairPosition),barber->id);
-       BarberChair* tmp_bbc5 = barber_chair(barber->shop,barber->chairPosition);
-       //printf("\n\n\n BARBER: get syncbbchair 5 -> client: %d barber: %d \n\n\n",tmp_bbc5->clientID,tmp_bbc5->barberID);
-
        BarberChair* bbchair3 = barber_chair(barber->shop,barber->chairPosition);
        bbchair3->toolsHolded += 4;
-
        bci_set_syncBBChair(*bbchair3,barber->id);
-       BarberChair* tmp_bbc6 = barber_chair(barber->shop,barber->chairPosition);
-       //printf("\n\n\n BARBER: set syncbbchair 6 -> client: %d barber: %d \n\n\n",tmp_bbc6->clientID,tmp_bbc6->barberID);
      }
 	 	
      //WAIT FOR SIT
      bci_set_state(barber->id,WAITING_ON_CLIENT_SIT);
      while(bci_get_state(barber->id) != CLIENT_SEATED);
-
-     bci_get_syncBBChair(barber_chair(barber->shop,barber->chairPosition),barber->id);
-     BarberChair* tmp_bbcextra = barber_chair(barber->shop,barber->chairPosition);
-     //printf("\n\n\n BARBER: get syncbbchair EXTRA -> client: %d barber: %d \n\n\n",tmp_bbcextra->clientID,tmp_bbcextra->barberID);
  
      if(barber->reqToDo == 1) {
        barber->state = CUTTING;
@@ -367,7 +345,10 @@ static void process_resquests_from_client(Barber* barber)
      else if(barber->reqToDo == 2) {
        barber->state = WASHING;
        log_barber(barber);
+       bci_get_syncWashbasin(washbasin(barber->shop,barber->basinPosition),barber->id);
+       Washbasin* wshbasin = washbasin(barber->shop,barber->basinPosition);
        process_hairwash_request(barber);
+       bci_set_syncWashbasin(*wshbasin,barber->id);
      }
      else {
        barber->state = SHAVING;
@@ -381,66 +362,37 @@ static void process_resquests_from_client(Barber* barber)
      bci_set_state(barber->id,WAITING_ON_CLIENT_RISE);
      while(bci_get_state(barber->id) == WAITING_ON_CLIENT_RISE);
 	 
+     barber->state = DONE;
+
      if(barber->reqToDo == 1) {
        return_scissor(tools_pot(barber->shop));
        barber->tools -= 1;
-
        bci_get_syncBBChair(barber_chair(barber->shop,barber->chairPosition),barber->id);
-       BarberChair* tmp_bbc7 = barber_chair(barber->shop,barber->chairPosition);
-       //printf("\n\n\n BARBER: get syncbbchair 7 -> client: %d barber: %d \n\n\n",tmp_bbc7->clientID,tmp_bbc7->barberID);
-
        BarberChair* bbchair4 = barber_chair(barber->shop,barber->chairPosition);
        bbchair4->toolsHolded -= 1;
-
        bci_set_syncBBChair(*bbchair4,barber->id);
-       BarberChair* tmp_bbc8 = barber_chair(barber->shop,barber->chairPosition);
-       //printf("\n\n\n BARBER: set syncbbchair 8 -> client: %d barber: %d \n\n\n",tmp_bbc8->clientID,tmp_bbc8->barberID);
-
+       
        return_comb(tools_pot(barber->shop));
        barber->tools -= 2;
-
        bci_get_syncBBChair(barber_chair(barber->shop,barber->chairPosition),barber->id);
-       BarberChair* tmp_bbc9 = barber_chair(barber->shop,barber->chairPosition);
-       //printf("\n\n\n BARBER: get syncbbchair 9 -> client: %d barber: %d \n\n\n",tmp_bbc9->clientID,tmp_bbc9->barberID);
-
        BarberChair* bbchair5 = barber_chair(barber->shop,barber->chairPosition);
        bbchair5->toolsHolded -= 2;
-
        bci_set_syncBBChair(*bbchair5,barber->id);
-       BarberChair* tmp_bbc10 = barber_chair(barber->shop,barber->chairPosition);
-       //printf("\n\n\n BARBER: set syncbbchair 10 -> client: %d barber: %d \n\n\n",tmp_bbc10->clientID,tmp_bbc10->barberID);
      }
      else if(barber->reqToDo == 4) {
        return_razor(tools_pot(barber->shop));
        barber->tools -= 4;
-
        bci_get_syncBBChair(barber_chair(barber->shop,barber->chairPosition),barber->id);
-       BarberChair* tmp_bbc11 = barber_chair(barber->shop,barber->chairPosition);
-       //printf("\n\n\n BARBER: get syncbbchair 11 -> client: %d barber: %d \n\n\n",tmp_bbc11->clientID,tmp_bbc11->barberID);
-
        BarberChair* bbchair6 = barber_chair(barber->shop,barber->chairPosition);
        bbchair6->toolsHolded -= 4;
-
        bci_set_syncBBChair(*bbchair6,barber->id);
-       BarberChair* tmp_bbc12 = barber_chair(barber->shop,barber->chairPosition);
-       //printf("\n\n\n BARBER: set syncbbchair 12 -> client: %d barber: %d \n\n\n",tmp_bbc12->clientID,tmp_bbc12->barberID);
      }
 
      if(barber->reqToDo == 1 or barber->reqToDo == 4) {
        bci_get_syncBBChair(barber_chair(barber->shop,barber->chairPosition),barber->id);
-       BarberChair* tmp_bbc13 = barber_chair(barber->shop,barber->chairPosition);
-       //printf("\n\n\n BARBER: get syncbbchair 13 -> client: %d barber: %d \n\n\n",tmp_bbc13->clientID,tmp_bbc13->barberID);
-
        release_barber_chair(barber_chair(barber->shop,barber->chairPosition), barber->id);
-       bci_get_syncBBChair(barber_chair(barber->shop,barber->chairPosition),barber->id);
-       BarberChair* tmp_bbc14 = barber_chair(barber->shop,barber->chairPosition);
-       //printf("\n\n\n BARBER: get syncbbchair 14 -> client: %d barber: %d \n\n\n",tmp_bbc14->clientID,tmp_bbc14->barberID);
-
        BarberChair* bbchair7 = barber_chair(barber->shop,barber->chairPosition);
        bci_set_syncBBChair(*bbchair7,barber->id);
-       BarberChair* tmp_bbc15 = barber_chair(barber->shop,barber->chairPosition);
-       //printf("\n\n\n BARBER: set syncbbchair 15 -> client: %d barber: %d \n\n\n",tmp_bbc15->clientID,tmp_bbc15->barberID);
-
        barber->chairPosition = -1;
      }
      else {

@@ -19,7 +19,7 @@
 static int shmid = 74;
 static BCInterface * bcinterfaces;
 
-const long key = 0x20A1L;
+const long key = 0x20A4L;
 
 enum BCState
 {
