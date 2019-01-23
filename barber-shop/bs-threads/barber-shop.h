@@ -49,6 +49,7 @@ typedef struct _BarberShop_
 
    // Barber Shop Mutex and cond
    pthread_mutex_t barberShopMutex = PTHREAD_MUTEX_INITIALIZER;
+   pthread_cond_t closeShop = PTHREAD_COND_INITIALIZER;
 
    // barber Bench mutex and cond
    pthread_mutex_t barberBenchMutex = PTHREAD_MUTEX_INITIALIZER;

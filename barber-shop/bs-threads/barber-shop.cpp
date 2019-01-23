@@ -306,9 +306,8 @@ void client_done(BarberShop* shop, int clientID)
 	require (shop != NULL, "shop argument required");
 	require (clientID > 0, concat_3str("invalid client id (", int2str(clientID), ")"));
 
-	Service service;
-	service.clientID = clientID;
-	Message message = write_message(service);
+
+	Message message = empty_message(clientID);
 	send_message(&(shop->commLine), message);
 	cond_signal(&shop->messageAvailable);
 }

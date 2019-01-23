@@ -135,6 +135,7 @@ static void life(Client* client)
 
 	int i = 0;
 	notify_client_birth(client);
+	printf("++++++++++++++++++++++++++++++CLIENT IS BORN, comes %d\n", client->num_trips_to_barber);
 	while(i < client->num_trips_to_barber)
 	{
 		wandering_outside(client);
@@ -147,6 +148,7 @@ static void life(Client* client)
 			i++;
 		}
 	}
+	printf("+++++++++++++++++++++++++++++CLIENT DIES! MUAHAHAH\n");
 	notify_client_death(client);
 }
 
@@ -157,6 +159,8 @@ static void notify_client_birth(Client* client)
 	/** TODO:
 	 * 1: (if necessary) inform simulation that a new client begins its existence.
 	 **/
+
+
 
 	log_client(client);
 }
@@ -342,6 +346,8 @@ static void wait_all_services_done(Client* client)
 				rise_from_barber_chair(chair, client->id);
 				cond_signal(&client->shop->clientRoseFromBarberChair);
 			}
+
+			client->shop->barberChair[client->chairPosition].completionPercentage = 0;
 			printf("--------------------------client - had haircut\n");
 			log_client(client);
 		}
@@ -395,6 +401,8 @@ static void wait_all_services_done(Client* client)
 	}
 
 	leave_barber_shop(client->shop, client->id);
+	// 'E necessário repôr os valores originais do cliente???
+
 	printf("--------------------------------------------CLIENT LIFE - WAIT ALL SERVICES DONE\n");
 
 	mutex_unlock(&client->shop->barberShopMutex);

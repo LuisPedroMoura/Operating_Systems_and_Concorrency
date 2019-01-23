@@ -116,15 +116,6 @@ static void go()
 	}
 
 	/* wait for threads to conclude */
-	for (int i = 0; i < global->NUM_BARBERS; i++)
-	{
-		if (pthread_join(bthr[i], NULL) != 0)
-		{
-			fprintf(stderr, "barber %d\n", i);
-			perror("error on waiting for a thread to conclude");
-			exit(EXIT_FAILURE);
-		}
-	}
 	for (int i = 0; i < global->NUM_CLIENTS; i++)
 	{
 		if (pthread_join(cthr[i], NULL) != 0)
@@ -135,6 +126,19 @@ static void go()
 		}
 	}
 
+	shop->opened = 0;
+
+	for (int i = 0; i < global->NUM_BARBERS; i++)
+	{
+		if (pthread_join(bthr[i], NULL) != 0)
+		{
+			fprintf(stderr, "barber %d\n", i);
+			perror("error on waiting for a thread to conclude");
+			exit(EXIT_FAILURE);
+		}
+	}
+
+
 }
 
 /**
@@ -143,6 +147,7 @@ static void go()
 static void finish()
 {
 	/* TODO: change this function to your needs */
+
 
 
 

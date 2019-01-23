@@ -180,21 +180,25 @@ static void wait_for_client(Barber* barber)
 	require (barber != NULL, "barber argument required");
 
 	barber->state = WAITING_CLIENTS;
-
+	printf("--------------------------------------------BARBER LIFE - BEGIN WAIT FOR CLIENT\n");
 	// se clientes acabarem, conseguimos fechar a loja???
 	mutex_lock(&barber->shop->barberShopMutex);
 
-	while (no_more_clients(&(barber->shop->clientBenches))){
-		cond_wait(&barber->shop->clientWaiting, &barber->shop->barberShopMutex);
+	if (barber->shop->opened){
+
+		while (no_more_clients(&(barber->shop->clientBenches)) ){
+			cond_wait(&barber->shop->clientWaiting, &barber->shop->barberShopMutex);
+		}
+
+		RQItem requests = next_client_in_benches(&(barber->shop->clientBenches));
+		barber->reqToDo = requests.request;
+		barber->clientID = requests.clientID;
+
+		receive_and_greet_client(barber->shop, barber->id, barber->clientID);
 	}
 
-	RQItem requests = next_client_in_benches(&(barber->shop->clientBenches));
-	barber->reqToDo = requests.request;
-	barber->clientID = requests.clientID;
-
-	receive_and_greet_client(barber->shop, barber->id, barber->clientID);
-
 	mutex_unlock(&barber->shop->barberShopMutex);
+
 	printf("--------------------------------------------BARBER LIFE - WAIT FOR CLIENT\n");
 	log_barber(barber);  // (if necessary) more than one in proper places!!!
 }
@@ -209,12 +213,19 @@ static int work_available(Barber* barber)
 
 	require (barber != NULL, "barber argument required");
 	printf("--------------------------------------------BARBER LIFE - WORK AVAILABLE\n");
+
+	if (!(barber->shop->opened)){
+		return 0;
+	}
+
 	if (barber->clientID > 0){
 		return 1;
 	}
 	else{
 		return 0;
 	}
+
+
 
 }
 
@@ -282,6 +293,7 @@ static void process_resquests_from_client(Barber* barber)
 			process_haircut_request(barber);
 			cond_signal(&barber->shop->barberChairServiceFinished);
 			printf("--------------------------barber - cut client hair\n");
+
 		}
 
 
@@ -322,6 +334,7 @@ static void process_resquests_from_client(Barber* barber)
 		//2.2: reserve a random empty chair
 		int basinPos = reserve_random_empty_washbasin(barber->shop, barber->id);
 		Washbasin* basin = barber->shop->washbasin+basinPos;
+		barber->basinPosition = basinPos;
 		set_washbasin_service(&service, barber->id, barber->clientID, basinPos);
 		printf("--------------------------barber - inform wash\n");
 		inform_client_on_service(barber->shop, service);
@@ -335,13 +348,15 @@ static void process_resquests_from_client(Barber* barber)
 		while (washbasin_with_a_client(basin)){
 			cond_wait(&barber->shop->clientRoseFromWashbasin, &barber->shop->barberShopMutex);
 		}
-		release_washbasin(basin, barber->clientID);
+		release_washbasin(basin, barber->id);
 		cond_signal(&barber->shop->washbasinAvailable);
 	}
 
 	// services are finished
-	release_client(barber);
-
+	if (barber->shop->opened == 0){
+		printf("--------------------------barber - shop closed, barber going to die\n");
+		term_barber(barber);
+	}
 	mutex_unlock(&barber->shop->barberShopMutex);
 
 	//At the end the client must leave the barber shop
@@ -358,7 +373,7 @@ static void release_client(Barber* barber)
 	 **/
 
 	require (barber != NULL, "barber argument required");
-
+	printf("--------------------------------------------BARBER LIFE - RELEASE CLIENT %d\n", barber->clientID);
 	client_done(barber->shop, barber->clientID);
 	barber->clientID = -1;
 	printf("--------------------------------------------BARBER LIFE - RELEASE CLIENT\n");
@@ -461,8 +476,6 @@ static void process_wash_hair_request(Barber* barber)
 	 **TODO:
 	 **/
 	require (barber != NULL, "barber argument required");
-	require (barber->tools & SCISSOR_TOOL, "barber not holding a scissor");
-	require (barber->tools & COMB_TOOL, "barber not holding a comb");
 
 	//4: process the service
 	barber->state = WASHING;
@@ -476,7 +489,7 @@ static void process_wash_hair_request(Barber* barber)
 		complete += 100/steps;
 		if (complete > 100)
 			complete = 100;
-		set_completion_barber_chair(barber_chair(barber->shop, barber->chairPosition), complete);
+		set_completion_washbasin(washbasin(barber->shop, barber->basinPosition), complete);
 	}
 
 	log_barber(barber);  // (if necessary) more than one in proper places!!!

@@ -5,11 +5,14 @@
 
 #define nClients global->NUM_CLIENTS
 
-static Message empty = {0,-1};
+static Service emptyService = {0,0,0,0,0,0};
+static Message empty = {emptyService,-1};
 
-Message empty_message()
+Message empty_message(int clientID)
 {
-   return empty;
+	Message message = empty;
+	message.service.clientID = clientID;
+	return message;
 }
 
 int is_empty(Message message)
@@ -21,7 +24,7 @@ void init_communication_line(CommunicationLine* commLine, int numClients){
 
 	commLine->commArray = new Message[numClients];
 	for (int i = 0; i < numClients; i++){
-		commLine->commArray[i] = empty_message();
+		commLine->commArray[i] = empty;
 	}
 }
 
@@ -41,22 +44,8 @@ Message read_message(CommunicationLine* commLine, int clientID)
 	return commLine->commArray[clientID];
 }
 
-Message read_message_with_barberID(CommunicationLine* commLine, int barberID)
-{
-	require (barberID > 0, concat_3str("invalid barber id (", int2str(barberID), ")"));
-
-	int size = sizeof(commLine->commArray) / sizeof(Service);
-	for (int i = 0; i < size; i++){
-		if (commLine->commArray[i].service.barberID == barberID){
-			return commLine->commArray[i];
-		}
-	}
-	return empty_message();
-}
-
 void send_message(CommunicationLine* commLine, Message message)
 {
-	require (!is_empty(message), "message argument required");
 	require (message.service.clientID > 0, "Invalid clientID in message argument");
 
 	commLine->commArray[message.service.clientID] = message;
@@ -67,7 +56,7 @@ void delete_message(CommunicationLine* commLine, int clientID)
 {
 	require (clientID > 0, concat_3str("invalid client id (", int2str(clientID), ")"));
 
-	commLine->commArray[clientID] = empty_message();
+	commLine->commArray[clientID] = empty;
 }
 
 int no_message_available(CommunicationLine* commLine, int clientID)
