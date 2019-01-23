@@ -299,8 +299,8 @@ void inform_client_on_service(BarberShop* shop, Service service)
 	require (shop != NULL, "shop argument required");
 	require (service.barberChair || service.washbasin, "only one request per service can be active");
 
-	Message message = write_message(service);
-	send_message(&(shop->commLine), message);
+	Message message = write_message(service, &shop->messagesMutex[service.clientID]);
+	send_message(&(shop->commLine), message, &shop->messagesMutex[service.clientID], &shop->messageAvailable[service.clientID]);
 	cond_signal(&shop->messageAvailable);
 }
 
@@ -314,8 +314,8 @@ void client_done(BarberShop* shop, int clientID)
 	require (clientID > 0, concat_3str("invalid client id (", int2str(clientID), ")"));
 
 
-	Message message = empty_message(clientID);
-	send_message(&(shop->commLine), message);
+	Message message = empty_message(clientID, &shop->messagesMutex[clientID]);
+	send_message(&(shop->commLine), message, &shop->messagesMutex[clientID], &shop->messageAvailable[clientID]);
 	//cond_signal(&shop->messageAvailable);
 }
 

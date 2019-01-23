@@ -15,13 +15,13 @@ typedef struct _CommunicationLine_
 	Message commArray[MAX_CLIENTS];
 }CommunicationLine;
 
-Message empty_message(int clientID, pthread_mutex_t mutex);
+Message empty_message(int clientID);
 int is_empty(Message message);
 void init_communication_line(CommunicationLine* commLine);
-Message write_message(Service service, pthread_mutex_t mutex);
-Message read_message(CommunicationLine* commLine, int clientID, pthread_mutex_t mutex, pthread_cond_t vcond);
-void send_message(CommunicationLine* commLine, Message message, pthread_mutex_t* mutex, pthread_cond_t* vcond);
-int no_message_available(CommunicationLine* commLine, int clientID, pthread_mutex_t* mutex, pthread_cond_t* vcond);
-void delete_message(CommunicationLine* commLine, int clientID, pthread_mutex_t* mutex, pthread_cond_t* vcond);
+Message write_message(Service service);
+Message read_message(CommunicationLine* commLine, int clientID, pthread_mutex_t* mutex, pthread_cond_t messageAvailable);
+void send_message(CommunicationLine* commLine, Message message, pthread_mutex_t* mutex);
+int no_message_available(CommunicationLine* commLine, int clientID);
+void delete_message(CommunicationLine* commLine, int clientID, pthread_mutex_t* mutex);
 
 #endif
