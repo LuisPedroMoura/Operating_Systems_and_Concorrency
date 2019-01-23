@@ -192,7 +192,7 @@ static void wait_for_client(Barber* barber)
    log_barber(barber);
 	 
    while(bci_get_num_clients_in_bench() == 0) {
-     spend(1.1*global->MAX_OUTSIDE_TIME_UNITS);
+     spend(2*global->MAX_OUTSIDE_TIME_UNITS);
      if(bci_get_num_clients_in_bench() == 0) close_shop(barber->shop);
    }
 	 
@@ -262,6 +262,7 @@ static void process_resquests_from_client(Barber* barber)
    require (barber != NULL, "barber argument required");
 
    while(bci_get_request(barber->clientID) > 0) {
+
      bci_set_state(barber->id,WAITING_ON_RESERVE);
 
      barber->state = WAITING_CLIENTS;
@@ -334,10 +335,13 @@ static void process_resquests_from_client(Barber* barber)
        bbchair3->toolsHolded += 4;
        bci_set_syncBBChair(*bbchair3,barber->id);
      }
-	 	
+	 
+     log_barber(barber);
+
      //WAIT FOR SIT
-     bci_set_state(barber->id,WAITING_ON_CLIENT_SIT);
-     while(bci_get_state(barber->id) != CLIENT_SEATED);
+     if(bci_get_state(barber->id) < CLIENT_SEATED)
+       bci_set_state(barber->id,WAITING_ON_CLIENT_SIT);
+     while(bci_get_state(barber->id) < CLIENT_SEATED);
  
      bci_set_state(barber->id,PROCESSING);
 
@@ -417,7 +421,7 @@ static void process_resquests_from_client(Barber* barber)
 	 	 
      bci_did_request(barber->clientID);
 
-     if(barber->reqToDo == 1) {
+     if(bci_get_request(barber->id) == 0) {
        bci_set_state(barber->id,ALL_PROCESSES_DONE);
      }
    }

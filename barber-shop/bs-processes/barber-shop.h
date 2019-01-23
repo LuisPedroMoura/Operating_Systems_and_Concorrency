@@ -18,7 +18,8 @@
 typedef struct _BCInterface_
 {	
    int semid;
-
+   int shopOpen;
+   
    int clientAccess[MAX_CLIENTS];
 
    ClientBenches syncBenches;
@@ -112,6 +113,8 @@ void bci_set_syncBenches(ClientBenches clientBenches);
 void bci_set_syncBBChair(BarberChair bbChair,int barberID);
 void bci_set_syncWashbasin(Washbasin basin, int barberID);
 void bci_set_request(int clientID,int request);
+void bci_open_shop();
+void bci_close_shop();
 void bci_did_request(int clientID);
 void bci_unset_clientID(int barberID);
 void bci_unset_barberID(int clientID);
@@ -129,6 +132,7 @@ void bci_get_syncBBChair(BarberChair* bbChair, int barberID);
 void bci_get_syncWashbasin(Washbasin* basin, int barberID);
 int bci_get_request(int clientID);
 int bci_get_next_request(int clientID);
+int bci_get_shop_status();
 void bci_grant_client_access(int clientID);
 void bci_revoke_client_access(int clientID);
 

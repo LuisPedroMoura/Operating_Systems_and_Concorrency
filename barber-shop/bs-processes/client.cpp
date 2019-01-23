@@ -336,7 +336,7 @@ static void wait_all_services_done(Client* client)
      bci_set_state(client->barberID,CLIENT_SEATED);
 
      log_client(client);
-     
+
      while(bci_get_state(client->barberID) != PROCESSING);
 
      if(tmp_service->request == 1)

@@ -19,7 +19,7 @@
 static int shmid = 74;
 static BCInterface * bcinterfaces;
 
-const long key = 0x20B2L;
+const long key = 0x20C7L;
 
 enum BCState
 {
@@ -471,13 +471,13 @@ int shop_opened(BarberShop* shop)
 {
    require (shop != NULL, "shop argument required");
 
-   return shop->opened;
+   return bci_get_shop_status();;
 }
 
 void close_shop(BarberShop* shop)
 {
    require (shop != NULL, "shop argument required");
-   require (shop_opened(shop), "barber shop already closed");
+   require (bci_get_shop_status(), "barber shop already closed");
  
    shop->opened = 0;
 }
@@ -612,6 +612,24 @@ void bci_set_request(int clientID,int request)
     lock();
 
 	bcinterfaces->clientRequests[clientID-1] = request;
+
+    unlock();
+}
+
+void bci_open_shop()
+{
+    lock();
+
+	bcinterfaces->shopOpen = 1;
+
+    unlock();
+}
+
+void bci_close_shop()
+{
+    lock();
+
+	bcinterfaces->shopOpen = 0;
 
     unlock();
 }
@@ -813,6 +831,16 @@ int bci_get_next_request(int clientID)
 
     unlock();
     return tmp_nreq;
+}
+
+int bci_get_shop_status()
+{
+    lock();
+
+        int state = bcinterfaces->shopOpen;
+
+    unlock();
+    return state;
 }
 
 void bci_grant_client_access(int clientID) 
