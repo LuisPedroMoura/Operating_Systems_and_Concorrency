@@ -150,10 +150,10 @@ static void life(Barber* barber)
 
 static void sit_in_barber_bench(Barber* barber)
 {
-	/**
-	 * 1: sit in a random empty seat in barber bench (always available)
-	 * TODO:
-	 **/
+   /**
+    * 1: sit in a random empty seat in barber bench (always available)
+    ** TODO:
+    **/
 	require (barber != NULL, "barber argument required");
 	require (num_seats_available_barber_bench(barber_bench(barber->shop)) > 0, "seat not available in barber shop");
 	require (!seated_in_barber_bench(barber_bench(barber->shop), barber->id), "barber already seated in barber shop");
@@ -170,12 +170,12 @@ static void sit_in_barber_bench(Barber* barber)
 
 static void wait_for_client(Barber* barber)
 {
-	/**
-	 * 1: set the barber state to WAITING_CLIENTS
-	 * 2: get next client from client benches (if empty, wait) (also, it may be required to check for simulation termination)
-	 * 3: receive and greet client (receive its requested services, and give back the barber's id)
-	 * TODO:
-	 **/
+   /**
+    * 1: set the barber state to WAITING_CLIENTS
+    * 2: get next client from client benches (if empty, wait) (also, it may be required to check for simulation termination)
+    * 3: receive and greet client (receive its requested services, and give back the barber's id)
+    ** TODO:
+    **/
 
 	require (barber != NULL, "barber argument required");
 
@@ -352,10 +352,10 @@ static void process_resquests_from_client(Barber* barber)
 
 static void release_client(Barber* barber)
 {
-	/**
-	 * 1: notify client that all the services are done
-	 * TODO:
-	 **/
+   /**
+    * 1: notify client the all the services are done
+    ** TODO:
+    **/
 
 	require (barber != NULL, "barber argument required");
 
@@ -367,11 +367,11 @@ static void release_client(Barber* barber)
 
 static void done(Barber* barber)
 {
-	/**
-	 * 1: set the barber state to DONE
-	 * TODO:
-	 **/
-	require (barber != NULL, "barber argument required");
+   /**
+    * 1: set the barber state to DONE
+    ** TODO:
+    **/
+   require (barber != NULL, "barber argument required");
 
 	barber->state = DONE;
 
