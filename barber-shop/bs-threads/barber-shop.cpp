@@ -389,11 +389,11 @@ int greet_barber(BarberShop* shop, int clientID)
 	require (shop != NULL, "shop argument required");
 	require (clientID > 0, concat_3str("invalid client id (", int2str(clientID), ")"));
 
-	while (no_message_available(&(shop->commLine), clientID)){
-		cond_wait(&shop->messageAvailable, &shop->communicationLineMutex);
-	}
+//	while (no_message_available(&(shop->commLine), clientID)){
+//		cond_wait(&shop->messageAvailable, &shop->communicationLineMutex);
+//	}
 
-	Message message = read_message(&(shop->commLine), clientID);
+	Message message = read_message(&(shop->commLine), clientID, shop->messagesMutex[clientID], shop->messageAvailable[clientID]);
 	int barberID = message.service.barberID;
 
 	//printf("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC\n");
