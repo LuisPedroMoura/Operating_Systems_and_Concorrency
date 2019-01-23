@@ -47,12 +47,14 @@ typedef struct _BarberShop_
    int logId;
    char* internal;
 
+
    // Barber Shop Mutex and cond
    pthread_mutex_t barberShopMutex = PTHREAD_MUTEX_INITIALIZER;
    pthread_cond_t clientLeft = PTHREAD_COND_INITIALIZER;
    pthread_cond_t closeShop = PTHREAD_COND_INITIALIZER;
 
-   //pthread_cond_t messageAvailable[global->MAX_CLIENTS];
+   pthread_mutex_t messagesMutex[MAX_CLIENTS];
+   pthread_cond_t messageAvailable[MAX_CLIENTS];
 
    // barber Bench mutex and cond
    pthread_mutex_t barberBenchMutex = PTHREAD_MUTEX_INITIALIZER;
