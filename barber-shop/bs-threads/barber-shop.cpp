@@ -283,7 +283,7 @@ Service wait_service_from_barber(BarberShop* shop, int clientID)
 	require (shop != NULL, "shop argument required");
 	require (clientID > 0, concat_3str("invalid barber id (", int2str(clientID), ")"));
 
-	Message message = read_message(&(shop->commLine), clientID);
+	Message message = read_message(&shop->commLine, clientID, &shop->messagesMutex[clientID], &shop->messageAvailable[clientID]);
 	Service service = message.service;
 
 	return service;
@@ -343,6 +343,8 @@ void leave_barber_shop(BarberShop* shop, int clientID)
 	 * Function called from a client when leaving the barbershop
 	 **/
 
+	mutex_lock(&shop->shopFloorMutex);
+
 	require (shop != NULL, "shop argument required");
 	require (clientID > 0, concat_3str("invalid client id (", int2str(clientID), ")"));
 	require (is_client_inside(shop, clientID), concat_3str("client ", int2str(clientID), " already inside barber shop"));
@@ -354,6 +356,8 @@ void leave_barber_shop(BarberShop* shop, int clientID)
 	check (shop->clientsInside[i] == clientID, "");
 	for(; i < shop->numClientsInside; i++)
 		shop->clientsInside[i] = shop->clientsInside[i+1];
+
+	mutex_unlock(&shop->shopFloorMutex);
 }
 
 void receive_and_greet_client(BarberShop* shop, int barberID, int clientID)
@@ -385,7 +389,6 @@ int greet_barber(BarberShop* shop, int clientID)
 	 * TODO:
 	 **/
 
-	//printf("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC\n");
 	require (shop != NULL, "shop argument required");
 	require (clientID > 0, concat_3str("invalid client id (", int2str(clientID), ")"));
 
@@ -393,10 +396,9 @@ int greet_barber(BarberShop* shop, int clientID)
 //		cond_wait(&shop->messageAvailable, &shop->communicationLineMutex);
 //	}
 
-	Message message = read_message(&(shop->commLine), clientID, shop->messagesMutex[clientID], shop->messageAvailable[clientID]);
+	Message message = read_message(&(shop->commLine), clientID, &shop->messagesMutex[clientID], &shop->messageAvailable[clientID]);
 	int barberID = message.service.barberID;
 
-	//printf("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC\n");
 	return barberID;
 }
 
