@@ -116,8 +116,6 @@ int complete_barber_chair(BarberChair* chair)
 {
    require (chair != NULL, "chair argument required");
 
-   printf("\n\n\n client: %d barber: %d\n\n\n",chair->clientID, chair->barberID);
-
    int res = chair->barberID > 0 && chair->clientID > 0;
    return res;
 }

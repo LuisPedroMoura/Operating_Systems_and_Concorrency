@@ -19,17 +19,18 @@
 static int shmid = 74;
 static BCInterface * bcinterfaces;
 
-const long key = 0x2096L;
+const long key = 0x20B2L;
 
 enum BCState
 {
    NO_BARBER_GREET,           //barber has yet to receive and greet the client
    GREET_AVAILABLE,	      //client can get barberID
    WAITING_ON_RESERVE,        //client waiting until the barber has reserved the seat for the process
-   WAITING_ON_PROCESS_START,  //client waiting until the process starts (barber has all the needed tools)
+   RESERVED,                  //chair reserved
+   SERVICE_INFO_AVAILABLE,    //client has been informed
    WAITING_ON_CLIENT_SIT,     //barber waiting on client to sit
    CLIENT_SEATED,	      //client has sat down
-   PROCESSING,                //process running
+   PROCESSING,		      //process started
    WAITING_ON_CLIENT_RISE,    //barber waiting for client to leave the spot
    CLIENT_RISEN,              //client left the spot
    PROCESS_DONE,              //process has finished
@@ -324,13 +325,8 @@ Service wait_service_from_barber(BarberShop* shop, int barberID)
 
    require (shop != NULL, "shop argument required");
    require (barberID > 0, concat_3str("invalid barber id (", int2str(barberID), ")"));
-   
-   //WARNING
-   //while(get_interface_state(shop,barberID) == WAITING_ON_RESERVE);
-   //Service res = *(get_interface_service(shop,barberID));
-   //return res;
 
-   while(bci_get_state(barberID) == WAITING_ON_RESERVE);
+   while(bci_get_state(barberID) < SERVICE_INFO_AVAILABLE);
 
    Service tmp_servicerin;
    bci_get_service_by_barberID(barberID,&tmp_servicerin);
@@ -348,7 +344,7 @@ void inform_client_on_service(BarberShop* shop, Service service)
    Service* tmp_serv = &service;
 
    bci_set_service(tmp_serv->barberID,service);
-   bci_set_state(tmp_serv->barberID,WAITING_ON_PROCESS_START);
+   bci_set_state(tmp_serv->barberID,SERVICE_INFO_AVAILABLE);
 }
 
 void client_done(BarberShop* shop, int clientID)
