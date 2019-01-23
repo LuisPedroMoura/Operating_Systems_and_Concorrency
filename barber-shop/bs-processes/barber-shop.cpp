@@ -19,17 +19,17 @@
 static int shmid = 74;
 static BCInterface * bcinterfaces;
 
-const long key = 0x2096L;
+const long key = 0x20A1L;
 
 enum BCState
 {
    NO_BARBER_GREET,           //barber has yet to receive and greet the client
    GREET_AVAILABLE,	      //client can get barberID
    WAITING_ON_RESERVE,        //client waiting until the barber has reserved the seat for the process
+   RESERVED,                  //chair reserved
    WAITING_ON_PROCESS_START,  //client waiting until the process starts (barber has all the needed tools)
    WAITING_ON_CLIENT_SIT,     //barber waiting on client to sit
    CLIENT_SEATED,	      //client has sat down
-   PROCESSING,                //process running
    WAITING_ON_CLIENT_RISE,    //barber waiting for client to leave the spot
    CLIENT_RISEN,              //client left the spot
    PROCESS_DONE,              //process has finished
