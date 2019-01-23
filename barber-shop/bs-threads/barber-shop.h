@@ -50,9 +50,12 @@ typedef struct _BarberShop_
 
    // Barber Shop Mutex and cond
    pthread_mutex_t barberShopMutex = PTHREAD_MUTEX_INITIALIZER;
+   pthread_mutex_t shopFloorMutex = PTHREAD_MUTEX_INITIALIZER;
+
    pthread_cond_t clientLeft = PTHREAD_COND_INITIALIZER;
    pthread_cond_t closeShop = PTHREAD_COND_INITIALIZER;
 
+   // Communications Line mutex and cond
    pthread_mutex_t messagesMutex[MAX_CLIENTS];
    pthread_cond_t messageAvailable[MAX_CLIENTS];
 
@@ -68,11 +71,6 @@ typedef struct _BarberShop_
    pthread_cond_t clientWaiting = PTHREAD_COND_INITIALIZER;
    pthread_cond_t clientReady = PTHREAD_COND_INITIALIZER;
    pthread_cond_t clientSeatAvailable = PTHREAD_COND_INITIALIZER;
-
-   // Communication Line mutex and cond
-   pthread_mutex_t communicationLineMutex = PTHREAD_MUTEX_INITIALIZER;
-   pthread_cond_t messageAvailable = PTHREAD_COND_INITIALIZER;
-   pthread_cond_t messageWasRead = PTHREAD_COND_INITIALIZER;
 
    // BarberChair mutex and cond
    pthread_mutex_t barberChairMutex = PTHREAD_MUTEX_INITIALIZER;
