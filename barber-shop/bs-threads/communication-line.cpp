@@ -19,7 +19,7 @@ Message empty_message(int clientID)
 
 int is_empty(Message message)
 {
-	require (&message != NULL , "message argument required");
+//	require (message != NULL , "message argument required");
 	return message.newMessage == 0;
 }
 
@@ -33,7 +33,7 @@ void init_communication_line(CommunicationLine* commLine)
 
 Message write_message(Service service)
 {
-	require (&service != NULL , "service argument required");
+//	require (service != NULL , "service argument required");
 		
 	Message message;
 	message.service = service;
@@ -65,7 +65,7 @@ Message read_message(CommunicationLine* commLine, int clientID, pthread_mutex_t*
 void send_message(CommunicationLine* commLine, Message message, pthread_mutex_t* mutex, pthread_cond_t* messageAvailable)
 {
 	require (commLine != NULL , "commLine argument required");
-	require (&message != NULL , "message argument required");
+//	require (message != NULL , "message argument required");
 	require (message.service.clientID > 0, "Invalid clientID in message argument");
 	require (mutex != NULL, "mutex argument required");
 

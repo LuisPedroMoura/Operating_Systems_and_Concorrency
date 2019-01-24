@@ -382,7 +382,7 @@ void receive_and_greet_client(BarberShop* shop, int barberID, int clientID)
 	service.barberID = barberID;
 	service.clientID = clientID;
 	Message message = write_message(service);
-	send_message(&(shop->commLine), message, &shop->messagesMutex[clientID]);
+	send_message(&(shop->commLine), message, &shop->messagesMutex[clientID], &shop->messageAvailable[clientID]);
 }
 
 int greet_barber(BarberShop* shop, int clientID)

@@ -89,8 +89,11 @@ typedef struct _BarberShop_
    pthread_cond_t clientRoseFromWashbasin = PTHREAD_COND_INITIALIZER;
    pthread_cond_t clientSatInWashbasin = PTHREAD_COND_INITIALIZER;
 
-   // Washbasin mutex and cond
+   // ToolsPot mutex and cond
    pthread_mutex_t toolsPotMutex = PTHREAD_MUTEX_INITIALIZER;
+   pthread_cond_t availableScissor = PTHREAD_COND_INITIALIZER;
+   pthread_cond_t availableComb = PTHREAD_COND_INITIALIZER;
+   pthread_cond_t availableRazor = PTHREAD_COND_INITIALIZER;
 
    // Logger mutex and cond
    pthread_mutex_t loggerMutex = PTHREAD_MUTEX_INITIALIZER;

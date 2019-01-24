@@ -158,7 +158,7 @@ static void finish()
 
 
 
-   [term_logger();
+   term_logger();
 }
 
 static void initSimulation()
