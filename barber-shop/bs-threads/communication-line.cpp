@@ -74,7 +74,7 @@ void send_message(CommunicationLine* commLine, Message message, pthread_mutex_t*
 	commLine->commArray[message.service.clientID] = message;
 	cond_broadcast(messageAvailable);
 
-	mutex_lock(mutex);
+	mutex_unlock(mutex);
 }
 
 void delete_message(CommunicationLine* commLine, int clientID, pthread_mutex_t* mutex)
@@ -87,7 +87,7 @@ void delete_message(CommunicationLine* commLine, int clientID, pthread_mutex_t* 
 	
 	commLine->commArray[clientID] = nullMessage;
 	
-	mutex_lock(mutex);
+	mutex_unlock(mutex);
 }
 
 int no_message_available(CommunicationLine* commLine, int clientID)

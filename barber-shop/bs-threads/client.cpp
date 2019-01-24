@@ -234,6 +234,7 @@ static void select_requests(Client* client)
 	client->requests = res;
 
 	log_client(client);
+	//printf("--------------------------------------------CLIENT LIFE - SELECT_REQUESTS\n");
 }
 
 static void wait_its_turn(Client* client)
@@ -260,6 +261,7 @@ static void wait_its_turn(Client* client)
 	cond_broadcast(&client->shop->clientWaiting);
 
 	int barberId = greet_barber(client->shop, client->id);
+
 	client->barberID = barberId;
 	//printf("--------------------------------------------CLIENT LIFE - WAIT ITS TURN\n");
 	log_client(client);
@@ -343,12 +345,8 @@ static void wait_all_services_done(Client* client)
 			update_client_with_service(client, service);
 
 			mutex_lock(&client->shop->barberChairMutex);
-			BarberChair* chair;
-			if (client->requests & HAIRCUT_REQ){
-				cond_broadcast(&client->shop->clientReadyForShave);
-			}
-			else{
-				chair = client->shop->barberChair+service.pos;
+			BarberChair* chair = client->shop->barberChair+service.pos;
+			if (!(client->requests & HAIRCUT_REQ)){
 				sit_in_barber_chair(chair, client->id);
 				cond_broadcast(&client->shop->clientSatInBarberChair);
 			}
@@ -356,7 +354,6 @@ static void wait_all_services_done(Client* client)
 			while(!barber_chair_service_finished(chair)){
 				cond_wait(&client->shop->barberChairServiceFinished, &client->shop->barberChairMutex);
 			}
-
 			rise_from_barber_chair(chair, client->id);
 			mutex_unlock(&client->shop->barberChairMutex);
 			cond_broadcast(&client->shop->clientRoseFromBarberChair);
