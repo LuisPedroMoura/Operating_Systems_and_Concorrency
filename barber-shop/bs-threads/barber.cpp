@@ -196,7 +196,6 @@ static void wait_for_client(Barber* barber)
 		cond_wait(&barber->shop->clientWaiting, &barber->shop->clientBenchMutex);
 	}
 	RQItem requests = next_client_in_benches(&(barber->shop->clientBenches));
-	if (request)
 	mutex_unlock(&barber->shop->clientBenchMutex);
 
 

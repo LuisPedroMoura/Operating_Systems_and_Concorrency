@@ -66,6 +66,13 @@ void init_washbasin(Washbasin* basin, int id, int line, int column)
    }
 
    basin->logId = register_logger(buf, line ,column , num_lines_washbasin(), num_columns_washbasin(), translations);
+
+   basin->washbasinMutex = PTHREAD_MUTEX_INITIALIZER;//PTHREAD_MUTEX_ERRORCHECK;
+   basin->washbasinAvailable = PTHREAD_COND_INITIALIZER;
+   basin->washbasinServiceFinished = PTHREAD_COND_INITIALIZER;
+   basin->clientRoseFromWashbasin = PTHREAD_COND_INITIALIZER;
+   basin->clientSatInWashbasin = PTHREAD_COND_INITIALIZER;
+
 }
 
 void term_washbasin(Washbasin* basin)
@@ -206,9 +213,49 @@ void set_completion_washbasin(Washbasin* basin, int completionPercentage)
 {
    require (basin != NULL, "basin argument required");
    require (completionPercentage >= 0 && completionPercentage <= 100, concat_3str("invalid percentage (", int2str(completionPercentage), ")"));
+
+  
+   mutex_lock(&basin->washbasinMutex);
+   
    require (complete_washbasin(basin), "washbasin is not complete");
 
    basin->completionPercentage = completionPercentage;
    log_washbasin(basin);
+
+   if(completionPercentage==100){
+      cond_broadcast(&basin->washbasinServiceFinished);
+   }
+   mutex_lock(&basin->washbasinMutex);
 }
 
+
+//barber 570
+void wait_for_client_to_sit_in_washbasin(Washbasin* basin)
+{
+   require (basin != NULL, "basin argument required");
+  
+   mutex_lock(&basin->washbasinMutex);
+	while(!washbasin_with_a_client(basin)){
+		cond_wait(&basin->clientSatInWashbasin, &basin->washbasinMutex);
+	}
+	mutex_unlock(&basin->washbasinMutex);
+
+}
+
+//barber 590
+//set_completion_washbasin(washbasin(barber->shop, barber->basinPosition), complete);
+
+//barber 597
+void release_washbasin_from_barber(Washbasin* basin, int barberID)
+{
+   require (basin != NULL, "basin argument required");
+   require (barberID > 0, concat_3str("invalid client id (", int2str(barberID), ")"));
+   
+   mutex_lock(&basin->washbasinMutex);
+	while (washbasin_with_a_client(basin)){
+		cond_wait(&basin->clientRoseFromWashbasin, &basin->washbasinMutex);
+	}
+	release_washbasin(basin, barberID);
+	mutex_unlock(&basin->washbasinMutex);
+	cond_broadcast(&basin->washbasinAvailable);
+}
