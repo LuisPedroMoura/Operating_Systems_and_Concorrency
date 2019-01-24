@@ -316,6 +316,13 @@ void client_done(BarberShop* shop, int clientID)
 	send_message(&(shop->commLine), message, &shop->messagesMutex[clientID], &shop->messageAvailable[clientID]);
 }
 
+void wait_for_available_seat_in_client_bench(BarberShop* shop)
+{
+	require (shop != NULL, "shop argument required");
+
+	wait_for_available_seat(&shop->clientBenches);
+}
+
 int enter_barber_shop(BarberShop* shop, int clientID, int request)
 {
 	/**
@@ -326,19 +333,17 @@ int enter_barber_shop(BarberShop* shop, int clientID, int request)
 	require (shop != NULL, "shop argument required");
 	require (clientID > 0, concat_3str("invalid client id (", int2str(clientID), ")"));
 	require (request > 0 && request < 8, concat_3str("invalid request (", int2str(request), ")"));
-
-	mutex_lock(&shop->clientBenchMutex);
 	require (num_available_benches_seats(client_benches(shop)) > 0, "empty seat not available in client benches");
-	mutex_unlock(&shop->clientBenchMutex);
 
 	mutex_lock(&shop->shopFloorMutex);
 	require (!is_client_inside(shop, clientID), concat_3str("client ", int2str(clientID), " already inside barber shop"));
 	mutex_unlock(&shop->shopFloorMutex);
 
-	mutex_lock(&shop->clientBenchMutex);
 	int res = random_sit_in_client_benches(&shop->clientBenches, clientID, request);
+
+	mutex_lock(&shop->shopFloorMutex);
 	shop->clientsInside[shop->numClientsInside++] = clientID;
-	mutex_unlock(&shop->clientBenchMutex);
+	mutex_unlock(&shop->shopFloorMutex);
 
 	return res;
 }
