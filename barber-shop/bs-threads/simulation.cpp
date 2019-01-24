@@ -129,12 +129,20 @@ static void go()
 		}
 	}
 
+	mutex_lock(&shop->shopFloorMutex);
 	close_shop(shop);
+//	while(num_seats_available_barber_bench(&shop->barberBench) != 0){
+//		cond_wait(&shop->closeShop, &shop->shopFloorMutex);
+//	}
+	mutex_unlock(&shop->shopFloorMutex);
+	cond_broadcast(&shop->clientWaiting);
+
 //	printf("--------------------------------------------SIMULATION - CLOSED THE SHOP\n");
 
 	for (int i = 0; i < global->NUM_BARBERS; i++)
 	{
-//		printf("--------------------------------------------SIMULATION - JOINING BARBER\n");
+		//cond_broadcast(&shop->clientWaiting);
+		//printf("--------------------------------------------SIMULATION - JOINING BARBER\n");
 		if (pthread_join(bthr[i], NULL) != 0)
 		{
 			fprintf(stderr, "barber %d\n", i);
