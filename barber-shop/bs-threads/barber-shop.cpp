@@ -299,9 +299,8 @@ void inform_client_on_service(BarberShop* shop, Service service)
 	require (shop != NULL, "shop argument required");
 	require (service.barberChair || service.washbasin, "only one request per service can be active");
 
-	Message message = write_message(service, &shop->messagesMutex[service.clientID]);
+	Message message = write_message(service);
 	send_message(&(shop->commLine), message, &shop->messagesMutex[service.clientID], &shop->messageAvailable[service.clientID]);
-	cond_signal(&shop->messageAvailable);
 }
 
 void client_done(BarberShop* shop, int clientID)
@@ -313,10 +312,8 @@ void client_done(BarberShop* shop, int clientID)
 	require (shop != NULL, "shop argument required");
 	require (clientID > 0, concat_3str("invalid client id (", int2str(clientID), ")"));
 
-
-	Message message = empty_message(clientID, &shop->messagesMutex[clientID]);
+	Message message = empty_message(clientID);
 	send_message(&(shop->commLine), message, &shop->messagesMutex[clientID], &shop->messageAvailable[clientID]);
-	//cond_signal(&shop->messageAvailable);
 }
 
 int enter_barber_shop(BarberShop* shop, int clientID, int request)
@@ -329,11 +326,20 @@ int enter_barber_shop(BarberShop* shop, int clientID, int request)
 	require (shop != NULL, "shop argument required");
 	require (clientID > 0, concat_3str("invalid client id (", int2str(clientID), ")"));
 	require (request > 0 && request < 8, concat_3str("invalid request (", int2str(request), ")"));
-	require (num_available_benches_seats(client_benches(shop)) > 0, "empty seat not available in client benches");
-	require (!is_client_inside(shop, clientID), concat_3str("client ", int2str(clientID), " already inside barber shop"));
 
+	mutex_lock(&shop->clientBenchMutex);
+	require (num_available_benches_seats(client_benches(shop)) > 0, "empty seat not available in client benches");
+	mutex_unlock(&shop->clientBenchMutex);
+
+	mutex_lock(&shop->shopFloorMutex);
+	require (!is_client_inside(shop, clientID), concat_3str("client ", int2str(clientID), " already inside barber shop"));
+	mutex_unlock(&shop->shopFloorMutex);
+
+	mutex_lock(&shop->clientBenchMutex);
 	int res = random_sit_in_client_benches(&shop->clientBenches, clientID, request);
 	shop->clientsInside[shop->numClientsInside++] = clientID;
+	mutex_unlock(&shop->clientBenchMutex);
+
 	return res;
 }
 
@@ -343,10 +349,10 @@ void leave_barber_shop(BarberShop* shop, int clientID)
 	 * Function called from a client when leaving the barbershop
 	 **/
 
-	mutex_lock(&shop->shopFloorMutex);
-
 	require (shop != NULL, "shop argument required");
 	require (clientID > 0, concat_3str("invalid client id (", int2str(clientID), ")"));
+
+	mutex_lock(&shop->shopFloorMutex);
 	require (is_client_inside(shop, clientID), concat_3str("client ", int2str(clientID), " already inside barber shop"));
 
 	int i;
@@ -372,14 +378,11 @@ void receive_and_greet_client(BarberShop* shop, int barberID, int clientID)
 	require (barberID > 0, concat_3str("invalid barber id (", int2str(barberID), ")"));
 	require (clientID > 0, concat_3str("invalid client id (", int2str(clientID), ")"));
 
-
 	Service service;
 	service.barberID = barberID;
 	service.clientID = clientID;
 	Message message = write_message(service);
 	send_message(&(shop->commLine), message, &shop->messagesMutex[clientID]);
-	cond_signal(&shop->messageAvailable[clientID]);
-
 }
 
 int greet_barber(BarberShop* shop, int clientID)
@@ -391,10 +394,6 @@ int greet_barber(BarberShop* shop, int clientID)
 
 	require (shop != NULL, "shop argument required");
 	require (clientID > 0, concat_3str("invalid client id (", int2str(clientID), ")"));
-
-//	while (no_message_available(&(shop->commLine), clientID)){
-//		cond_wait(&shop->messageAvailable, &shop->communicationLineMutex);
-//	}
 
 	Message message = read_message(&(shop->commLine), clientID, &shop->messagesMutex[clientID], &shop->messageAvailable[clientID]);
 	int barberID = message.service.barberID;

@@ -118,7 +118,9 @@ void log_client(Client* client)
 	require (client != NULL, "client argument required");
 
 	spend(random_int(global->MIN_VITALITY_TIME_UNITS, global->MAX_VITALITY_TIME_UNITS));
+	mutex_lock(&client->shop->loggerMutex);
 	send_log(client->logId, to_string_client(client));
+	mutex_unlock(&client->shop->loggerMutex);
 }
 
 void* main_client(void* args)
@@ -135,7 +137,6 @@ static void life(Client* client)
 
 	int i = 0;
 	notify_client_birth(client);
-	//printf("++++++++++++++++++++++++++++++CLIENT IS BORN, comes %d\n", client->num_trips_to_barber);
 	while(i < client->num_trips_to_barber)
 	{
 		wandering_outside(client);
@@ -148,7 +149,6 @@ static void life(Client* client)
 			i++;
 		}
 	}
-	//printf("+++++++++++++++++++++++++++++CLIENT DIES! MUAHAHAH\n");
 	notify_client_death(client);
 }
 
@@ -170,8 +170,6 @@ static void notify_client_death(Client* client)
 	 **/
 
 	require (client != NULL, "client argument required");
-
-	term_client(client);
 
 	log_client(client);
 }
@@ -205,12 +203,13 @@ static int vacancy_in_barber_shop(Client* client)
 
 	client->state = WAITING_BARBERSHOP_VACANCY;
 
-	int res = 0;
-	res = num_available_benches_seats(&(client->shop->clientBenches)); // any value greater than 0 is True
+	mutex_lock(&client->shop->clientBenchMutex);
+	int numSeats = num_available_benches_seats(&(client->shop->clientBenches)); // any value greater than 0 is True
+	mutex_unlock(&client->shop->clientBenchMutex);
 
 	log_client(client);
 
-	return res;
+	return numSeats;
 }
 
 static void select_requests(Client* client)
@@ -250,28 +249,19 @@ static void wait_its_turn(Client* client)
 
 	client->state = WAITING_ITS_TURN;
 
-	// enter barbershop (if necessary waiting for an empty seat)
 	mutex_lock(&client->shop->clientBenchMutex);
-
 	while(num_available_benches_seats(&(client->shop->clientBenches)) == 0){
 		cond_wait(&client->shop->clientSeatAvailable, &client->shop->clientBenchMutex);
 	}
-
-	int clientSeat = enter_barber_shop(client->shop, client->id, client->requests);
-
 	mutex_unlock(&client->shop->clientBenchMutex);
 
+	int clientSeat = enter_barber_shop(client->shop, client->id, client->requests);
 	client->benchesPosition = clientSeat;
 	cond_signal(&client->shop->clientWaiting);
 
-	// "handshake" with assigned barber (greet_barber)
-//	while(no_message_available(&(client->shop->commLine), &client->shop->messagesMutex[client->id],client->id)){
-//		cond_wait(&client->shop->messageAvailable[client->id], &client->shop->barberShopMutex);
-//	}
-	int barberId;
-	barberId = greet_barber(client->shop, client->id);
-	client->barberID = barberId;
 
+	int barberId = greet_barber(client->shop, client->id);
+	client->barberID = barberId;
 	//printf("--------------------------------------------CLIENT LIFE - WAIT ITS TURN\n");
 	log_client(client);
 }
@@ -284,19 +274,17 @@ static void rise_from_client_benches(Client* client)
 	 **/
 
 	require (client != NULL, "client argument required");
-	require (seated_in_client_benches(client_benches(client->shop), client->id), concat_3str("client ",int2str(client->id)," not seated in benches"));
 
 	mutex_lock(&client->shop->clientBenchMutex);
+	require (seated_in_client_benches(client_benches(client->shop), client->id), concat_3str("client ",int2str(client->id)," not seated in benches"));
 
 	rise_client_benches(&(client->shop->clientBenches) , client->benchesPosition, client->id);
-
 	cond_signal(&client->shop->clientSeatAvailable);
 	mutex_unlock(&client->shop->clientBenchMutex);
 
 	client->benchesPosition = -1;
 	client->chairPosition = -1;
 	client->basinPosition = -1;
-
 	//printf("--------------------------------------------CLIENT LIFE - RISE FROM CLIENT BENCH\n");
 	log_client(client);
 }
@@ -320,15 +308,9 @@ static void wait_all_services_done(Client* client)
 
 	while (client->state != DONE)
 	{
-		/* Waiting for service */
-		//printf("--------------------------client - in waiting service\n");
+
 		client->state = WAITING_SERVICE;
-//		while(no_message_available(&client->shop->commLine, client->id)){
-//			cond_wait(&client->shop->messageAvailable[client->id], &client->shop->barberShopMutex);
-//		}
-		//printf("--------------------------client - got message, will act\n");
 		Service service = wait_service_from_barber(client->shop, client->id);
-		//printf("service %d\n", service.request);
 		client->state = WAITING_SERVICE_START;
 
 		/* Request to cut hair OR Resquest to shave*/
@@ -354,12 +336,12 @@ static void wait_all_services_done(Client* client)
 			mutex_unlock(&client->shop->barberChairMutex);
 
 			client->shop->barberChair[client->chairPosition].completionPercentage = 0;
-			//printf("--------------------------client - had haircut\n");
+
 			log_client(client);
 		}
 
 		else if (service.request == SHAVE_REQ){
-			//printf("--------------------------client - gonna have a shave\n");
+
 			update_client_with_service(client, service);
 
 			mutex_lock(&client->shop->barberChairMutex);
@@ -384,7 +366,7 @@ static void wait_all_services_done(Client* client)
 			mutex_lock(&client->shop->barberChairMutex);
 
 			client->chairPosition = -1;
-			//printf("--------------------------client - had a shave\n");
+
 			log_client(client);
 		}
 
@@ -405,12 +387,11 @@ static void wait_all_services_done(Client* client)
 			rise_from_washbasin(basin, client->id);
 			cond_signal(&client->shop->clientRoseFromWashbasin);
 			mutex_unlock(&client->shop->washbasinMutex);
-			//printf("--------------------------client - had a wash\n");
+
 			log_client(client);
 		}
 
 		else {
-			//printf("--------------------------client - got informed he may leave\n");
 			update_client_with_service(client, service);
 		}
 
@@ -418,9 +399,8 @@ static void wait_all_services_done(Client* client)
 
 	leave_barber_shop(client->shop, client->id);
 	cond_signal(&client->shop->clientLeft);
-
 	//printf("--------------------------------------------CLIENT LIFE - WAIT ALL SERVICES DONE\n");
-	log_client(client); // more than one in proper places!!!
+	log_client(client);
 }
 
 static void update_client_with_service(Client* client, Service service)

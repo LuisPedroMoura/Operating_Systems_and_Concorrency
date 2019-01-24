@@ -79,12 +79,11 @@ typedef struct _BarberShop_
    pthread_cond_t barberChairServiceFinished = PTHREAD_COND_INITIALIZER;
    pthread_cond_t clientRoseFromBarberChair = PTHREAD_COND_INITIALIZER;
    pthread_cond_t clientSatInBarberChair = PTHREAD_COND_INITIALIZER;
-   //pthread_cond_t clientReadyForShave = PTHREAD_COND_INITIALIZER;
+   pthread_cond_t clientReadyForShave = PTHREAD_COND_INITIALIZER;
 
    // Washbasin mutex and cond
    pthread_mutex_t washbasinMutex = PTHREAD_MUTEX_INITIALIZER;
 
-   pthread_cond_t barberChairAvailable = PTHREAD_COND_INITIALIZER;
    pthread_cond_t washbasinAvailable = PTHREAD_COND_INITIALIZER;
    pthread_cond_t washbasinServiceFinished = PTHREAD_COND_INITIALIZER;
    pthread_cond_t clientRoseFromWashbasin = PTHREAD_COND_INITIALIZER;
@@ -92,6 +91,9 @@ typedef struct _BarberShop_
 
    // Washbasin mutex and cond
    pthread_mutex_t toolsPotMutex = PTHREAD_MUTEX_INITIALIZER;
+
+   // Logger mutex and cond
+   pthread_mutex_t loggerMutex = PTHREAD_MUTEX_INITIALIZER;
 
 } BarberShop;
 
