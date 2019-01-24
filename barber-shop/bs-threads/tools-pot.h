@@ -14,6 +14,13 @@ typedef struct _ToolsPot_
    int availRazors;
    int logId;
    char* internal;
+
+   // ToolsPot mutex and cond
+   pthread_mutex_t toolsPotMutex = PTHREAD_MUTEX_INITIALIZER;
+   pthread_cond_t availableScissor = PTHREAD_COND_INITIALIZER;
+   pthread_cond_t availableComb = PTHREAD_COND_INITIALIZER;
+   pthread_cond_t availableRazor = PTHREAD_COND_INITIALIZER;
+
 } ToolsPot;
 
 int num_lines_tools_pot();
