@@ -22,6 +22,15 @@ typedef struct _Washbasin_
    pthread_cond_t washbasinServiceFinished;
    pthread_cond_t clientRoseFromWashbasin;
    pthread_cond_t clientSatInWashbasin;
+   
+   /* cond variables */
+   pthread_cond_t availableWashbasin[MAX_WASHBASINS];
+
+   /* mutex to cond variables */
+   pthread_mutex_t washbasinMutex[MAX_WASHBASINS];
+
+   /* Semaphore washbasin*/
+   sem_t accessWashbasin;
 
 } Washbasin;
 

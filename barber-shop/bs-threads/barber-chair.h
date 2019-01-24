@@ -16,6 +16,16 @@ typedef struct _BarberChair_
    int completionPercentage; // [0;100]
    int logId;
    char* internal;
+
+   /* condition variables */
+   pthread_cond_t availableBarberChair[MAX_BARBER_CHAIRS];
+
+   /* mutex in order to access cond var*/
+   pthread_mutex_t barberChairMutex[MAX_BARBER_CHAIRS];
+
+   /* Semaphore barber chair */
+   sem_t accessBarberChair;
+
 } BarberChair;
 
 // tools mask:

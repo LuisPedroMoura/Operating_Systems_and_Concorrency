@@ -203,9 +203,7 @@ static int vacancy_in_barber_shop(Client* client)
 
 	client->state = WAITING_BARBERSHOP_VACANCY;
 
-	mutex_lock(&client->shop->clientBenchMutex);
-	int numSeats = num_available_benches_seats(&(client->shop->clientBenches)); // any value greater than 0 is True
-	mutex_unlock(&client->shop->clientBenchMutex);
+	int numSeats = num_available_benches_seats(&(client->shop->clientBenches));
 
 	log_client(client);
 
@@ -250,18 +248,12 @@ static void wait_its_turn(Client* client)
 
 	client->state = WAITING_ITS_TURN;
 
-	mutex_lock(&client->shop->clientBenchMutex);
-	while(num_available_benches_seats(&(client->shop->clientBenches)) == 0){
-		cond_wait(&client->shop->clientSeatAvailable, &client->shop->clientBenchMutex);
-	}
-	mutex_unlock(&client->shop->clientBenchMutex);
+	wait_for_available_seat_in_client_bench(client->shop);
 
 	int clientSeat = enter_barber_shop(client->shop, client->id, client->requests);
 	client->benchesPosition = clientSeat;
-	cond_broadcast(&client->shop->clientWaiting);
 
 	int barberId = greet_barber(client->shop, client->id);
-
 	client->barberID = barberId;
 	//printf("--------------------------------------------CLIENT LIFE - WAIT ITS TURN\n");
 	log_client(client);
@@ -275,13 +267,9 @@ static void rise_from_client_benches(Client* client)
 	 **/
 
 	require (client != NULL, "client argument required");
-
-	mutex_lock(&client->shop->clientBenchMutex);
 	require (seated_in_client_benches(client_benches(client->shop), client->id), concat_3str("client ",int2str(client->id)," not seated in benches"));
 
 	rise_client_benches(&(client->shop->clientBenches) , client->benchesPosition, client->id);
-	mutex_unlock(&client->shop->clientBenchMutex);
-	cond_broadcast(&client->shop->clientSeatAvailable);
 
 	client->benchesPosition = -1;
 	client->chairPosition = -1;

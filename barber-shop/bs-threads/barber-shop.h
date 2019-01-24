@@ -63,12 +63,12 @@ typedef struct _BarberShop_
    pthread_cond_t barberBenchNotFull = PTHREAD_COND_INITIALIZER;
    pthread_cond_t barberBenchNotEmpty = PTHREAD_COND_INITIALIZER;
 
-   // client Bench mutex and cond
-   pthread_mutex_t clientBenchMutex = PTHREAD_MUTEX_INITIALIZER;
-
-   pthread_cond_t clientWaiting = PTHREAD_COND_INITIALIZER;
-   pthread_cond_t clientReady = PTHREAD_COND_INITIALIZER;
-   pthread_cond_t clientSeatAvailable = PTHREAD_COND_INITIALIZER;
+//   // client Bench mutex and cond
+//   pthread_mutex_t clientBenchMutex = PTHREAD_MUTEX_INITIALIZER;
+//
+//   pthread_cond_t clientWaiting = PTHREAD_COND_INITIALIZER;
+//   pthread_cond_t clientReady = PTHREAD_COND_INITIALIZER;
+//   pthread_cond_t clientSeatAvailable = PTHREAD_COND_INITIALIZER;
 
    // BarberChair mutex and cond
    pthread_mutex_t barberChairMutex = PTHREAD_MUTEX_INITIALIZER;
@@ -117,6 +117,8 @@ ToolsPot* tools_pot(BarberShop* shop);
 Washbasin* washbasin(BarberShop* shop, int pos);
 BarberBench* barber_bench(BarberShop* shop);
 ClientBenches* client_benches(BarberShop* shop);
+
+void wait_for_available_seat_in_client_bench(BarberShop* shop);
 
 int num_available_barber_chairs(BarberShop* shop);
 int reserve_random_empty_barber_chair(BarberShop* shop, int barberID);
