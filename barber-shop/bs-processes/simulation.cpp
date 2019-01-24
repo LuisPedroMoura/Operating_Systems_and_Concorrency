@@ -21,12 +21,12 @@
 #include "barber.h"
 #include "client.h"
 #include "process.h"
+#include "barber-shop.h"
 
 //static sem_t sem_shop;
 //static sem_t sem_tools_box;
 //static sem_t sem_washbasin;
 //static sem_t sem_barber_chair;
-
 
 static BarberShop *shop;
 static Barber* allBarbers = NULL;
@@ -136,7 +136,7 @@ static void go()
       		if(global->NUM_CLIENTS > 1) pfork();
    	}
    }*/
-   
+
    pid_t x = pfork();
    if(x == 0) main_barber(allBarbers);
    else main_client(allClients);
@@ -147,6 +147,7 @@ static void go()
    //psem_unlink("sem_washbasin");
    //psem_unlink("sem_barber_chair");    
 
+   if(bci_get_numClientsThatLeft() == global->NUM_CLIENTS) close_shop(shop);
 }
 
 /**
@@ -160,7 +161,8 @@ static void finish()
    //psem_destroy(&sem_washbasin);
    //psem_destroy(&sem_barber_chair);
    term_logger();
-
+   term_client(allClients);
+   term_barber(allBarbers);
 }
 
 static void initSimulation()

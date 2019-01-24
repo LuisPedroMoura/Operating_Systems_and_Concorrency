@@ -139,7 +139,6 @@ void* main_barber(void* args)
    Barber* barber = (Barber*)args;
    require (barber != NULL, "barber argument required");
    life(barber);
-   bci_connect();
    return NULL;
 }
 
@@ -173,8 +172,14 @@ static void sit_in_barber_bench(Barber* barber)
 
    barber->benchPosition = random_sit_in_barber_bench(barber_bench(barber->shop),barber->id); 
    log_barber(barber);
-   
-   bci_set_state(barber->id,NO_BARBER_GREET);
+
+   //printf("\n\n\n\nBARBER: I PASSED HERE AND DIDNT CHANGE STATE\n\n\n\n");
+
+   //bci_set_state(barber->id,NO_BARBER_GREET);
+
+   //printf("\n\n\n\nBARBER: I PASSED HERE AND CHANGED STATE\n\n\n\n");
+
+   log_barber(barber);
 }
 
 static void wait_for_client(Barber* barber)
@@ -183,18 +188,23 @@ static void wait_for_client(Barber* barber)
     * 1: set the barber state to WAITING_CLIENTS
     * 2: get next client from client benches (if empty, wait) (also, it may be required to check for simulation termination)
     * 3: receive and greet client (receive its requested services, and give back the barber's id)
-    **/
+    **/ 
 
    require (barber != NULL, "barber argument required");
 
+   //printf("\n\n\n\nBARBER: I DIDNT GO WAITING\n\n\n\n"); 
+
    barber->state = WAITING_CLIENTS;
    log_barber(barber);
-	 
-   while(bci_get_num_clients_in_bench() == 0) {
-     spend(2*global->MAX_OUTSIDE_TIME_UNITS);
-     if(bci_get_num_clients_in_bench() == 0) close_shop(barber->shop);
-   }
-	 
+
+   //printf("\n\n\n\nBARBER: I WENT WAITING\n\n\n\n"); 
+
+   log_barber(barber);  
+
+   //if(bci_get_state(barber->id) == ALL_PROCESSES_DONE) { while(1) printf("\n\n\n\n HELLO \n\n\n\n"); }
+
+   while(bci_get_num_clients_in_bench() == 0);
+
    bci_get_syncBenches(client_benches(barber->shop));
 
    RQItem queue_item = next_client_in_benches(client_benches(barber->shop));
@@ -376,6 +386,7 @@ static void process_resquests_from_client(Barber* barber)
      bci_set_state(barber->id,WAITING_ON_CLIENT_RISE);
      while(bci_get_state(barber->id) < CLIENT_RISEN);
 	 
+     bci_did_request(barber->clientID);
      barber->state = DONE;
 
      if(barber->reqToDo == 1) {
@@ -418,10 +429,8 @@ static void process_resquests_from_client(Barber* barber)
      }
 
      log_barber(barber);
-	 	 
-     bci_did_request(barber->clientID);
 
-     //printf("\n\n\n\nBARBER: I PASSED HERE YO\n\n\n\n");
+     //printf("\n\n\n\nBARBER: I PASSED HERE 1\n\n\n\n");
 
      if(bci_get_request(barber->id) == 0) {
        bci_set_state(barber->id,ALL_PROCESSES_DONE);
@@ -429,6 +438,8 @@ static void process_resquests_from_client(Barber* barber)
      else {
        bci_set_state(barber->id,PROCESS_DONE);
      }
+
+     //printf("\n\n\n\nBARBER: I PASSED HERE 2\n\n\n\n");
    }
 
    log_barber(barber);

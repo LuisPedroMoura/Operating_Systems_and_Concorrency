@@ -33,7 +33,9 @@ typedef struct _BCInterface_
 
    Service service[MAX_BARBERS];
    int currentState[MAX_BARBERS];
-   int clientRequests[MAX_CLIENTS];   
+   int clientRequests[MAX_CLIENTS]; 
+
+   int numClientsThatLeft;  
 
 } BCInterface;
 
@@ -113,6 +115,7 @@ void bci_set_syncBenches(ClientBenches clientBenches);
 void bci_set_syncBBChair(BarberChair bbChair,int barberID);
 void bci_set_syncWashbasin(Washbasin basin, int barberID);
 void bci_set_request(int clientID,int request);
+void bci_client_left();
 void bci_open_shop();
 void bci_close_shop();
 void bci_did_request(int clientID);
@@ -133,6 +136,7 @@ void bci_get_syncWashbasin(Washbasin* basin, int barberID);
 int bci_get_request(int clientID);
 int bci_get_next_request(int clientID);
 int bci_get_shop_status();
+int bci_get_numClientsThatLeft();
 void bci_grant_client_access(int clientID);
 void bci_revoke_client_access(int clientID);
 
