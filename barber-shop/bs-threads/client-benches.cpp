@@ -1,9 +1,5 @@
 #include <stdlib.h>
-#include <sys/ioctl.h>
-#include <unistd.h>
 #include "dbc.h"
-#include "include/thread.h"
-#include "utils.h"
 #include "global.h"
 #include "utils.h"
 #include "box.h"
