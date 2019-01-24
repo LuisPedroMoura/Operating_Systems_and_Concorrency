@@ -62,7 +62,7 @@ Message read_message(CommunicationLine* commLine, int clientID, pthread_mutex_t*
 	return commLine->commArray[clientID];
 }
 
-void send_message(CommunicationLine* commLine, Message message, pthread_mutex_t* mutex)
+void send_message(CommunicationLine* commLine, Message message, pthread_mutex_t* mutex, pthread_cond_t* messageAvailable)
 {
 	require (commLine != NULL , "commLine argument required");
 	require (&message != NULL , "message argument required");
@@ -72,6 +72,7 @@ void send_message(CommunicationLine* commLine, Message message, pthread_mutex_t*
 	mutex_lock(mutex);
 	
 	commLine->commArray[message.service.clientID] = message;
+	cond_broadcast(messageAvailable);
 
 	mutex_lock(mutex);
 }
