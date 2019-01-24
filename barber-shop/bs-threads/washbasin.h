@@ -15,6 +15,16 @@ typedef struct _Washbasin_
    int completionPercentage; // [0;100]
    int logId;
    char* internal;
+
+   /* cond variables */
+   pthread_cond_t availableWashbasin[MAX_WASHBASINS];
+
+   /* mutex to cond variables */
+   pthread_mutex_t washbasinMutex[MAX_WASHBASINS];
+
+   /* Semaphore washbasin*/
+   sem_t accessWashbasin;
+
 } Washbasin;
 
 int num_lines_washbasin();

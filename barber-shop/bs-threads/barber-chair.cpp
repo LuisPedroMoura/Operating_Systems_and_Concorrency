@@ -35,6 +35,8 @@ void init_barber_chair(BarberChair* chair, int id, int line, int column)
    require (id > 0, concat_3str("invalid id (", int2str(id), ")"));
    require (line >= 0, concat_3str("Invalid line (", int2str(line), ")"));
    require (column >= 0, concat_3str("Invalid column (", int2str(column), ")"));
+   /* Barber chair semaphore init */
+   require(sem_init(&(chair->accessBarberChair),0, global->NUM_BARBER_CHAIRS) == 0, "Barber Chair semaphore init error");
 
    chair->id = id;
    chair->clientID = 0;
@@ -50,6 +52,19 @@ void init_barber_chair(BarberChair* chair, int id, int line, int column)
       RAZOR, (char*)"Razor",
       NULL
    };
+
+   /* Cond variables */
+   for (int i = 0 ; i < MAX_BARBER_CHAIRS; i++)
+   {
+      chair->availableBarberChair[i] = PTHREAD_COND_INITIALIZER;
+   }
+
+   /* BarberChair Mutex init */
+   for (int i = 0 ; i < MAX_BARBER_CHAIRS; i++)
+   {
+      chair->barberChairMutex[i] = PTHREAD_MUTEX_INITIALIZER;
+   }
+
    chair->logId = register_logger(buf, line ,column , num_lines_barber_chair(), num_columns_barber_chair(), translations);
 }
 

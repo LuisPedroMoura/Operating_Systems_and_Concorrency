@@ -37,6 +37,9 @@ void init_washbasin(Washbasin* basin, int id, int line, int column)
    require (id > 0, concat_3str("invalid id (", int2str(id), ")"));
    require (line >= 0, concat_3str("Invalid line (", int2str(line), ")"));
    require (column >= 0, concat_3str("Invalid column (", int2str(column), ")"));
+   
+   /* Washbasin semaphore init */
+   require(sem_init(&(basin->accessWashbasin),0, global->NUM_WASHBASINS) == 0, "Washbasin semaphore error"));
 
    basin->id = id;
    basin->clientID = 0;
@@ -49,6 +52,19 @@ void init_washbasin(Washbasin* basin, int id, int line, int column)
       SPLASH, (char*)"",
       NULL
    };
+
+   /* Cond variables init */
+   for (int i = 0 ; i < MAX_WASHBASINS ; i++)
+   {
+      basin->availableWashbasin[i] = PTHREAD_COND_INITIALIZER;
+   }
+
+   /* Washbasin mutex init */
+   for (int i = 0 ; i < MAX_WASHBASINS ; i++)
+   {
+      basin->washbasinMutex[i] = PTHREAD_MUTEX_INITIALIZER;
+   }
+
    basin->logId = register_logger(buf, line ,column , num_lines_washbasin(), num_columns_washbasin(), translations);
 }
 
