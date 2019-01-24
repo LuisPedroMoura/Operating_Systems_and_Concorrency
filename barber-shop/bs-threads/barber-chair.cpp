@@ -53,17 +53,17 @@ void init_barber_chair(BarberChair* chair, int id, int line, int column)
       NULL
    };
 
-   /* Cond variables */
-   for (int i = 0 ; i < MAX_BARBER_CHAIRS; i++)
-   {
-      chair->availableBarberChair[i] = PTHREAD_COND_INITIALIZER;
-   }
+   // /* Cond variables */
+   // for (int i = 0 ; i < MAX_BARBER_CHAIRS; i++)
+   // {
+   //    chair->availableBarberChair[i] = PTHREAD_COND_INITIALIZER;
+   // }
 
-   /* BarberChair Mutex init */
-   for (int i = 0 ; i < MAX_BARBER_CHAIRS; i++)
-   {
-      chair->barberChairMutex[i] = PTHREAD_MUTEX_INITIALIZER;
-   }
+   // /* BarberChair Mutex init */
+   // for (int i = 0 ; i < MAX_BARBER_CHAIRS; i++)
+   // {
+   //    chair->barberChairMutex[i] = PTHREAD_MUTEX_INITIALIZER;
+   // }
 
    chair->logId = register_logger(buf, line ,column , num_lines_barber_chair(), num_columns_barber_chair(), translations);
 }

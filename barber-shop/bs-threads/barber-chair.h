@@ -18,10 +18,20 @@ typedef struct _BarberChair_
    char* internal;
 
    /* condition variables */
-   pthread_cond_t availableBarberChair[MAX_BARBER_CHAIRS];
+   //pthread_cond_t availableBarberChair[MAX_BARBER_CHAIRS];
 
    /* mutex in order to access cond var*/
-   pthread_mutex_t barberChairMutex[MAX_BARBER_CHAIRS];
+   //pthread_mutex_t barberChairMutex[MAX_BARBER_CHAIRS];
+
+   // BarberChair mutex and cond 
+   pthread_mutex_t barberChairMutex = PTHREAD_MUTEX_INITIALIZER;
+
+   pthread_cond_t barberChairAvailable = PTHREAD_COND_INITIALIZER;
+   pthread_cond_t barberChairServiceFinished = PTHREAD_COND_INITIALIZER;
+   pthread_cond_t clientRoseFromBarberChair = PTHREAD_COND_INITIALIZER;
+   pthread_cond_t clientSatInBarberChair = PTHREAD_COND_INITIALIZER;
+   pthread_cond_t clientReadyForShave = PTHREAD_COND_INITIALIZER;
+   
 
    /* Semaphore barber chair */
    sem_t accessBarberChair;

@@ -16,18 +16,19 @@ typedef struct _Washbasin_
    int logId;
    char* internal;
 
-   pthread_mutex_t washbasinMutex;
+   // Washbasin mutex and cond
+   pthread_mutex_t washbasinMutex = PTHREAD_MUTEX_INITIALIZER;
 
-   pthread_cond_t washbasinAvailable;
-   pthread_cond_t washbasinServiceFinished;
-   pthread_cond_t clientRoseFromWashbasin;
-   pthread_cond_t clientSatInWashbasin;
+   pthread_cond_t washbasinAvailable = PTHREAD_COND_INITIALIZER;
+   pthread_cond_t washbasinServiceFinished = PTHREAD_COND_INITIALIZER;
+   pthread_cond_t clientRoseFromWashbasin = PTHREAD_COND_INITIALIZER;
+   pthread_cond_t clientSatInWashbasin = PTHREAD_COND_INITIALIZER;
    
    /* cond variables */
-   pthread_cond_t availableWashbasin[MAX_WASHBASINS];
+   //pthread_cond_t availableWashbasin[MAX_WASHBASINS];
 
    /* mutex to cond variables */
-   pthread_mutex_t washbasinMutex[MAX_WASHBASINS];
+   //pthread_mutex_t washbasinMutex[MAX_WASHBASINS];
 
    /* Semaphore washbasin*/
    sem_t accessWashbasin;
