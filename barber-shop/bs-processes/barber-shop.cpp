@@ -19,7 +19,7 @@
 static int shmid = 74;
 static BCInterface * bcinterfaces;
 
-const long key = 0x20EBL;
+const long key = 0x2139L;
 
 enum BCState
 {
@@ -476,6 +476,10 @@ void close_shop(BarberShop* shop)
    require (shop != NULL, "shop argument required");
    require (bci_get_shop_status(), "barber shop already closed");
  
+   //while(1) printf("\n\n\n\n HELLO \n\n\n\n");
+
+   bci_close_shop();
+
    bci_destroy();
    shop->opened = 0;
 }
@@ -614,6 +618,15 @@ void bci_set_request(int clientID,int request)
     unlock();
 }
 
+void bci_client_left()
+{
+    lock();
+
+        bcinterfaces->numClientsThatLeft += 1;
+
+    unlock();
+}
+
 void bci_open_shop()
 {
     lock();
@@ -745,7 +758,7 @@ int bci_get_barberID(int clientID)
  	int tmp_bid;
 	for(int y=0; y<MAX_BARBERS; y++) {
 	  if(bcinterfaces->barberIDs[y] == clientID) 
-	    tmp_bid = bcinterfaces->barberIDs[y];
+	    tmp_bid = y+1;
 	}
 
     unlock();
@@ -760,7 +773,7 @@ int bci_get_clientID(int barberID)
 	int tmp_cid;
 	for(int z=0; z<MAX_CLIENTS; z++) {
 	  if(bcinterfaces->clientIDs[z] == barberID) 
-	    tmp_cid = bcinterfaces->clientIDs[z];
+	    tmp_cid = z+1;
 	}
 
     unlock();
@@ -839,6 +852,16 @@ int bci_get_shop_status()
 
     unlock();
     return state;
+}
+
+int bci_get_numClientsThatLeft()
+{
+    lock();
+
+        int numC = bcinterfaces->numClientsThatLeft;
+
+    unlock();
+    return numC;
 }
 
 void bci_grant_client_access(int clientID) 

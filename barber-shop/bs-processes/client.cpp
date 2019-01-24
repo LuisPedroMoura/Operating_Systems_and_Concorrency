@@ -137,7 +137,6 @@ void* main_client(void* args)
 {
    Client* client = (Client*)args;
    require (client != NULL, "client argument required");
-   bci_connect();
    life(client);
    return NULL;
 }
@@ -183,8 +182,10 @@ static void notify_client_death(Client* client)
 
    require (client != NULL, "client argument required");
 
-   if(client->state == DONE)
+   if(client->state == DONE) {
       log_client(client);
+      bci_client_left();
+   }
 }
 
 static void wandering_outside(Client* client)
@@ -306,9 +307,7 @@ static void wait_all_services_done(Client* client)
 
    require (client != NULL, "client argument required");
 
-   while(client->state != DONE) {
- 
-     //printf("\n\n\n\nCLIENT: I ENTERED THIS FUNCTION\n\n\n\n");    
+   while(client->state != DONE) { 
  
      client->state = WAITING_SERVICE;
      log_client(client);
@@ -317,8 +316,6 @@ static void wait_all_services_done(Client* client)
 
      Service given_service = wait_service_from_barber(client->shop,client->barberID);
      Service* tmp_service = &(given_service);
-
-     //printf("\n\n\n\n Client: I did do wait \n\n\n\n");
 
      client->state = WAITING_SERVICE_START;
 
@@ -339,13 +336,9 @@ static void wait_all_services_done(Client* client)
        bci_set_syncWashbasin(*tmp_wsh4,client->barberID);
      }
 
-     //printf("\n\n\n\nCLIENT: I PASSED HERE 1\n\n\n\n");
-
      while(bci_get_state(client->barberID) < WAITING_ON_CLIENT_SIT);
 
      bci_set_state(client->barberID,CLIENT_SEATED);
-
-     //printf("\n\n\n\nCLIENT: I PASSED HERE 2\n\n\n\n");
 
      log_client(client);
 
@@ -380,10 +373,10 @@ static void wait_all_services_done(Client* client)
      bci_set_state(client->barberID,CLIENT_RISEN);
 
      while(bci_get_state(client->barberID) < PROCESS_DONE);
+
+     client->requests = bci_get_request(client->id);
    
      log_client(client);   
-
-     //printf("\n\n\n\nCLIENT: GONNA SEE IF I STOP OR CONTINUE\n\n\n\n"); 
 
      if(bci_get_state(client->barberID) == ALL_PROCESSES_DONE) {
         client->state = DONE;
@@ -395,6 +388,8 @@ static void wait_all_services_done(Client* client)
    }
 
    bci_unset_barberID(client->id);
+   client->barberID = 0;
+
    leave_barber_shop(client->shop,client->id);
 
    log_client(client); // more than one in proper places!!!
