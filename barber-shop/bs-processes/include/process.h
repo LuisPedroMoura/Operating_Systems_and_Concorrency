@@ -210,7 +210,8 @@ int psemget(key_t key, int nsems, int semflg);
  *
  *  @see https://man.cx/semctl(2)
  */
-int psemctl(int semid, int semnum, int cmd, ...);
+int psemctl(int semid, int semnum, int cmd);
+int psemctl(int semid, int semnum, int cmd, void *u);
 
 /**
  *  \brief `semop` wrapper function.
@@ -323,7 +324,8 @@ size_t pmsgrcv(int msqid, void *msgp, size_t msgsz, long msgtyp, int msgflg);
  *
  *  @see https://man.cx/sem_open(3)
  */
-sem_t *psem_open(const char *name, int oflag, ...);
+sem_t *psem_open(const char *name, int oflag);
+sem_t *psem_open(const char *name, int oflag, mode_t mode, unsigned int value);
 
 /**
  *  \brief `sem_close` wrapper function.

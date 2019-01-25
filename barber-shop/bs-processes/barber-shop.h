@@ -37,6 +37,16 @@ typedef struct _BCInterface_
 
    int numClientsThatLeft;  
 
+   sem_t semReserved[MAX_BARBERS];
+   sem_t semServiceInfoAvailable[MAX_BARBERS];
+   sem_t semWaitingOnClientSit[MAX_BARBERS];
+   sem_t semClientSeated[MAX_BARBERS];
+   sem_t semProcessing[MAX_BARBERS];
+   sem_t semWaitingOnRise[MAX_BARBERS];
+   sem_t semClientRisen[MAX_BARBERS];
+   sem_t semProcessDone[MAX_BARBERS];
+   sem_t semAllProcessesDone[MAX_BARBERS];
+
 } BCInterface;
 
 typedef struct _BarberShop_
@@ -140,4 +150,33 @@ int bci_get_numClientsThatLeft();
 void bci_grant_client_access(int clientID);
 void bci_revoke_client_access(int clientID);
 
+void bci_wait_semReserved(int barberID);
+void bci_wait_semServiceInfoAvailable(int barberID);
+void bci_wait_semWaitingOnClientSit(int barberID);
+void bci_wait_semClientSeated(int barberID);
+void bci_wait_semProcessing(int barberID);
+void bci_wait_semWaitingOnRise(int barberID);
+void bci_wait_semClientRisen(int barberID);
+void bci_wait_semProcessDone(int barberID);
+void bci_wait_semAllProcessesDone(int barberID);
+
+void bci_post_semReserved(int barberID);
+void bci_post_semServiceInfoAvailable(int barberID);
+void bci_post_semWaitingOnClientSit(int barberID);
+void bci_post_semClientSeated(int barberID);
+void bci_post_semProcessing(int barberID);
+void bci_post_semWaitingOnRise(int barberID);
+void bci_post_semClientRisen(int barberID);
+void bci_post_semProcessDone(int barberID);
+void bci_post_semAllProcessesDone(int barberID);
+
+int bci_get_semReservedValue(int barberID);
+int bci_get_semServiceInfoAvailableValue(int barberID);
+int bci_get_semWaitingOnClientSitValue(int barberID);
+int bci_get_semClientSeatedValue(int barberID);
+int bci_get_semProcessingValue(int barberID);
+int bci_get_semWaitingOnRiseValue(int barberID);
+int bci_get_semClientRisenValue(int barberID);
+int bci_get_semProcessDoneValue(int barberID);
+int bci_get_semAllProcessesDoneValue(int barberID);
 #endif
