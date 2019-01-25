@@ -91,12 +91,16 @@ void pick_scissor(ToolsPot* pot)
 	require (pot != NULL, "pot argument required");
 
 	mutex_lock(&pot->toolsPotMutex);
+
 	while(!pot->availScissors){
 		cond_wait(&pot->availableScissor, &pot->toolsPotMutex);
 	}
 	require (pot->availScissors > 0, pot->availScissors == 0 ? "scissor not available" : concat_3str("invalid number of scissors (", int2str(pot->availScissors), ")"));
+
 	pot->availScissors--;
+
 	log_tools_pot(pot);
+
 	mutex_unlock(&pot->toolsPotMutex);
 }
 
@@ -105,12 +109,16 @@ void pick_comb(ToolsPot* pot)
 	require (pot != NULL, "pot argument required");
 
 	mutex_lock(&pot->toolsPotMutex);
+
 	while(!pot->availCombs){
 		cond_wait(&pot->availableComb, &pot->toolsPotMutex);
 	}
 	require (pot->availCombs > 0, pot->availCombs == 0 ? "comb not available" : concat_3str("invalid number of combs (", int2str(pot->availCombs), ")"));
+
 	pot->availCombs--;
+
 	log_tools_pot(pot);
+
 	mutex_unlock(&pot->toolsPotMutex);
 }
 
@@ -119,12 +127,16 @@ void pick_razor(ToolsPot* pot)
 	require (pot != NULL, "pot argument required");
 
 	mutex_lock(&pot->toolsPotMutex);
+
 	while(!pot->availRazors){
 		cond_wait(&pot->availableRazor, &pot->toolsPotMutex);
 	}
 	require (pot->availRazors > 0, pot->availRazors == 0 ? "razor not available" : concat_3str("invalid number of razors (", int2str(pot->availRazors), ")"));
+
 	pot->availRazors--;
+
 	log_tools_pot(pot);
+
 	mutex_unlock(&pot->toolsPotMutex);
 }
 
@@ -134,9 +146,12 @@ void return_scissor(ToolsPot* pot)
 	require (pot->availScissors < MAX_NUM_TOOLS, concat_3str("invalid number of scissors (", int2str(pot->availScissors), ")"));
 
 	mutex_lock(&pot->toolsPotMutex);
+
 	pot->availScissors++;
 	cond_broadcast(&pot->availableScissor);
+
 	log_tools_pot(pot);
+
 	mutex_unlock(&pot->toolsPotMutex);
 }
 
@@ -146,9 +161,12 @@ void return_comb(ToolsPot* pot)
 	require (pot->availCombs < MAX_NUM_TOOLS, concat_3str("invalid number of combs (", int2str(pot->availCombs), ")"));
 
 	mutex_lock(&pot->toolsPotMutex);
+
 	pot->availCombs++;
 	cond_broadcast(&pot->availableComb);
+
 	log_tools_pot(pot);
+
 	mutex_unlock(&pot->toolsPotMutex);
 }
 
@@ -158,9 +176,11 @@ void return_razor(ToolsPot* pot)
 	require (pot->availRazors < MAX_NUM_TOOLS, concat_3str("invalid number of razors (", int2str(pot->availRazors), ")"));
 
 	mutex_lock(&pot->toolsPotMutex);
+
 	pot->availRazors++;
 	cond_broadcast(&pot->availableRazor);
+
 	log_tools_pot(pot);
+
 	mutex_unlock(&pot->toolsPotMutex);
 }
-

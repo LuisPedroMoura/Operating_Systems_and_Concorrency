@@ -117,8 +117,18 @@ int empty_barber_chair(BarberChair* chair)
 	require (chair != NULL, "chair argument required");
 
 	mutex_lock(&chair->barberChairMutex);
-	int res = chair->barberID == 0 && chair->clientID == 0;
+	int res = _empty_barber_chair_(chair);
 	mutex_unlock(&chair->barberChairMutex);
+
+	return res;
+}
+
+int _empty_barber_chair_(BarberChair* chair)
+{
+	require (chair != NULL, "chair argument required");
+
+	int res = chair->barberID == 0 && chair->clientID == 0;
+
 	return res;
 }
 
@@ -168,12 +178,15 @@ void reserve_barber_chair(BarberChair* chair, int barberID)
 {
 	require (chair != NULL, "chair argument required");
 	require (barberID > 0, concat_3str("invalid barber id (", int2str(barberID), ")"));
-	require (empty_barber_chair(chair), "barber chair is already occupied");
 
 	mutex_lock(&chair->barberChairMutex);
+	require (_empty_barber_chair_(chair), "barber chair is already occupied");
+
 	chair->barberID = barberID;
 	chair->completionPercentage = 0;
+	require
 	log_barber_chair(chair);
+
 	mutex_unlock(&chair->barberChairMutex);
 }
 
@@ -188,13 +201,15 @@ void release_barber_chair(BarberChair* chair, int barberID)
 	while (barber_chair_with_a_client(chair)){
 		cond_wait(&chair->clientRoseFromBarberChair, &chair->barberChairMutex);
 	}
-	cond_broadcast(&chair->barberChairAvailable);
-
 	require (!barber_chair_with_a_client(chair), "a client is still in chair");
 
 	chair->barberID = 0;
+	chair->clientID = 0;
 	chair->toolsHolded = 0;
 	chair->completionPercentage = -1;
+	require (_empty_barber_chair_(chair), "release of barber chair was not successful");
+	cond_broadcast(&chair->barberChairAvailable);
+
 	log_barber_chair(chair);
 
 	mutex_unlock(&chair->barberChairMutex);
@@ -240,12 +255,15 @@ void set_tools_barber_chair(BarberChair* chair, int tools)
 	require ((tools & 0x7) != 0, concat_3str("invalid tools mask (", int2str(tools), ")"));
 
 	mutex_lock(&chair->barberChairMutex);
+
 	while(!barber_chair_with_a_client(chair)){
-			cond_wait(&chair->clientSatInBarberChair, &chair->barberChairMutex);
-		}
+		cond_wait(&chair->clientSatInBarberChair, &chair->barberChairMutex);
+	}
 	require (complete_barber_chair(chair), "barber chair is not complete");
 	chair->toolsHolded = tools;
+
 	log_barber_chair(chair);
+
 	mutex_unlock(&chair->barberChairMutex);
 }
 
@@ -287,5 +305,3 @@ void wait_for_barber_chair_service_completion(BarberChair* chair)
 	}
 	mutex_unlock(&chair->barberChairMutex);
 }
-
-

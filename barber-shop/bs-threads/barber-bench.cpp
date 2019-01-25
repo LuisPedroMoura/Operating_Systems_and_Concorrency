@@ -26,6 +26,11 @@ void init_barber_bench(BarberBench* bench, int num_seats, int vertical_orientati
 			,vertical_orientation ? num_seats*2+1 : 3
 					,vertical_orientation ? 5 : num_seats*4+1
 							,NULL);
+
+	bench->barberBenchMutex = PTHREAD_MUTEX_INITIALIZER;
+	bench->barberBenchNotFull = PTHREAD_COND_INITIALIZER;
+	bench->barberBenchNotEmpty = PTHREAD_COND_INITIALIZER;
+	bench->barberBenchesAreFull = PTHREAD_COND_INITIALIZER;
 }
 
 void term_barber_bench(BarberBench* bench)
@@ -101,6 +106,10 @@ int _num_seats_available_barber_bench_(BarberBench* bench)
 		if (bench->id[pos] == 0)
 			res++;
 	printf("res: %d\n", res);
+
+	if (res == 0){
+		cond_broadcast(&bench->barberBenchesAreFull);
+	}
 
 	return res;
 }
@@ -207,4 +216,3 @@ int _seated_in_barber_bench_(BarberBench* bench, int id)
 
 	return res;
 }
-

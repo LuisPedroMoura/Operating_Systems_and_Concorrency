@@ -40,6 +40,7 @@ void term_barber_chair(BarberChair* chair);
 void log_barber_chair(BarberChair* chair);
 
 int empty_barber_chair(BarberChair* chair);
+int _empty_barber_chair_(BarberChair* chair);
 int complete_barber_chair(BarberChair* chair); // with both a barber and a client
 int barber_chair_with_a_client(BarberChair* chair);
 int barber_chair_with_a_barber(BarberChair* chair);
@@ -55,7 +56,6 @@ int barber_chair_service_finished(BarberChair* chair);
 
 void set_tools_barber_chair(BarberChair* chair, int tools);
 void set_completion_barber_chair(BarberChair* chair, int completionPercentage);
-
 void wait_for_barber_chair_service_completion(BarberChair* chair);
 
 #endif

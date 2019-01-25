@@ -39,6 +39,7 @@ typedef struct _BarberShop_
 
 	int numClientsInside;
 	int clientsInside[MAX_CLIENTS];
+	int clientsAlive;
 
 	CommunicationLine commLine;
 
@@ -47,29 +48,14 @@ typedef struct _BarberShop_
 	int logId;
 	char* internal;
 
-
 	// Barber Shop Mutex and cond
-	pthread_mutex_t shopFloorMutex = PTHREAD_MUTEX_INITIALIZER;
-	pthread_cond_t clientLeft = PTHREAD_COND_INITIALIZER;
-	pthread_cond_t closeShop = PTHREAD_COND_INITIALIZER;
-
-	// Communications Line mutex and cond
-	// pthread_mutex_t messagesMutex[MAX_CLIENTS];
-	// pthread_cond_t messageAvailable[MAX_CLIENTS];
-
-	// barber Bench mutex and cond
-
+	pthread_mutex_t shopFloorMutex;
 
 	// BarberChair mutex and cond
 	sem_t accessBarberChair;
 
 	// Washbasin mutex and cond
 	sem_t accessWashbasin;
-
-	// ToolsPot mutex and cond
-
-	// Logger mutex and cond
-	pthread_mutex_t loggerMutex = PTHREAD_MUTEX_INITIALIZER;
 
 } BarberShop;
 
@@ -111,7 +97,9 @@ int is_client_inside(BarberShop* shop, int clientID);
 Service wait_service_from_barber(BarberShop* shop, int barberID);
 void inform_client_on_service(BarberShop* shop, Service service);
 
+void client_was_born(BarberShop* shop);
 void client_done(BarberShop* shop, int clientID);
+void client_died(BarberShop* shop);
 
 int enter_barber_shop(BarberShop* shop, int clientID, int request);
 void leave_barber_shop(BarberShop* shop, int clientID);
@@ -119,8 +107,13 @@ void receive_and_greet_client(BarberShop* shop, int barberID, int clientID);
 int greet_barber(BarberShop* shop, int clientID); // returns barberID
 
 int shop_opened(BarberShop* shop);
-void close_shop(BarberShop* shop); // no more outside clients accepted
 void sem_up(sem_t* semaphore);
 void sem_down(sem_t* semaphore);
+void notify_all_barbers_to_leave_shop(BarberShop* shop);
+void close_shop(BarberShop* shop); // no more outside clients accepted
+
+
+
+
 
 #endif

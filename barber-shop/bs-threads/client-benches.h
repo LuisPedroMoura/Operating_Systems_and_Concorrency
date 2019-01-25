@@ -12,6 +12,7 @@
 
 typedef struct _ClientBenches_
 {
+	int closed;
 	int numSeats;
 	int numBenches;
 	int id[MAX_CLIENT_BENCHES_SEATS];
@@ -34,6 +35,7 @@ void log_client_benches(ClientBenches* benches);
 
 int num_available_benches_seats(ClientBenches* benches);
 int occupied_by_id_client_benches(ClientBenches* benches, int pos, int id);
+void notify_barbers_all_clients_are_done(ClientBenches* benches);
 
 // to use directly by clients:
 void wait_for_available_seat(ClientBenches* benches);
@@ -44,6 +46,8 @@ int seated_in_client_benches(ClientBenches* benches, int id);
 // to use directly by barbers:
 int no_more_clients(ClientBenches* benches);
 RQItem next_client_in_benches(ClientBenches* benches);
+
+
 
 
 #endif

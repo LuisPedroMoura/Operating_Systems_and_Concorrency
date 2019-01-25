@@ -17,9 +17,10 @@ typedef struct _BarberBench_
 	int logId;
 	char* internal;
 
-	pthread_mutex_t barberBenchMutex = PTHREAD_MUTEX_INITIALIZER;
-	pthread_cond_t barberBenchNotFull = PTHREAD_COND_INITIALIZER;
-	pthread_cond_t barberBenchNotEmpty = PTHREAD_COND_INITIALIZER;
+	pthread_mutex_t barberBenchMutex;
+	pthread_cond_t barberBenchNotFull;
+	pthread_cond_t barberBenchNotEmpty;
+	pthread_cond_t barberBenchesAreFull;
 
 } BarberBench;
 
@@ -39,4 +40,3 @@ int seated_in_barber_bench(BarberBench* bench, int id);
 int _seated_in_barber_bench_(BarberBench* bench, int id);
 
 #endif
-

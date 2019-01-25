@@ -66,9 +66,10 @@ static void process_shave_request(Barber* barber);
 static void pick_shave_tools(Barber* barber);
 static void return_shave_tools(Barber* barber);
 static void process_wash_hair_request(Barber* barber);
+static void process_barber_chair_service(Barber* barber);
+static void process_washbasin_service(Barber* barber);
 
 static char* to_string_barber(Barber* barber);
-
 
 
 size_t sizeof_barber()
@@ -124,9 +125,7 @@ void log_barber(Barber* barber)
 	require (barber != NULL, "barber argument required");
 
 	spend(random_int(global->MIN_VITALITY_TIME_UNITS, global->MAX_VITALITY_TIME_UNITS));
-	mutex_lock(&barber->shop->loggerMutex);
 	send_log(barber->logId, to_string_barber(barber));
-	mutex_unlock(&barber->shop->loggerMutex);
 }
 
 void* main_barber(void* args)
@@ -158,7 +157,6 @@ static void sit_in_barber_bench(Barber* barber)
 {
 	/**
 	 * 1: sit in a random empty seat in barber bench (always available)
-	 ** TODO:
 	 **/
 	require (barber != NULL, "barber argument required");
 	require (!seated_in_barber_bench(barber_bench(barber->shop), barber->id), "barber already seated in barber shop");
@@ -169,7 +167,6 @@ static void sit_in_barber_bench(Barber* barber)
 	int seatPos = random_sit_in_barber_bench(barber_bench(barber->shop), barber->id);
 	barber->benchPosition = seatPos;
 
-	//printf("--------------------------------------------BARBER LIFE - SIT IN BARBER BENCH\n");
 	log_barber(barber);
 }
 
@@ -179,22 +176,17 @@ static void wait_for_client(Barber* barber)
 	 * 1: set the barber state to WAITING_CLIENTS
 	 * 2: get next client from client benches (if empty, wait) (also, it may be required to check for simulation termination)
 	 * 3: receive and greet client (receive its requested services, and give back the barber's id)
-	 ** TODO:
 	 **/
 
 	require (barber != NULL, "barber argument required");
 
 	barber->state = WAITING_CLIENTS;
-	// TODO: problema do fecho da loja
 	RQItem requests = next_client_in_benches(&(barber->shop->clientBenches));
 
-//	mutex_lock(&barber->shop->shopFloorMutex);
-//	if (!barber->shop->opened){
-//		mutex_unlock(&barber->shop->shopFloorMutex);
-//		log_barber(barber);
-//		return;
-//	}
-//	mutex_unlock(&barber->shop->shopFloorMutex);
+	if (requests.benchPos == -1){
+		barber->clientID = -1;
+		return;
+	}
 
 	barber->reqToDo = requests.request;
 	barber->clientID = requests.clientID;
@@ -207,26 +199,16 @@ static void wait_for_client(Barber* barber)
 static int work_available(Barber* barber)
 {
 	/**
-	 * TODO:
 	 * 1: find a safe way to solve the problem of barber termination
 	 **/
 
 	require (barber != NULL, "barber argument required");
 
-//	mutex_lock(&barber->shop->shopFloorMutex);
-//	if (!(barber->shop->opened)){
-//
-//		rise_from_barber_bench(barber);
-//		barber->benchPosition = -1;
-//		mutex_unlock(&barber->shop->shopFloorMutex);
-//		//printf("!!!!!!!!!!!!!!!!!!!! barber %d, no work available, suicides\n", barber->id);
-//		return 0;
-//	}
-//	mutex_unlock(&barber->shop->shopFloorMutex);
-
 	if (barber->clientID > 0){
 		return 1;
 	}
+	rise_from_barber_bench(barber);
+	log_barber(barber);
 	return 0;
 }
 
@@ -234,15 +216,13 @@ static void rise_from_barber_bench(Barber* barber)
 {
 	/**
 	 * 1: rise from the seat of barber bench
-	 ** TODO:
 	 **/
 
 	require (barber != NULL, "barber argument required");
 	require (seated_in_barber_bench(barber_bench(barber->shop), barber->id), "barber not seated in barber shop");
-	
+
 	rise_barber_bench(&(barber->shop->barberBench), barber->benchPosition);
 	barber->benchPosition = -1;
-	//printf("--------------------------------------------BARBER LIFE - RISE FROM BARBER BENCH\n");
 	log_barber(barber);
 }
 
@@ -262,16 +242,13 @@ static void process_resquests_from_client(Barber* barber)
 	 *  4.1: return the used tools to the pot (if any)
 	 *
 	 * At the end the client must leave the barber shop
-	 **TODO:
 	 **/
 
 	require (barber != NULL, "barber argument required");
 
-	//1: select the request to process (any order is acceptable)
 	Service service;
 	if ((barber->reqToDo & HAIRCUT_REQ) || (barber->reqToDo & SHAVE_REQ)) {
 
-		//reserve a random empty chair
 		barber->state = WAITING_BARBER_SEAT;
 		int chairPos = reserve_empty_barber_chair(barber->shop, barber->id);
 		barber->chairPosition = chairPos;
@@ -297,7 +274,6 @@ static void process_resquests_from_client(Barber* barber)
 
 		barber->state = WAITING_WASHBASIN;
 
-		//TODO: QUAL BLOQUEAR? SEMAFORO COMO?
 		int basinPos = reserve_empty_washbasin(barber->shop, barber->id);
 		barber->basinPosition = basinPos;
 
@@ -308,7 +284,7 @@ static void process_resquests_from_client(Barber* barber)
 	}
 
 	barber->state = NONE;
-	//printf("--------------------------------------------BARBER LIFE - PROCESS REQUESTS FROM CLIENT\n");
+
 	log_barber(barber);
 }
 
@@ -317,20 +293,13 @@ static void release_client(Barber* barber)
 {
 	/**
 	 * 1: notify client the all the services are done
-	 ** TODO:
 	 **/
 
 	require (barber != NULL, "barber argument required");
 
 	client_done(barber->shop, barber->clientID); // is a communicationLine action (messagesMutex inside)
-
-	mutex_lock(&barber->shop->shopFloorMutex);
-	while (is_client_inside(barber->shop, barber->clientID)){
-		cond_wait(&barber->shop->clientLeft, &barber->shop->shopFloorMutex);
-	}
-	mutex_unlock(&barber->shop->shopFloorMutex);
 	barber->clientID = -1;
-	//printf("--------------------------------------------BARBER LIFE - RELEASE CLIENT\n");
+
 	log_barber(barber);
 }
 
@@ -339,58 +308,39 @@ static void done(Barber* barber)
 {
 	/**
 	 * 1: set the barber state to DONE
-	 ** TODO:
 	 **/
 	require (barber != NULL, "barber argument required");
 
 	barber->state = DONE;
-	//printf("--------------------------------------------BARBER LIFE - EXITING - DONE\n");
+
 	log_barber(barber);
 }
 
 
 static void process_haircut_request(Barber* barber, int shaveReq)
 {
-	/**
-	 * ([incomplete] example code for task completion algorithm)
-	 ** TODO:
-	 **/
 	require (barber != NULL, "barber argument required");
-	//   require (barber->tools & SCISSOR_TOOL, "barber not holding a scissor");
-	//   require (barber->tools & COMB_TOOL, "barber not holding a comb");
 
-	//grab the necessary tools from the pot
 	pick_haircut_tools(barber);
+	require (barber->tools & SCISSOR_TOOL, "barber not holding a scissor");
+	require (barber->tools & COMB_TOOL, "barber not holding a comb");
 
-	//wait for client to sit
 	BarberChair* chair = barber->shop->barberChair+barber->chairPosition;
 	set_tools_barber_chair(chair, barber->tools);
 
-	//process the service
 	barber->state = CUTTING;
-
-	int steps = random_int(5,20);
-	int slice = (global->MAX_WORK_TIME_UNITS-global->MIN_WORK_TIME_UNITS+steps)/steps;
-	int complete = 0;
-	while(complete < 100)
-	{
-		spend(slice);
-		complete += 100/steps;
-		if (complete > 100)
-			complete = 100;
-		set_completion_barber_chair(barber_chair(barber->shop, barber->chairPosition), complete);
-	}
+	process_barber_chair_service(barber);
 
 	if(!shaveReq){
+		printf("QWERTY   barber %d releases chair %d after haircut\n", barber->id, barber->chairPosition);
 		release_barber_barberchair(barber->shop, barber->id, barber->chairPosition);
 		barber->chairPosition = -1;
 	}
 
 	return_haircut_tools(barber);
 
-	log_barber(barber);  // (if necessary) more than one in proper places!!!
+	log_barber(barber);
 }
-
 
 static void pick_haircut_tools(Barber* barber)
 {
@@ -405,7 +355,6 @@ static void pick_haircut_tools(Barber* barber)
 	barber->tools += COMB_TOOL;
 }
 
-
 static void return_haircut_tools(Barber* barber)
 {
 	require (barber != NULL, "barber argument required");
@@ -415,37 +364,20 @@ static void return_haircut_tools(Barber* barber)
 	barber->tools = NO_TOOLS;
 }
 
-
 static void process_shave_request(Barber* barber)
 {
-	/**
-	 * ([incomplete] example code for task completion algorithm)
-	 **TODO:
-	 **/
 	require (barber != NULL, "barber argument required");
 
-	//grab the necessary tools from the pot
 	pick_shave_tools(barber);
+	require (barber->tools & RAZOR_TOOL, "barber not holding a razor");
 
-	//wait for client to sit, or to signal ready
 	BarberChair* chair = &barber->shop->barberChair[barber->chairPosition];
 	set_tools_barber_chair(chair, barber->tools);
 
-	//process the service
 	barber->state = SHAVING;
+	process_barber_chair_service(barber);
 
-	int steps = random_int(5,20);
-	int slice = (global->MAX_WORK_TIME_UNITS-global->MIN_WORK_TIME_UNITS+steps)/steps;
-	int complete = 0;
-	while(complete < 100)
-	{
-		spend(slice);
-		complete += 100/steps;
-		if (complete > 100)
-			complete = 100;
-		set_completion_barber_chair(barber_chair(barber->shop, barber->chairPosition), complete);
-	}
-
+	printf("QWERTY   barber %d releases chair %d after shave\n", barber->id, barber->chairPosition);
 	release_barber_barberchair(barber->shop, barber->id, barber->chairPosition);
 	barber->chairPosition = -1;
 
@@ -464,7 +396,6 @@ static void pick_shave_tools(Barber* barber)
 	barber->tools = RAZOR_TOOL;
 }
 
-
 static void return_shave_tools(Barber* barber)
 {
 	require (barber != NULL, "barber argument required");
@@ -473,20 +404,39 @@ static void return_shave_tools(Barber* barber)
 	barber->tools = NO_TOOLS;
 }
 
+static void process_barber_chair_service(Barber* barber)
+{
+	int steps = random_int(5,20);
+	int slice = (global->MAX_WORK_TIME_UNITS-global->MIN_WORK_TIME_UNITS+steps)/steps;
+	int complete = 0;
+	while(complete < 100)
+	{
+		spend(slice);
+		complete += 100/steps;
+		if (complete > 100)
+			complete = 100;
+		set_completion_barber_chair(barber_chair(barber->shop, barber->chairPosition), complete);
+	}
+}
 
 static void process_wash_hair_request(Barber* barber)
 {
-	/**
-	 * ([incomplete] example code for task completion algorithm)
-	 **TODO:
-	 **/
 	require (barber != NULL, "barber argument required");
 
-	//wait for client to sit
 	wait_for_client_to_sit_in_washbasin(barber->shop, barber->basinPosition);
 
-	//process the service
 	barber->state = WASHING;
+	process_washbasin_service(barber);
+
+	release_barber_washbasin(barber->shop, barber->id, barber->basinPosition);
+	barber->basinPosition = -1;
+
+	log_barber(barber);
+}
+
+static void process_washbasin_service(Barber* barber)
+{
+	require (barber != NULL, "barber argument required");
 
 	int steps = random_int(5,20);
 	int slice = (global->MAX_WORK_TIME_UNITS-global->MIN_WORK_TIME_UNITS+steps)/steps;
@@ -499,14 +449,7 @@ static void process_wash_hair_request(Barber* barber)
 			complete = 100;
 		set_completion_washbasin(washbasin(barber->shop, barber->basinPosition), complete);
 	}
-
-	//release washbasin
-	release_barber_washbasin(barber->shop, barber->id, barber->basinPosition);
-	barber->basinPosition = -1;
-
-	log_barber(barber);  // (if necessary) more than one in proper places!!!
 }
-
 
 static char* to_string_barber(Barber* barber)
 {

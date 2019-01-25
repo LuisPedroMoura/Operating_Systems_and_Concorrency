@@ -65,6 +65,7 @@ void init_barber_shop(BarberShop* shop, int num_barbers, int num_chairs,
 	shop->numClientBenchesSeats = num_client_benches_seats;
 	shop->numClientBenches = num_client_benches;
 	shop->numClientsInside = 0;
+	shop->clientsAlive = 0;
 	for(int i = 0; i < MAX_CLIENTS; i++)
 		shop->clientsInside[i] = 0;
 	shop->opened = 1;
@@ -97,6 +98,8 @@ void init_barber_shop(BarberShop* shop, int num_barbers, int num_chairs,
 
 	/* Washbasin semaphore init */
 	require (sem_init(&shop->accessWashbasin, 0, global->NUM_WASHBASINS) == 0, "Washbasin semaphore error");
+
+	shop->shopFloorMutex = PTHREAD_MUTEX_INITIALIZER;
 }
 
 void term_barber_shop(BarberShop* shop)
@@ -193,9 +196,14 @@ int reserve_empty_barber_chair(BarberShop* shop, int barberID)
 	require (shop != NULL, "shop argument required");
 	require (barberID > 0, concat_3str("invalid barber id (", int2str(barberID), ")"));
 
-	sem_down(&shop->accessBarberChair);
-	int chairPos = reserve_random_empty_barber_chair(shop, barberID);
+	int* val = NULL;
+	//sem_getvalue(&shop->accessBarberChair, val);
 
+	//printf("QWERTY   %d\n", *val);
+	sem_down(&shop->accessBarberChair);
+	printf("QWERTY   barber %d DOWN\n", barberID);
+	int chairPos = reserve_random_empty_barber_chair(shop, barberID);
+	printf("QWERTY   barber %d reserved chair %d\n", barberID, chairPos);
 	return chairPos;
 }
 
@@ -203,12 +211,13 @@ int reserve_random_empty_barber_chair(BarberShop* shop, int barberID)
 {
 	/**
 	 * function called from a barber, when reserving a empty barber chair
-	 * TODO:
 	 **/
 
 	require (shop != NULL, "shop argument required");
 	require (barberID > 0, concat_3str("invalid barber id (", int2str(barberID), ")"));
-	require (num_available_barber_chairs(shop) > 0, "barber chair not available");
+
+	// the semaphore guarantees this requirement
+	//require (num_available_barber_chairs(shop) > 0, "barber chair not available");
 
 	int r = random_int(1, num_available_barber_chairs(shop));
 	int res;
@@ -241,10 +250,10 @@ void release_barber_barberchair(BarberShop* shop, int barberID, int barberPos)
 	require (barberID > 0, concat_3str("invalid barber id (", int2str(barberID), ")"));
 
 	release_barber_chair(&shop->barberChair[barberPos], barberID);
+	require ( num_available_barber_chairs(shop) >= 0, "available barber chairs went down to zero");
 	sem_up(&shop->accessBarberChair);
+	printf("QWERTY   barber %d UP\n", barberID);
 }
-
-
 
 int reserve_empty_washbasin(BarberShop* shop, int barberID)
 {
@@ -273,7 +282,6 @@ int reserve_random_empty_washbasin(BarberShop* shop, int barberID)
 {
 	/**
 	 * function called from a barber, when reserving a empty washbasin
-	 * TODO:
 	 **/
 
 	require (shop != NULL, "shop argument required");
@@ -317,7 +325,7 @@ int is_client_inside(BarberShop* shop, int clientID)
 
 Service wait_service_from_barber(BarberShop* shop, int clientID)
 {
-	/** TODO:
+	/**
 	 * function called from a client, expecting to be informed of the next Service to be provided by a barber
 	 **/
 
@@ -334,7 +342,6 @@ void inform_client_on_service(BarberShop* shop, Service service)
 {
 	/**
 	 * function called from a barber, expecting to inform a client of its next service
-	 * TODO:
 	 **/
 
 	require (shop != NULL, "shop argument required");
@@ -346,7 +353,7 @@ void inform_client_on_service(BarberShop* shop, Service service)
 
 void client_done(BarberShop* shop, int clientID)
 {
-	/** TODO:
+	/**
 	 * function called from a barber, notifying a client that all its services are done
 	 **/
 
@@ -357,31 +364,23 @@ void client_done(BarberShop* shop, int clientID)
 	send_message(&(shop->commLine), message);
 }
 
-//void wait_for_available_seat_in_client_bench(BarberShop* shop)
-//{
-//	require (shop != NULL, "shop argument required");
-//
-//	wait_for_available_seat(&shop->clientBenches);
-//}
-
 void wait_for_client_to_sit_in_washbasin(BarberShop* shop, int basinPos)
 {
 	require (shop != NULL, "shop argument required");
 
 	wait_client_to_sit_in_washbasin(&shop->washbasin[basinPos]);
-
 }
 
 int enter_barber_shop(BarberShop* shop, int clientID, int request)
 {
 	/**
 	 * Function called from a client when entering the barbershop
-	 * TODO:
 	 **/
 
 	require (shop != NULL, "shop argument required");
 	require (clientID > 0, concat_3str("invalid client id (", int2str(clientID), ")"));
 	require (request > 0 && request < 8, concat_3str("invalid request (", int2str(request), ")"));
+
 	// available benches seats is verified in random_sit_in_client_benches() in the code below
 	//require (num_available_benches_seats(client_benches(shop)) > 0, "empty seat not available in client benches");
 
@@ -400,7 +399,7 @@ int enter_barber_shop(BarberShop* shop, int clientID, int request)
 
 void leave_barber_shop(BarberShop* shop, int clientID)
 {
-	/** TODO:
+	/**
 	 * Function called from a client when leaving the barbershop
 	 **/
 
@@ -426,7 +425,6 @@ void receive_and_greet_client(BarberShop* shop, int barberID, int clientID)
 	/**
 	 * function called from a barber, when receiving a new client
 	 * it must send the barber ID to the client
-	 * TODO:
 	 **/
 
 	require (shop != NULL, "shop argument required");
@@ -444,7 +442,6 @@ int greet_barber(BarberShop* shop, int clientID)
 {
 	/**
 	 * function called from a client, expecting to receive its barber's ID
-	 * TODO:
 	 **/
 
 	require (shop != NULL, "shop argument required");
@@ -468,7 +465,7 @@ void close_shop(BarberShop* shop)
 	require (shop != NULL, "shop argument required");
 	require (shop_opened(shop), "barber shop already closed");
 
-	shop->opened = 0;
+	notify_barbers_all_clients_are_done(&shop->clientBenches);
 }
 
 void sem_up(sem_t* semaphore){

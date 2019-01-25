@@ -32,6 +32,7 @@ void term_washbasin(Washbasin* basin);
 void log_washbasin(Washbasin* basin);
 
 int empty_washbasin(Washbasin* basin);
+int _empty_washbasin_(Washbasin* basin);
 int complete_washbasin(Washbasin* basin); // with both a barber and a client
 int washbasin_with_a_client(Washbasin* basin);
 int washbasin_with_a_barber(Washbasin* basin);

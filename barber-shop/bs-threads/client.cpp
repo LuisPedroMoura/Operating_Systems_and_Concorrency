@@ -59,9 +59,7 @@ static void select_requests(Client* client);
 static void wait_its_turn(Client* client);
 static void rise_from_client_benches(Client* client);
 static void wait_all_services_done(Client* client);
-
 static void update_client_with_service(Client* client, Service service);
-
 static char* to_string_client(Client* client);
 
 size_t sizeof_client()
@@ -118,9 +116,7 @@ void log_client(Client* client)
 	require (client != NULL, "client argument required");
 
 	spend(random_int(global->MIN_VITALITY_TIME_UNITS, global->MAX_VITALITY_TIME_UNITS));
-	mutex_lock(&client->shop->loggerMutex);
 	send_log(client->logId, to_string_client(client));
-	mutex_unlock(&client->shop->loggerMutex);
 }
 
 void* main_client(void* args)
@@ -154,7 +150,7 @@ static void life(Client* client)
 
 static void notify_client_birth(Client* client)
 {
-	/** TODO:
+	/**
 	 * 1: (if necessary) inform simulation that a new client begins its existence.
 	 **/
 
@@ -165,7 +161,7 @@ static void notify_client_birth(Client* client)
 
 static void notify_client_death(Client* client)
 {
-	/** TODO:
+	/**
 	 * 1: (if necessary) inform simulation that a new client ceases its existence.
 	 **/
 
@@ -179,7 +175,6 @@ static void wandering_outside(Client* client)
 	/**
 	 * 1: set the client state to WANDERING_OUTSIDE
 	 * 2. random a time interval [global->MIN_OUTSIDE_TIME_UNITS, global->MAX_OUTSIDE_TIME_UNITS]
-	 *  TODO:
 	 **/
 
 	require (client != NULL, "client argument required");
@@ -188,7 +183,7 @@ static void wandering_outside(Client* client)
 
 	spend(random_int(global->MIN_OUTSIDE_TIME_UNITS, global->MAX_OUTSIDE_TIME_UNITS));
 
-log_client(client);
+	log_client(client);
 }
 
 static int vacancy_in_barber_shop(Client* client)
@@ -196,7 +191,6 @@ static int vacancy_in_barber_shop(Client* client)
 	/**
 	 * 1: set the client state to WAITING_BARBERSHOP_VACANCY
 	 * 2: check if there is an empty seat in the client benches (at this instant, later on it may fail)
-	 * TODO:
 	 **/
 
 	require (client != NULL, "client argument required");
@@ -214,7 +208,6 @@ static void select_requests(Client* client)
 	/**
 	 * 1: set the client state to SELECTING_REQUESTS
 	 * 2: choose a random combination of requests
-	 * TODO:
 	 **/
 
 	require (client != NULL, "client argument required");
@@ -231,7 +224,6 @@ static void select_requests(Client* client)
 	client->requests = res;
 
 	log_client(client);
-	//printf("--------------------------------------------CLIENT LIFE - SELECT_REQUESTS\n");
 }
 
 static void wait_its_turn(Client* client)
@@ -240,7 +232,6 @@ static void wait_its_turn(Client* client)
 	 * 1: set the client state to WAITING_ITS_TURN
 	 * 2: enter barbershop (if necessary waiting for an empty seat)
 	 * 3. "handshake" with assigned barber (greet_barber)
-	 * TODO:
 	 **/
 
 	require (client != NULL, "client argument required");
@@ -252,7 +243,7 @@ static void wait_its_turn(Client* client)
 
 	int barberId = greet_barber(client->shop, client->id);
 	client->barberID = barberId;
-	//printf("--------------------------------------------CLIENT LIFE - WAIT ITS TURN\n");
+
 	log_client(client);
 }
 
@@ -260,7 +251,6 @@ static void rise_from_client_benches(Client* client)
 {
 	/**
 	 * 1: (exactly what the name says)
-	 * TODO:
 	 **/
 
 	require (client != NULL, "client argument required");
@@ -269,9 +259,7 @@ static void rise_from_client_benches(Client* client)
 	rise_client_benches(&(client->shop->clientBenches) , client->benchesPosition, client->id);
 
 	client->benchesPosition = -1;
-	client->chairPosition = -1;
-	client->basinPosition = -1;
-	//printf("--------------------------------------------CLIENT LIFE - RISE FROM CLIENT BENCH\n");
+
 	log_client(client);
 }
 
@@ -286,7 +274,6 @@ static void wait_all_services_done(Client* client)
 	 * 4: sit in proper position in destination (chair/basin depending on the service selected)
 	 * 5: set the client state to the active service
 	 * 6: rise from destination
-	 * TODO
 	 * At the end the client must leave the barber shop
 	 **/
 
@@ -299,7 +286,7 @@ static void wait_all_services_done(Client* client)
 		Service service = wait_service_from_barber(client->shop, client->id);
 		client->state = WAITING_SERVICE_START;
 
-		/* Request to cut hair OR Resquest to shave*/
+		/* Request to cut hair OR request to shave*/
 		if (service.request == HAIRCUT_REQ)
 		{
 			update_client_with_service(client, service);
@@ -356,8 +343,7 @@ static void wait_all_services_done(Client* client)
 	}
 
 	leave_barber_shop(client->shop, client->id);
-	cond_broadcast(&client->shop->clientLeft);
-	//printf("--------------------------------------------CLIENT LIFE - WAIT ALL SERVICES DONE\n");
+
 	log_client(client);
 }
 
@@ -384,6 +370,8 @@ static void update_client_with_service(Client* client, Service service)
 		client->state = HAVING_A_HAIR_WASH;
 	}
 	else{
+		client->barberID = -1;
+		client->requests = -1;
 		client->state = DONE;
 	}
 }

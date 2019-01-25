@@ -21,6 +21,7 @@ void init_client_benches(ClientBenches* benches, int num_seats, int num_benches,
 	require (line >= 0, concat_3str("Invalid line (", int2str(line), ")"));
 	require (column >= 0, concat_3str("Invalid column (", int2str(column), ")"));
 
+	benches->closed = 0;
 	benches->numSeats = num_seats;
 	benches->numBenches = num_benches;
 	for(int i = 0; i < num_seats; i++)
@@ -114,7 +115,7 @@ int random_sit_in_client_benches(ClientBenches* benches, int id, int request)
 	benches->request[res] = request;
 	benches->order[res] = in_client_queue(&benches->queue, item);
 
-	cond_broadcast(&benches->clientWaiting);
+	cond_signal(&benches->clientWaiting);
 	log_client_benches(benches);
 
 	mutex_unlock(&benches->clientBenchMutex);
@@ -138,7 +139,7 @@ RQItem next_client_in_benches(ClientBenches* benches)
 	RQItem res;
 	mutex_lock(&benches->clientBenchMutex);
 
-	while (no_more_clients(benches)){
+	while (no_more_clients(benches) && !benches->closed){
 		cond_wait(&benches->clientWaiting, &benches->clientBenchMutex);
 	}
 
@@ -190,6 +191,8 @@ int seated_in_client_benches(ClientBenches* benches, int id)
 
 static int random_empty_seat_position_client_benches(ClientBenches* benches)
 {
+	require (benches != NULL, "benches argument required");
+
 	int r = random_int(1, _num_available_benches_seats_(benches));
 	int res;
 	for(res = 0; r > 0 && res < benches->numSeats ; res++)
@@ -200,6 +203,16 @@ static int random_empty_seat_position_client_benches(ClientBenches* benches)
 	ensure (res >= 0 && res < benches->numSeats, "");
 
 	return res;
+}
+
+void notify_barbers_all_clients_are_done(ClientBenches* benches)
+{
+	require (benches != NULL, "benches argument required");
+
+	mutex_lock(&benches->clientBenchMutex);
+	benches->closed = 1;
+	cond_broadcast(&benches->clientWaiting);
+	mutex_unlock(&benches->clientBenchMutex);
 }
 
 static char* to_string_client_benches(ClientBenches* benches)

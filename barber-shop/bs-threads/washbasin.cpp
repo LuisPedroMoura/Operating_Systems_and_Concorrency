@@ -84,17 +84,29 @@ static char* to_string_washbasin(Washbasin* basin)
 		basin->internal = (char*)mem_alloc(skel_length + 1);
 
 	return gen_boxes(basin->internal, skel_length, skel,
-			empty_washbasin(basin) ? " ---" : perc2str(basin->completionPercentage),
-					empty_washbasin(basin) ? basin_not_used : SPLASH,
-							empty_washbasin(basin) ? "--" : int2nstr(basin->clientID, 2),
-									empty_washbasin(basin) ? "--" : int2nstr(basin->barberID, 2));
+			_empty_washbasin_(basin) ? " ---" : perc2str(basin->completionPercentage),
+					_empty_washbasin_(basin) ? basin_not_used : SPLASH,
+							_empty_washbasin_(basin) ? "--" : int2nstr(basin->clientID, 2),
+									_empty_washbasin_(basin) ? "--" : int2nstr(basin->barberID, 2));
 }
 
 int empty_washbasin(Washbasin* basin)
 {
 	require (basin != NULL, "basin argument required");
 
+	mutex_lock(&basin->washbasinMutex);
+	int res = _empty_washbasin_(basin);
+	mutex_unlock(&basin->washbasinMutex);
+
+	return res;
+}
+
+int _empty_washbasin_(Washbasin* basin)
+{
+	require (basin != NULL, "basin argument required");
+
 	int res = basin->barberID == 0 && basin->clientID == 0;
+
 	return res;
 }
 
@@ -144,11 +156,16 @@ void reserve_washbasin(Washbasin* basin, int barberID)
 {
 	require (basin != NULL, "basin argument required");
 	require (barberID > 0, concat_3str("invalid barber id (", int2str(barberID), ")"));
-	require (empty_washbasin(basin), "washbasin is already occupied");
+
+	mutex_lock(&basin->washbasinMutex);
+	require (_empty_washbasin_(basin), "washbasin is already occupied");
 
 	basin->barberID = barberID;
 	basin->completionPercentage = 0;
+
 	log_washbasin(basin);
+
+	mutex_unlock(&basin->washbasinMutex);
 }
 
 void release_washbasin(Washbasin* basin, int barberID)
@@ -162,12 +179,13 @@ void release_washbasin(Washbasin* basin, int barberID)
 	while (washbasin_with_a_client(basin)){
 		cond_wait(&basin->clientRoseFromWashbasin, &basin->washbasinMutex);
 	}
-	cond_broadcast(&basin->washbasinAvailable);
-
 	require (!washbasin_with_a_client(basin), "a client is still in basin");
 
 	basin->barberID = 0;
+	basin->clientID = 0;
 	basin->completionPercentage = -1;
+	cond_broadcast(&basin->washbasinAvailable);
+
 	log_washbasin(basin);
 
 	mutex_unlock(&basin->washbasinMutex);
@@ -225,16 +243,16 @@ void set_completion_washbasin(Washbasin* basin, int completionPercentage)
 	require (complete_washbasin(basin), "washbasin is not complete");
 
 	basin->completionPercentage = completionPercentage;
-	log_washbasin(basin);
 
 	if(completionPercentage==100){
 		cond_broadcast(&basin->washbasinServiceFinished);
 	}
+
+	log_washbasin(basin);
+
 	mutex_unlock(&basin->washbasinMutex);
 }
 
-
-//barber 570
 void wait_client_to_sit_in_washbasin(Washbasin* basin)
 {
 	require (basin != NULL, "basin argument required");
@@ -244,13 +262,7 @@ void wait_client_to_sit_in_washbasin(Washbasin* basin)
 		cond_wait(&basin->clientSatInWashbasin, &basin->washbasinMutex);
 	}
 	mutex_unlock(&basin->washbasinMutex);
-
 }
-
-//barber 590
-//set_completion_washbasin(washbasin(barber->shop, barber->basinPosition), complete);
-
-
 
 void wait_for_washbasin_service_completion(Washbasin* basin)
 {
