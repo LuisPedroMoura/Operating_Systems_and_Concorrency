@@ -8,21 +8,6 @@
 #include "service.h"
 #include "client.h"
 
-enum BCState
-{
-   NO_BARBER_GREET,           //barber has yet to receive and greet the client
-   WAITING_ON_RESERVE,        //client waiting until the barber has reserved the seat for the process
-   RESERVED,                  //chair reserved
-   SERVICE_INFO_AVAILABLE,    //client has been informed
-   WAITING_ON_CLIENT_SIT,     //barber waiting on client to sit
-   CLIENT_SEATED,	      //client has sat down
-   PROCESSING,		      //process started
-   WAITING_ON_CLIENT_RISE,    //barber waiting for client to leave the spot
-   CLIENT_RISEN,              //client left the spot
-   PROCESS_DONE,              //process has finished
-   ALL_PROCESSES_DONE         //all processes done   
-};
-
 enum ClientState
 {
    NONE = 0,                   // initial state
@@ -254,11 +239,18 @@ static void wait_its_turn(Client* client)
    client->state = WAITING_ITS_TURN;
    log_client(client);
 
-   //WILL NEED A SEMAPHORE
+   bci_wait_semEnterClientBench();
+
+   bci_get_syncBenches(client_benches(client->shop));
+
    while(bci_get_num_clients_in_bench() == client_benches(client->shop)->numSeats);
    client->benchesPosition = enter_barber_shop(client->shop,client->id,client->requests);
    bci_set_syncBenches(*client_benches(client->shop));
    bci_client_in();
+
+   bci_post_semClientBench();
+
+   bci_post_semEnterClientBench();
    
    log_client(client);
    
@@ -266,12 +258,6 @@ static void wait_its_turn(Client* client)
    
    client->barberID = greet_barber(client->shop,client->id);
    log_client(client);
-   
-   bci_set_state(client->barberID,WAITING_ON_RESERVE);
-   
-   //while(bci_get_state(client->barberID) < RESERVED);
-   //sem_t* tmp_semRes;
-   //bci_get_semReserved(tmp_semRes,client->barberID);
    
    bci_wait_semReserved(client->barberID);
 }
@@ -285,7 +271,8 @@ static void rise_from_client_benches(Client* client)
    require (client != NULL, "client argument required");
    require (client != NULL, "client argument required");
    require (seated_in_client_benches(client_benches(client->shop), client->id), concat_3str("client ",int2str(client->id)," not seated in benches"));
-
+  
+   bci_get_syncBenches(client_benches(client->shop));
    rise_client_benches(client_benches(client->shop),client->benchesPosition,client->id);
    bci_set_syncBenches(*client_benches(client->shop));
    client->benchesPosition = -1;
@@ -316,7 +303,6 @@ static void wait_all_services_done(Client* client)
      client->state = WAITING_SERVICE;
      log_client(client);
 
-     //while(bci_get_state(client->barberID) < SERVICE_INFO_AVAILABLE);
      bci_wait_semServiceInfoAvailable(client->barberID);
 
      Service given_service = wait_service_from_barber(client->shop,client->barberID);
@@ -324,7 +310,6 @@ static void wait_all_services_done(Client* client)
 
      client->state = WAITING_SERVICE_START;
 
-     //while(bci_get_state(client->barberID) < WAITING_ON_CLIENT_SIT);
      bci_wait_semWaitingOnClientSit(client->barberID);
 
      if(is_barber_chair_service(tmp_service)) {
@@ -344,12 +329,10 @@ static void wait_all_services_done(Client* client)
        bci_set_syncWashbasin(*tmp_wsh4,client->barberID);
      }
 
-     //bci_set_state(client->barberID,CLIENT_SEATED);
      bci_post_semClientSeated(client->barberID);
 
      log_client(client);
 
-     //while(bci_get_state(client->barberID) < PROCESSING);
      bci_wait_semProcessing(client->barberID);
 
      if(tmp_service->request == 1)
@@ -361,7 +344,6 @@ static void wait_all_services_done(Client* client)
 
      log_client(client);
 
-     //while(bci_get_state(client->barberID) < WAITING_ON_CLIENT_RISE);
      bci_wait_semWaitingOnRise(client->barberID);
      
      if(tmp_service->request == 1 or tmp_service->request == 4) {
@@ -379,32 +361,18 @@ static void wait_all_services_done(Client* client)
        client->basinPosition = -1; 
      }
 
-     //bci_set_state(client->barberID,CLIENT_RISEN);
      bci_post_semClientRisen(client->barberID);
 
-     //while(bci_get_state(client->barberID) < PROCESS_DONE);
      bci_wait_semProcessDone(client->barberID);
 
      client->requests = bci_get_request(client->id);
    
      log_client(client);   
 
-     //if(bci_get_state(client->barberID) == ALL_PROCESSES_DONE) {
-     //   client->state = DONE;
-     //}
-     //else {
-     //   bci_set_state(client->barberID,WAITING_ON_RESERVE);
-     //}
-
      if(bci_get_semAllProcessesDoneValue(client->barberID) > 0) {
        client->state = DONE;
        bci_wait_semAllProcessesDone(client->barberID);
      }
-     else {
-       
-     }
-
-     bci_wait_semProcessDone(client->barberID);
 
      log_client(client);   
    }
