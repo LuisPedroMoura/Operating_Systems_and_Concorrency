@@ -92,13 +92,6 @@ void init_barber_shop(BarberShop* shop, int num_barbers, int num_chairs,
 	init_client_benches(&shop->clientBenches, num_client_benches_seats, num_client_benches, 1+3+num_lines_barber_chair()+num_lines_tools_pot(), 16);
 	init_communication_line(&shop->commLine);
 
-	for(int i=0; i<MAX_CLIENTS; i++){
-		shop->messageAvailable[i] = PTHREAD_COND_INITIALIZER;
-	}
-	for(int i=0; i<MAX_CLIENTS; i++){
-		shop->messagesMutex[i] = PTHREAD_MUTEX_INITIALIZER;
-	}
-
 	/* Barber chair semaphore init */
 	require(sem_init(&shop->accessBarberChair, 0, global->NUM_BARBER_CHAIRS) == 0, "Barber Chair semaphore init error");
 
