@@ -91,11 +91,9 @@ void wait_for_available_seat(ClientBenches* benches)
 {
 	require (benches != NULL, "benches argument required");
 
-	mutex_lock(&benches->clientBenchMutex);
 	while(_num_available_benches_seats_(benches) == 0){
 		cond_wait(&benches->clientSeatAvailable, &benches->clientBenchMutex);
 	}
-	mutex_unlock(&benches->clientBenchMutex);
 }
 
 // returns position
@@ -105,16 +103,20 @@ int random_sit_in_client_benches(ClientBenches* benches, int id, int request)
 	require (id > 0, concat_3str("invalid id (", int2str(id), ")"));
 	require (request > 0, concat_3str("invalid request (", int2str(request), ")"));
 
-	int res;
 	mutex_lock(&benches->clientBenchMutex);
 
-	res = random_empty_seat_position_client_benches(benches);
+	wait_for_available_seat(benches);
+	require (_num_available_benches_seats_(benches) > 0, "empty seat not available in client benches");
+
+	int res = random_empty_seat_position_client_benches(benches);
 	RQItem item = {id, res, request, 0};
 	benches->id[res] = id;
 	benches->request[res] = request;
 	benches->order[res] = in_client_queue(&benches->queue, item);
+
 	cond_broadcast(&benches->clientWaiting);
 	log_client_benches(benches);
+
 	mutex_unlock(&benches->clientBenchMutex);
 
 	return res;
@@ -147,6 +149,7 @@ RQItem next_client_in_benches(ClientBenches* benches)
 	else
 		res = empty_item();
 	printf("next client in benches - returns: %d\n", res.benchPos);
+
 	mutex_unlock(&benches->clientBenchMutex);
 
 	return res;
@@ -165,7 +168,9 @@ void rise_client_benches(ClientBenches* benches, int pos, int id)
 	benches->order[pos] = 0;
 	benches->request[pos] = 0;
 	cond_broadcast(&benches->clientSeatAvailable);
+
 	log_client_benches(benches);
+
 	mutex_unlock(&benches->clientBenchMutex);
 }
 

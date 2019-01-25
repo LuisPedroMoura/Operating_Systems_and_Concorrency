@@ -208,6 +208,7 @@ void sit_in_barber_chair(BarberChair* chair, int clientID)
 	cond_broadcast(&chair->clientSatInBarberChair);
 
 	log_barber_chair(chair);
+
 	mutex_unlock(&chair->barberChairMutex);
 }
 
@@ -225,6 +226,7 @@ void rise_from_barber_chair(BarberChair* chair, int clientID)
 	cond_broadcast(&chair->clientRoseFromBarberChair);
 
 	log_barber_chair(chair);
+
 	mutex_unlock(&chair->barberChairMutex);
 }
 
@@ -280,7 +282,6 @@ void wait_for_barber_chair_service_completion(BarberChair* chair)
 		cond_wait(&chair->barberChairServiceFinished, &chair->barberChairMutex);
 	}
 	mutex_unlock(&chair->barberChairMutex);
-
 }
 
 

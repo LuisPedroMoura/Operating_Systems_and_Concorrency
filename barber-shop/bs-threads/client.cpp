@@ -247,8 +247,6 @@ static void wait_its_turn(Client* client)
 
 	client->state = WAITING_ITS_TURN;
 
-	wait_for_available_seat_in_client_bench(client->shop);
-
 	int clientSeat = enter_barber_shop(client->shop, client->id, client->requests);
 	client->benchesPosition = clientSeat;
 
@@ -346,6 +344,7 @@ static void wait_all_services_done(Client* client)
 			wait_for_washbasin_service_completion(basin);
 
 			rise_from_washbasin(basin, client->id);
+			client->basinPosition = -1;
 
 			log_client(client);
 		}

@@ -185,6 +185,7 @@ void sit_in_washbasin(Washbasin* basin, int clientID)
 	cond_broadcast(&basin->clientSatInWashbasin);
 
 	log_washbasin(basin);
+
 	mutex_unlock(&basin->washbasinMutex);
 }
 
@@ -202,6 +203,7 @@ void rise_from_washbasin(Washbasin* basin, int clientID)
 	cond_broadcast(&basin->clientRoseFromWashbasin);
 
 	log_washbasin(basin);
+
 	mutex_unlock(&basin->washbasinMutex);
 }
 

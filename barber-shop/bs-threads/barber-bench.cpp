@@ -85,13 +85,23 @@ int num_seats_available_barber_bench(BarberBench* bench)
 	require (bench != NULL, "bench argument required");
 
 	mutex_lock(&bench->barberBenchMutex);
+	int res = _num_seats_available_barber_bench_(bench);
+	mutex_unlock(&bench->barberBenchMutex);
+
+	return res;
+}
+
+int _num_seats_available_barber_bench_(BarberBench* bench)
+{
+	require (bench != NULL, "bench argument required");
+
 	printf("\nbench: %d\n", bench->numSeats);
 	int res = 0;
 	for(int pos = 0; pos < bench->numSeats ; pos++)
 		if (bench->id[pos] == 0)
 			res++;
 	printf("res: %d\n", res);
-	mutex_unlock(&bench->barberBenchMutex);
+
 	return res;
 }
 
@@ -135,11 +145,11 @@ int random_sit_in_barber_bench(BarberBench* bench, int id)
 	require (bench != NULL, "bench argument required");
 	require (id > 0, concat_3str("invalid id (", int2str(id), ")"));
 
+	mutex_lock(&bench->barberBenchMutex);
+	require (_num_seats_available_barber_bench_(bench) > 0, "empty seat not available in barber bench");
+	require (!_seated_in_barber_bench_(bench, id), concat_3str("barber ",int2str(id)," is already seated"));
 
-	require (num_seats_available_barber_bench(bench) > 0, "empty seat not available in barber bench");
-	require (!seated_in_barber_bench(bench, id), concat_3str("barber ",int2str(id)," is already seated"));
-
-	int r = random_int(1, num_seats_available_barber_bench(bench));
+	int r = random_int(1, _num_seats_available_barber_bench_(bench));
 	int res;
 	for(res = 0; r > 0 && res < bench->numSeats ; res++)
 		if (bench->id[res] == 0)
@@ -149,11 +159,12 @@ int random_sit_in_barber_bench(BarberBench* bench, int id)
 	check (bench->id[res] == 0, "");
 
 	bench->id[res] = id;
+
 	log_barber_bench(bench);
 
 	ensure (res >= 0 && res < bench->numSeats, "");
 
-
+	mutex_unlock(&bench->barberBenchMutex);
 
 	return res;
 }
@@ -162,10 +173,15 @@ void rise_barber_bench(BarberBench* bench, int pos)
 {
 	require (bench != NULL, "bench argument required");
 	require (pos >= 0 && pos < bench->numSeats, concat_5str("invalid bench position (", int2str(pos), " not in [0,", int2str(bench->numSeats), "[)"));
+
+	mutex_lock(&bench->barberBenchMutex);
 	require (bench_seat_occupied(bench, pos), concat_3str("barber bench sit ",int2str(pos)," is empty"));
 
 	bench->id[pos] = 0;
+
 	log_barber_bench(bench);
+
+	mutex_unlock(&bench->barberBenchMutex);
 }
 
 int seated_in_barber_bench(BarberBench* bench, int id)
@@ -174,10 +190,21 @@ int seated_in_barber_bench(BarberBench* bench, int id)
 	require (id > 0, concat_3str("invalid id (", int2str(id), ")"));
 
 	mutex_lock(&bench->barberBenchMutex);
+	int res = _seated_in_barber_bench_(bench, id);
+	mutex_unlock(&bench->barberBenchMutex);
+
+	return res;
+}
+
+int _seated_in_barber_bench_(BarberBench* bench, int id)
+{
+	require (bench != NULL, "bench argument required");
+	require (id > 0, concat_3str("invalid id (", int2str(id), ")"));
+
 	int res = 0;
 	for(int i = 0; !res && i < bench->numSeats ; i++)
 		res = (bench->id[i] == id);
-	mutex_unlock(&bench->barberBenchMutex);
+
 	return res;
 }
 

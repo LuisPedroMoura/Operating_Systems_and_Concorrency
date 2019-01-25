@@ -161,14 +161,12 @@ static void sit_in_barber_bench(Barber* barber)
 	 ** TODO:
 	 **/
 	require (barber != NULL, "barber argument required");
-
-	mutex_lock(&barber->shop->barberBenchMutex);
-	require (num_seats_available_barber_bench(barber_bench(barber->shop)) > 0, "seat not available in barber shop");
 	require (!seated_in_barber_bench(barber_bench(barber->shop), barber->id), "barber already seated in barber shop");
 
-	int seatPos = random_sit_in_barber_bench(barber_bench(barber->shop), barber->id);
+	//require is verified in random_sit_in_barber_bench() in the code below
+	//require (num_seats_available_barber_bench(barber_bench(barber->shop)) > 0, "seat not available in barber shop");
 
-	mutex_unlock(&barber->shop->barberBenchMutex);
+	int seatPos = random_sit_in_barber_bench(barber_bench(barber->shop), barber->id);
 	barber->benchPosition = seatPos;
 
 	//printf("--------------------------------------------BARBER LIFE - SIT IN BARBER BENCH\n");
@@ -190,13 +188,13 @@ static void wait_for_client(Barber* barber)
 	// TODO: problema do fecho da loja
 	RQItem requests = next_client_in_benches(&(barber->shop->clientBenches));
 
-	mutex_lock(&barber->shop->shopFloorMutex);
-	if (!barber->shop->opened){
-		mutex_unlock(&barber->shop->shopFloorMutex);
-		log_barber(barber);
-		return;
-	}
-	mutex_unlock(&barber->shop->shopFloorMutex);
+//	mutex_lock(&barber->shop->shopFloorMutex);
+//	if (!barber->shop->opened){
+//		mutex_unlock(&barber->shop->shopFloorMutex);
+//		log_barber(barber);
+//		return;
+//	}
+//	mutex_unlock(&barber->shop->shopFloorMutex);
 
 	barber->reqToDo = requests.request;
 	barber->clientID = requests.clientID;
@@ -215,21 +213,20 @@ static int work_available(Barber* barber)
 
 	require (barber != NULL, "barber argument required");
 
-	mutex_lock(&barber->shop->shopFloorMutex);
-	if (!(barber->shop->opened)){
-
-		rise_from_barber_bench(barber);
-		barber->benchPosition = -1;
-		mutex_unlock(&barber->shop->shopFloorMutex);
-		//printf("!!!!!!!!!!!!!!!!!!!! barber %d, no work available, suicides\n", barber->id);
-		return 0;
-	}
-	mutex_unlock(&barber->shop->shopFloorMutex);
+//	mutex_lock(&barber->shop->shopFloorMutex);
+//	if (!(barber->shop->opened)){
+//
+//		rise_from_barber_bench(barber);
+//		barber->benchPosition = -1;
+//		mutex_unlock(&barber->shop->shopFloorMutex);
+//		//printf("!!!!!!!!!!!!!!!!!!!! barber %d, no work available, suicides\n", barber->id);
+//		return 0;
+//	}
+//	mutex_unlock(&barber->shop->shopFloorMutex);
 
 	if (barber->clientID > 0){
 		return 1;
 	}
-
 	return 0;
 }
 
@@ -241,12 +238,9 @@ static void rise_from_barber_bench(Barber* barber)
 	 **/
 
 	require (barber != NULL, "barber argument required");
-
-	mutex_lock(&barber->shop->barberBenchMutex);
 	require (seated_in_barber_bench(barber_bench(barber->shop), barber->id), "barber not seated in barber shop");
 	
 	rise_barber_bench(&(barber->shop->barberBench), barber->benchPosition);
-	mutex_unlock(&barber->shop->barberBenchMutex);
 	barber->benchPosition = -1;
 	//printf("--------------------------------------------BARBER LIFE - RISE FROM BARBER BENCH\n");
 	log_barber(barber);

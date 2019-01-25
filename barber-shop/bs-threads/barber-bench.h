@@ -29,12 +29,14 @@ void log_barber_bench(BarberBench* bench);
 
 int empty_barber_bench(BarberBench* bench);
 int num_seats_available_barber_bench(BarberBench* bench);
+int _num_seats_available_barber_bench_(BarberBench* bench);
 int occupied_by_barber(BarberBench* bench, int pos, int id);
 
 int bench_seat_occupied(BarberBench* bench, int pos);
 int random_sit_in_barber_bench(BarberBench* bench, int id);
 void rise_barber_bench(BarberBench* bench, int pos);
 int seated_in_barber_bench(BarberBench* bench, int id);
+int _seated_in_barber_bench_(BarberBench* bench, int id);
 
 #endif
 
