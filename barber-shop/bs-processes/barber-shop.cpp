@@ -94,7 +94,6 @@ void init_barber_shop(BarberShop* shop, int num_barbers, int num_chairs,
       init_washbasin(shop->washbasin+i, i+1, 1+3+num_lines_barber_chair(), num_columns_tools_pot()+3+11+1+i*(num_columns_washbasin()+2));
    init_client_benches(&shop->clientBenches, num_client_benches_seats, num_client_benches, 1+3+num_lines_barber_chair()+num_lines_tools_pot(), 16);
 
-
    /* create the shared memory */
    shmid = shmget(key, sizeof(BCInterface), 0600 | IPC_CREAT | IPC_EXCL);
    if (shmid == -1)
@@ -140,6 +139,14 @@ void init_barber_shop(BarberShop* shop, int num_barbers, int num_chairs,
      psem_init(&bcinterfaces->semProcessDone[initsem],1,0);
      psem_init(&bcinterfaces->semAllProcessesDone[initsem],1,0);
    }
+
+   psem_init(&bcinterfaces->semBarberBench,1,1);  
+   psem_init(&bcinterfaces->semClientBench,1,0);
+   psem_init(&bcinterfaces->semEnterClientBench,1,1);
+   psem_init(&bcinterfaces->semChairBasin,1,1);
+   psem_init(&bcinterfaces->semToolPot,1,1);
+
+   bci_set_syncBenches(*client_benches(shop));
 }
 
 void term_barber_shop(BarberShop* shop)
@@ -1029,3 +1036,149 @@ int bci_get_semAllProcessesDoneValue(int barberID)
     unlock();
     return *pval;
 }
+
+void bci_wait_semBarberBench()
+{
+        sem_t* tmp_r = &(bcinterfaces->semBarberBench);
+        psem_wait(tmp_r);
+}
+
+void bci_wait_semClientBench()
+{
+        sem_t* tmp_r = &(bcinterfaces->semClientBench);
+        psem_wait(tmp_r);	
+}
+
+void bci_wait_semEnterClientBench()
+{
+        sem_t* tmp_r = &(bcinterfaces->semEnterClientBench);
+        psem_wait(tmp_r);	
+}
+
+void bci_wait_semChairBasin()
+{
+        sem_t* tmp_r = &(bcinterfaces->semChairBasin);
+        psem_wait(tmp_r);	
+}
+
+void bci_wait_semToolPot()
+{
+        sem_t* tmp_r = &(bcinterfaces->semToolPot);
+        psem_wait(tmp_r);	
+}
+
+void bci_post_semBarberBench()
+{        
+    lock();
+
+        sem_t* tmp_r = &(bcinterfaces->semBarberBench);
+        psem_post(tmp_r);
+    
+    unlock();	
+}
+
+void bci_post_semClientBench()
+{
+    lock();
+
+        sem_t* tmp_r = &(bcinterfaces->semClientBench);
+        psem_post(tmp_r);
+
+    unlock();	
+}
+
+void bci_post_semEnterClientBench()
+{
+    lock();
+
+        sem_t* tmp_r = &(bcinterfaces->semEnterClientBench);
+        psem_post(tmp_r);
+
+    unlock();	
+}
+
+void bci_post_semChairBasin()
+{
+    lock();
+
+        sem_t* tmp_r = &(bcinterfaces->semChairBasin);
+        psem_post(tmp_r);
+
+    unlock();	
+}
+
+void bci_post_semToolPot()
+{
+    lock();
+
+        sem_t* tmp_r = &(bcinterfaces->semToolPot);
+        psem_post(tmp_r);	
+
+    unlock();
+}
+
+int bci_get_semBarberBenchValue()
+{
+    lock();
+
+        sem_t* tmp_r = &(bcinterfaces->semBarberBench);
+        int val; 
+        int* pval = &val;
+        sem_getvalue(tmp_r,pval);
+        
+    unlock();
+    return *pval;	
+}
+
+int bci_get_semClientBenchValue()
+{
+    lock();
+
+        sem_t* tmp_r = &(bcinterfaces->semClientBench);
+        int val; 
+        int* pval = &val;
+        sem_getvalue(tmp_r,pval);
+        
+    unlock();
+    return *pval;	
+}
+
+int bci_get_semEnterClientBenchValue()
+{
+    lock();
+
+        sem_t* tmp_r = &(bcinterfaces->semEnterClientBench);
+        int val; 
+        int* pval = &val;
+        sem_getvalue(tmp_r,pval);
+        
+    unlock();
+    return *pval;	
+}
+
+int bci_get_semChairBasinValue()
+{
+    lock();
+
+        sem_t* tmp_r = &(bcinterfaces->semChairBasin);
+        int val; 
+        int* pval = &val;
+        sem_getvalue(tmp_r,pval);
+        
+    unlock();
+    return *pval;	
+}
+
+int bci_get_semToolPotValue()
+{
+    lock();
+
+        sem_t* tmp_r = &(bcinterfaces->semToolPot);
+        int val; 
+        int* pval = &val;
+        sem_getvalue(tmp_r,pval);
+        
+    unlock();
+    return *pval;	
+}
+

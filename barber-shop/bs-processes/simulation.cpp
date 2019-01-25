@@ -23,11 +23,6 @@
 #include "process.h"
 #include "barber-shop.h"
 
-//static sem_t sem_shop;
-//static sem_t sem_tools_box;
-//static sem_t sem_washbasin;
-//static sem_t sem_barber_chair;
-
 static BarberShop *shop;
 static Barber* allBarbers = NULL;
 static Client* allClients = NULL;
@@ -84,11 +79,6 @@ static void go()
    require (allBarbers != NULL, "list of barbers data structures not created");
    require (allClients != NULL, "list of clients data structures not created");
 
-   //psem_open("sem_shop",IPC_CREAT,00700,1);
-   //psem_open("sem_tools_box",IPC_CREAT,00700,1);
-   //psem_open("sem_washbasin",IPC_CREAT,00700,1);
-   //psem_open("sem_barber_chair",IPC_CREAT,00700,1);	
-
    launch_logger();
    char* descText;
    descText = (char*)"Barbers:";
@@ -97,56 +87,27 @@ static void go()
    send_log(logIdClientsDesc, (char*)descText);
    show_barber_shop(shop);
 
-   /*
+   
    pid_t pdi = 0;
    pid_t x = pfork();
-   int i = 0;
-   if(x == 0){
-     while(i<global->NUM_CLIENTS){
+   int i;
+   if(x == 0) {
+     for(i=0;i<global->NUM_CLIENTS-1;) {
        pdi = pfork();
        if(pdi!=0) break;
-       else i++;
+       i++;
      }
-     log_client(allClients+i);
      main_client(allClients+i);
    }
-   else{
-     while(i<global->NUM_BARBERS){
+   else {
+     for(i=0;i<global->NUM_BARBERS-1;){
        pdi = pfork();
        if(pdi!=0) break;
-       else i++;
+       i++;
      }
-     log_barber(allBarbers+i);
      main_barber(allBarbers+i);
-   }
-   */ 
-
-
-   /*for(int i = 0; i < global->NUM_BARBERS; i++){
-      allBarbers=allBarbers+i;
-      log_barber(allBarbers);      
-      if(global->NUM_BARBERS > 1) pdi = pfork();
-      if(pdi == 0) break;
-   }
-
-   if(pdi == 0){
-   	for(int i = 0; i < global->NUM_CLIENTS; i++){
-		allClients=allClients+i;      		
-		log_client(allClients);
-      		if(global->NUM_CLIENTS > 1) pfork();
-   	}
-   }*/
-
-   pid_t x = pfork();
-   if(x == 0) main_barber(allBarbers);
-   else main_client(allClients);
-
-   //if(pdi==0)
-   //psem_unlink("sem_shop");
-   //psem_unlink("sem_tools_box");
-   //psem_unlink("sem_washbasin");
-   //psem_unlink("sem_barber_chair");    
-
+   }  
+ 
    if(bci_get_numClientsThatLeft() == global->NUM_CLIENTS) close_shop(shop);
 }
 
@@ -156,13 +117,8 @@ static void go()
 static void finish()
 {
    /* TODO: change this function to your needs */
-   //psem_destroy(&sem_shop);
-   //psem_destroy(&sem_tools_box);
-   //psem_destroy(&sem_washbasin);
-   //psem_destroy(&sem_barber_chair);
+
    term_logger();
-   term_client(allClients);
-   term_barber(allBarbers);
 }
 
 static void initSimulation()

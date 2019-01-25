@@ -239,10 +239,18 @@ static void wait_its_turn(Client* client)
    client->state = WAITING_ITS_TURN;
    log_client(client);
 
+   bci_wait_semEnterClientBench();
+
+   bci_get_syncBenches(client_benches(client->shop));
+
    while(bci_get_num_clients_in_bench() == client_benches(client->shop)->numSeats);
    client->benchesPosition = enter_barber_shop(client->shop,client->id,client->requests);
    bci_set_syncBenches(*client_benches(client->shop));
    bci_client_in();
+
+   bci_post_semClientBench();
+
+   bci_post_semEnterClientBench();
    
    log_client(client);
    
@@ -263,7 +271,8 @@ static void rise_from_client_benches(Client* client)
    require (client != NULL, "client argument required");
    require (client != NULL, "client argument required");
    require (seated_in_client_benches(client_benches(client->shop), client->id), concat_3str("client ",int2str(client->id)," not seated in benches"));
-
+  
+   bci_get_syncBenches(client_benches(client->shop));
    rise_client_benches(client_benches(client->shop),client->benchesPosition,client->id);
    bci_set_syncBenches(*client_benches(client->shop));
    client->benchesPosition = -1;

@@ -46,6 +46,12 @@ typedef struct _BCInterface_
    sem_t semProcessDone[MAX_BARBERS];
    sem_t semAllProcessesDone[MAX_BARBERS];
 
+   sem_t semBarberBench;
+   sem_t semClientBench;
+   sem_t semEnterClientBench;
+   sem_t semChairBasin;
+   sem_t semToolPot;
+
 } BCInterface;
 
 typedef struct _BarberShop_
@@ -180,4 +186,23 @@ int bci_get_semWaitingOnRiseValue(int barberID);
 int bci_get_semClientRisenValue(int barberID);
 int bci_get_semProcessDoneValue(int barberID);
 int bci_get_semAllProcessesDoneValue(int barberID);
+
+void bci_wait_semBarberBench();
+void bci_wait_semClientBench();
+void bci_wait_semEnterClientBench();
+void bci_wait_semChairBasin();
+void bci_wait_semToolPot();
+
+void bci_post_semBarberBench();
+void bci_post_semClientBench();
+void bci_post_semEnterClientBench();
+void bci_post_semChairBasin();
+void bci_post_semToolPot();
+
+int bci_get_semBarberBenchValue();
+int bci_get_semClientBenchValue();
+int bci_get_semEnterClientBenchValue();
+int bci_get_semChairBasinValue();
+int bci_get_semToolPotValue();
+
 #endif
