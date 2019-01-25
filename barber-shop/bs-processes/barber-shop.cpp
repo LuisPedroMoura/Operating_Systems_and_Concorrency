@@ -19,7 +19,7 @@
 static int shmid = 74;
 static BCInterface * bcinterfaces;
 
-const long key = 0x2139L;
+const long key = 0x213AL;
 
 enum BCState
 {
@@ -143,6 +143,18 @@ void init_barber_shop(BarberShop* shop, int num_barbers, int num_chairs,
 
    bci_connect();
    bci_open_shop();
+
+   for(int initsem = 0; initsem < MAX_BARBERS; initsem++){
+     psem_init(&bcinterfaces->semReserved[initsem],1,0);
+     psem_init(&bcinterfaces->semServiceInfoAvailable[initsem],1,0);
+     psem_init(&bcinterfaces->semWaitingOnClientSit[initsem],1,0);
+     psem_init(&bcinterfaces->semClientSeated[initsem],1,0);
+     psem_init(&bcinterfaces->semProcessing[initsem],1,0);
+     psem_init(&bcinterfaces->semWaitingOnRise[initsem],1,0);
+     psem_init(&bcinterfaces->semClientRisen[initsem],1,0);
+     psem_init(&bcinterfaces->semProcessDone[initsem],1,0);
+     psem_init(&bcinterfaces->semAllProcessesDone[initsem],1,0);
+   }
 }
 
 void term_barber_shop(BarberShop* shop)
@@ -864,6 +876,80 @@ int bci_get_numClientsThatLeft()
     return numC;
 }
 
+/*
+void bci_get_semReserved(sem_t* tmp_sem, int barberID)
+{
+    lock();
+
+        tmp_sem = &(bcinterfaces->semReserved[barberID-1]);
+
+    unlock();
+}
+
+void bci_get_semServiceInfoAvailable(sem_t* tmp_sem, int barberID)
+{
+    lock();
+
+        tmp_sem = &(bcinterfaces->semServiceInfoAvailable[barberID-1]);
+
+    unlock();
+}
+
+void bci_get_semWaitingOnClientSit(sem_t* tmp_sem, int barberID)
+{
+    lock();
+
+        tmp_sem = &(bcinterfaces->semWaitingOnClientSit[barberID-1]);
+
+    unlock();
+}
+
+void bci_get_semClientSeated(sem_t* tmp_sem, int barberID)
+{
+    lock();
+
+        tmp_sem = &(bcinterfaces->semClientSeated[barberID-1]);
+
+    unlock();
+}
+
+void bci_get_semProcessing(sem_t* tmp_sem, int barberID)
+{
+    lock();
+
+        tmp_sem = &(bcinterfaces->semProcessing[barberID-1]);
+
+    unlock();
+}
+
+void bci_get_semWaitingOnRise(sem_t* tmp_sem, int barberID)
+{
+    lock();
+
+        tmp_sem = &(bcinterfaces->semWaitingOnRise[barberID-1]);
+
+    unlock();
+}
+
+void bci_get_semClientRisen(sem_t* tmp_sem, int barberID)
+{
+    lock();
+
+        tmp_sem = &(bcinterfaces->semClientRisen[barberID-1]);
+
+    unlock();
+}
+
+void bci_get_semProcessDone(sem_t* tmp_sem, int barberID)
+{
+    lock();
+
+        tmp_sem = &(bcinterfaces->semProcessDone[barberID-1]);
+
+    unlock();
+}
+*/
+
 void bci_grant_client_access(int clientID) 
 {
     lock();
@@ -880,4 +966,229 @@ void bci_revoke_client_access(int clientID)
 	bcinterfaces->clientAccess[clientID-1] = 0;
 
     unlock();
+}
+
+void bci_wait_semReserved(int barberID)
+{
+        sem_t* tmp_r = &(bcinterfaces->semReserved[barberID-1]);
+        psem_wait(tmp_r);
+}
+
+void bci_wait_semServiceInfoAvailable(int barberID)
+{
+        sem_t* tmp_r = &(bcinterfaces->semServiceInfoAvailable[barberID-1]);
+        psem_wait(tmp_r);
+}
+
+void bci_wait_semWaitingOnClientSit(int barberID)
+{
+        sem_t* tmp_r = &(bcinterfaces->semWaitingOnClientSit[barberID-1]);
+        psem_wait(tmp_r);
+}
+
+void bci_wait_semClientSeated(int barberID)
+{
+        sem_t* tmp_r = &(bcinterfaces->semClientSeated[barberID-1]);
+        psem_wait(tmp_r);
+}
+
+void bci_wait_semProcessing(int barberID)
+{
+        sem_t* tmp_r = &(bcinterfaces->semProcessing[barberID-1]);
+        psem_wait(tmp_r);
+}
+
+void bci_wait_semWaitingOnRise(int barberID)
+{
+        sem_t* tmp_r = &(bcinterfaces->semWaitingOnRise[barberID-1]);
+        psem_wait(tmp_r);
+}
+
+void bci_wait_semClientRisen(int barberID)
+{
+        sem_t* tmp_r = &(bcinterfaces->semClientRisen[barberID-1]);
+        psem_wait(tmp_r);
+}
+
+void bci_wait_semProcessDone(int barberID)
+{
+        sem_t* tmp_r = &(bcinterfaces->semProcessDone[barberID-1]);
+        psem_wait(tmp_r);
+}
+
+void bci_wait_semAllProcessesDone(int barberID)
+{
+        sem_t* tmp_r = &(bcinterfaces->semAllProcessesDone[barberID-1]);
+        psem_wait(tmp_r);
+}
+
+void bci_post_semReserved(int barberID)
+{
+        sem_t* tmp_r = &(bcinterfaces->semReserved[barberID-1]);
+        psem_post(tmp_r);
+}
+
+void bci_post_semServiceInfoAvailable(int barberID)
+{
+        sem_t* tmp_r = &(bcinterfaces->semServiceInfoAvailable[barberID-1]);
+        psem_post(tmp_r);
+}
+
+void bci_post_semWaitingOnClientSit(int barberID)
+{
+        sem_t* tmp_r = &(bcinterfaces->semWaitingOnClientSit[barberID-1]);
+        psem_post(tmp_r);
+}
+
+void bci_post_semClientSeated(int barberID)
+{
+        sem_t* tmp_r = &(bcinterfaces->semClientSeated[barberID-1]);
+        psem_post(tmp_r);
+}
+
+void bci_post_semProcessing(int barberID)
+{
+        sem_t* tmp_r = &(bcinterfaces->semProcessing[barberID-1]);
+        psem_post(tmp_r);
+}
+
+void bci_post_semWaitingOnRise(int barberID)
+{
+        sem_t* tmp_r = &(bcinterfaces->semWaitingOnRise[barberID-1]);
+        psem_post(tmp_r);
+}
+
+void bci_post_semClientRisen(int barberID)
+{
+        sem_t* tmp_r = &(bcinterfaces->semClientRisen[barberID-1]);
+        psem_post(tmp_r);
+}
+
+void bci_post_semProcessDone(int barberID)
+{
+        sem_t* tmp_r = &(bcinterfaces->semProcessDone[barberID-1]);
+        psem_post(tmp_r);
+}
+
+void bci_post_semAllProcessesDone(int barberID)
+{
+        sem_t* tmp_r = &(bcinterfaces->semAllProcessesDone[barberID-1]);
+        psem_post(tmp_r);
+}
+
+int bci_get_semReservedValue(int barberID)
+{
+    lock();
+
+        sem_t* tmp_r = &(bcinterfaces->semReserved[barberID-1]);
+        int val; 
+        int* pval = &val;
+        sem_getvalue(tmp_r,pval);
+        
+    unlock();
+    return *pval;
+}
+
+int bci_get_semServiceInfoAvailableValue(int barberID)
+{
+    lock();
+
+        sem_t* tmp_r = &(bcinterfaces->semServiceInfoAvailable[barberID-1]);
+        int val; 
+        int* pval = &val;
+        sem_getvalue(tmp_r,pval);
+        
+    unlock();
+    return *pval;
+}
+
+int bci_get_semWaitingOnClientSitValue(int barberID)
+{
+    lock();
+
+        sem_t* tmp_r = &(bcinterfaces->semWaitingOnClientSit[barberID-1]);
+        int val; 
+        int* pval = &val;
+        sem_getvalue(tmp_r,pval);
+        
+    unlock();
+    return *pval;
+}
+
+int bci_get_semClientSeatedValue(int barberID)
+{
+    lock();
+
+        sem_t* tmp_r = &(bcinterfaces->semClientSeated[barberID-1]);
+        int val; 
+        int* pval = &val;
+        sem_getvalue(tmp_r,pval);
+        
+    unlock();
+    return *pval;
+}
+
+int bci_get_semProcessingValue(int barberID)
+{
+    lock();
+
+        sem_t* tmp_r = &(bcinterfaces->semProcessing[barberID-1]);
+        int val; 
+        int* pval = &val;
+        sem_getvalue(tmp_r,pval);
+        
+    unlock();
+    return *pval;
+}
+
+int bci_get_semWaitingOnRiseValue(int barberID)
+{
+    lock();
+
+        sem_t* tmp_r = &(bcinterfaces->semWaitingOnRise[barberID-1]);
+        int val; 
+        int* pval = &val;
+        sem_getvalue(tmp_r,pval);
+        
+    unlock();
+    return *pval;
+}
+
+int bci_get_semClientRisenValue(int barberID)
+{
+    lock();
+
+        sem_t* tmp_r = &(bcinterfaces->semClientRisen[barberID-1]);
+        int val; 
+        int* pval = &val;
+        sem_getvalue(tmp_r,pval);
+        
+    unlock();
+    return *pval;
+}
+
+int bci_get_semProcessDoneValue(int barberID)
+{
+    lock();
+
+        sem_t* tmp_r = &(bcinterfaces->semProcessDone[barberID-1]);
+        int val; 
+        int* pval = &val;
+        sem_getvalue(tmp_r,pval);
+        
+    unlock();
+    return *pval;
+}
+
+int bci_get_semAllProcessesDoneValue(int barberID)
+{
+    lock();
+
+        sem_t* tmp_r = &(bcinterfaces->semAllProcessesDone[barberID-1]);
+        int val; 
+        int* pval = &val;
+        sem_getvalue(tmp_r,pval);
+        
+    unlock();
+    return *pval;
 }

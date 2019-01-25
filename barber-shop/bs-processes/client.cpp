@@ -269,7 +269,11 @@ static void wait_its_turn(Client* client)
    
    bci_set_state(client->barberID,WAITING_ON_RESERVE);
    
-   while(bci_get_state(client->barberID) < RESERVED);
+   //while(bci_get_state(client->barberID) < RESERVED);
+   //sem_t* tmp_semRes;
+   //bci_get_semReserved(tmp_semRes,client->barberID);
+   
+   bci_wait_semReserved(client->barberID);
 }
 
 static void rise_from_client_benches(Client* client)
@@ -312,12 +316,16 @@ static void wait_all_services_done(Client* client)
      client->state = WAITING_SERVICE;
      log_client(client);
 
-     while(bci_get_state(client->barberID) < SERVICE_INFO_AVAILABLE);
+     //while(bci_get_state(client->barberID) < SERVICE_INFO_AVAILABLE);
+     bci_wait_semServiceInfoAvailable(client->barberID);
 
      Service given_service = wait_service_from_barber(client->shop,client->barberID);
      Service* tmp_service = &(given_service);
 
      client->state = WAITING_SERVICE_START;
+
+     //while(bci_get_state(client->barberID) < WAITING_ON_CLIENT_SIT);
+     bci_wait_semWaitingOnClientSit(client->barberID);
 
      if(is_barber_chair_service(tmp_service)) {
        client->chairPosition = tmp_service->pos ;
@@ -336,13 +344,13 @@ static void wait_all_services_done(Client* client)
        bci_set_syncWashbasin(*tmp_wsh4,client->barberID);
      }
 
-     while(bci_get_state(client->barberID) < WAITING_ON_CLIENT_SIT);
-
-     bci_set_state(client->barberID,CLIENT_SEATED);
+     //bci_set_state(client->barberID,CLIENT_SEATED);
+     bci_post_semClientSeated(client->barberID);
 
      log_client(client);
 
-     while(bci_get_state(client->barberID) < PROCESSING);
+     //while(bci_get_state(client->barberID) < PROCESSING);
+     bci_wait_semProcessing(client->barberID);
 
      if(tmp_service->request == 1)
        client->state = HAVING_A_HAIRCUT;
@@ -353,7 +361,8 @@ static void wait_all_services_done(Client* client)
 
      log_client(client);
 
-     while(bci_get_state(client->barberID) < WAITING_ON_CLIENT_RISE);
+     //while(bci_get_state(client->barberID) < WAITING_ON_CLIENT_RISE);
+     bci_wait_semWaitingOnRise(client->barberID);
      
      if(tmp_service->request == 1 or tmp_service->request == 4) {
        bci_get_syncBBChair(barber_chair(client->shop,client->chairPosition),client->barberID);
@@ -370,20 +379,33 @@ static void wait_all_services_done(Client* client)
        client->basinPosition = -1; 
      }
 
-     bci_set_state(client->barberID,CLIENT_RISEN);
+     //bci_set_state(client->barberID,CLIENT_RISEN);
+     bci_post_semClientRisen(client->barberID);
 
-     while(bci_get_state(client->barberID) < PROCESS_DONE);
+     //while(bci_get_state(client->barberID) < PROCESS_DONE);
+     bci_wait_semProcessDone(client->barberID);
 
      client->requests = bci_get_request(client->id);
    
      log_client(client);   
 
-     if(bci_get_state(client->barberID) == ALL_PROCESSES_DONE) {
-        client->state = DONE;
+     //if(bci_get_state(client->barberID) == ALL_PROCESSES_DONE) {
+     //   client->state = DONE;
+     //}
+     //else {
+     //   bci_set_state(client->barberID,WAITING_ON_RESERVE);
+     //}
+
+     if(bci_get_semAllProcessesDoneValue(client->barberID) > 0) {
+       client->state = DONE;
+       bci_wait_semAllProcessesDone(client->barberID);
      }
      else {
-        bci_set_state(client->barberID,WAITING_ON_RESERVE);
+       
      }
+
+     bci_wait_semProcessDone(client->barberID);
+
      log_client(client);   
    }
 

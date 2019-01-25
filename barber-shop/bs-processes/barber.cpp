@@ -173,11 +173,7 @@ static void sit_in_barber_bench(Barber* barber)
    barber->benchPosition = random_sit_in_barber_bench(barber_bench(barber->shop),barber->id); 
    log_barber(barber);
 
-   //printf("\n\n\n\nBARBER: I PASSED HERE AND DIDNT CHANGE STATE\n\n\n\n");
-
    //bci_set_state(barber->id,NO_BARBER_GREET);
-
-   //printf("\n\n\n\nBARBER: I PASSED HERE AND CHANGED STATE\n\n\n\n");
 
    log_barber(barber);
 }
@@ -192,16 +188,10 @@ static void wait_for_client(Barber* barber)
 
    require (barber != NULL, "barber argument required");
 
-   //printf("\n\n\n\nBARBER: I DIDNT GO WAITING\n\n\n\n"); 
-
    barber->state = WAITING_CLIENTS;
    log_barber(barber);
 
-   //printf("\n\n\n\nBARBER: I WENT WAITING\n\n\n\n"); 
-
    log_barber(barber);  
-
-   //if(bci_get_state(barber->id) == ALL_PROCESSES_DONE) { while(1) printf("\n\n\n\n HELLO \n\n\n\n"); }
 
    while(bci_get_num_clients_in_bench() == 0);
 
@@ -297,8 +287,13 @@ static void process_resquests_from_client(Barber* barber)
      }
  
      log_barber(barber); 
-     bci_set_state(barber->id,RESERVED); 
-      
+     
+     //bci_set_state(barber->id,RESERVED); 
+     //sem_t* tmp_semRes;
+     //bci_get_semReserved(tmp_semRes,barber->id);
+     
+     bci_post_semReserved(barber->id); 
+
      Service service_to_send; 
      if(barber->reqToDo == 1 || barber->reqToDo == 4)
        set_barber_chair_service(&service_to_send,barber->id,barber->clientID,barber->chairPosition,barber->reqToDo);
@@ -306,7 +301,9 @@ static void process_resquests_from_client(Barber* barber)
        set_washbasin_service(&service_to_send,barber->id,barber->clientID,barber->basinPosition); 
       
      inform_client_on_service(barber->shop,service_to_send);
-     bci_set_state(barber->id,SERVICE_INFO_AVAILABLE); 
+     
+     //bci_set_state(barber->id,SERVICE_INFO_AVAILABLE);
+     bci_post_semServiceInfoAvailable(barber->id); 
 
      if(barber->reqToDo == 1) {
        barber->state = REQ_SCISSOR;
@@ -346,16 +343,18 @@ static void process_resquests_from_client(Barber* barber)
 	 
      log_barber(barber);
 
-     //printf("\n\n\n\nBARBER: I HAZ TOOLS\n\n\n\n");
-
      //WAIT FOR SIT
-     if(bci_get_state(barber->id) < CLIENT_SEATED)
-       bci_set_state(barber->id,WAITING_ON_CLIENT_SIT);
-     while(bci_get_state(barber->id) < CLIENT_SEATED);
- 
-     //printf("\n\n\n\nBARBER: I KNOW HE SAT\n\n\n\n");
+     //if(bci_get_state(barber->id) < CLIENT_SEATED) {
+     //  bci_set_state(barber->id,WAITING_ON_CLIENT_SIT);
+     //}
 
-     bci_set_state(barber->id,PROCESSING);
+     bci_post_semWaitingOnClientSit(barber->id);
+
+     //while(bci_get_state(barber->id) < CLIENT_SEATED);
+     bci_wait_semClientSeated(barber->id);
+
+     //bci_set_state(barber->id,PROCESSING);
+     bci_post_semProcessing(barber->id);
 
      if(barber->reqToDo == 1) {
        barber->state = CUTTING;
@@ -383,8 +382,11 @@ static void process_resquests_from_client(Barber* barber)
        bci_set_syncBBChair(*bbchairshave,barber->id);
      }
 
-     bci_set_state(barber->id,WAITING_ON_CLIENT_RISE);
-     while(bci_get_state(barber->id) < CLIENT_RISEN);
+     //bci_set_state(barber->id,WAITING_ON_CLIENT_RISE);
+     bci_post_semWaitingOnRise(barber->id);
+
+     //while(bci_get_state(barber->id) < CLIENT_RISEN);
+     bci_wait_semClientRisen(barber->id);
 	 
      bci_did_request(barber->clientID);
      barber->state = DONE;
@@ -430,16 +432,15 @@ static void process_resquests_from_client(Barber* barber)
 
      log_barber(barber);
 
-     //printf("\n\n\n\nBARBER: I PASSED HERE 1\n\n\n\n");
-
      if(bci_get_request(barber->id) == 0) {
-       bci_set_state(barber->id,ALL_PROCESSES_DONE);
+       //bci_set_state(barber->id,ALL_PROCESSES_DONE);
+       bci_post_semAllProcessesDone(barber->id);
      }
      else {
-       bci_set_state(barber->id,PROCESS_DONE);
+       //bci_set_state(barber->id,PROCESS_DONE);
      }
 
-     //printf("\n\n\n\nBARBER: I PASSED HERE 2\n\n\n\n");
+     bci_post_semProcessDone(barber->id);
    }
 
    log_barber(barber);
