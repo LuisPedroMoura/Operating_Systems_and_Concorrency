@@ -8,21 +8,6 @@
 #include "barber-shop.h"
 #include "barber.h"
 
-enum BCState
-{
-   NO_BARBER_GREET,           //barber has yet to receive and greet the client
-   WAITING_ON_RESERVE,        //client waiting until the barber has reserved the seat for the process
-   RESERVED,                  //chair reserved
-   SERVICE_INFO_AVAILABLE,    //client has been informed
-   WAITING_ON_CLIENT_SIT,     //barber waiting on client to sit
-   CLIENT_SEATED,	      //client has sat down
-   PROCESSING,		      //process started
-   WAITING_ON_CLIENT_RISE,    //barber waiting for client to leave the spot
-   CLIENT_RISEN,              //client left the spot
-   PROCESS_DONE,              //process has finished
-   ALL_PROCESSES_DONE         //all processes done   
-};
-
 enum State
 {
    NONE = 0,
@@ -169,11 +154,13 @@ static void sit_in_barber_bench(Barber* barber)
    require (barber != NULL, "barber argument required");
    require (num_seats_available_barber_bench(barber_bench(barber->shop)) > 0, "seat not available in barber shop");
    require (!seated_in_barber_bench(barber_bench(barber->shop), barber->id), "barber already seated in barber shop");
+  
+   bci_wait_semBarberBench();
 
    barber->benchPosition = random_sit_in_barber_bench(barber_bench(barber->shop),barber->id); 
    log_barber(barber);
 
-   //bci_set_state(barber->id,NO_BARBER_GREET);
+   bci_post_semBarberBench();
 
    log_barber(barber);
 }
@@ -194,6 +181,8 @@ static void wait_for_client(Barber* barber)
    log_barber(barber);  
 
    while(bci_get_num_clients_in_bench() == 0);
+
+   bci_wait_semClientBench();
 
    bci_get_syncBenches(client_benches(barber->shop));
 
@@ -260,12 +249,12 @@ static void process_resquests_from_client(Barber* barber)
 
    while(bci_get_request(barber->clientID) > 0) {
 
-     bci_set_state(barber->id,WAITING_ON_RESERVE);
-
      barber->state = WAITING_CLIENTS;
      log_barber(barber);
 
      barber->reqToDo = bci_get_next_request(barber->clientID);
+
+     bci_wait_semChairBasin();
 
      if(barber->reqToDo == 1) {
        while(num_available_barber_chairs(barber->shop) == 0);
@@ -288,11 +277,9 @@ static void process_resquests_from_client(Barber* barber)
  
      log_barber(barber); 
      
-     //bci_set_state(barber->id,RESERVED); 
-     //sem_t* tmp_semRes;
-     //bci_get_semReserved(tmp_semRes,barber->id);
-     
      bci_post_semReserved(barber->id); 
+
+     bci_post_semChairBasin();
 
      Service service_to_send; 
      if(barber->reqToDo == 1 || barber->reqToDo == 4)
@@ -302,8 +289,9 @@ static void process_resquests_from_client(Barber* barber)
       
      inform_client_on_service(barber->shop,service_to_send);
      
-     //bci_set_state(barber->id,SERVICE_INFO_AVAILABLE);
      bci_post_semServiceInfoAvailable(barber->id); 
+
+     bci_wait_semToolPot();
 
      if(barber->reqToDo == 1) {
        barber->state = REQ_SCISSOR;
@@ -340,20 +328,15 @@ static void process_resquests_from_client(Barber* barber)
        bbchair3->toolsHolded += 4;
        bci_set_syncBBChair(*bbchair3,barber->id);
      }
+
+     bci_post_semToolPot();
 	 
      log_barber(barber);
 
-     //WAIT FOR SIT
-     //if(bci_get_state(barber->id) < CLIENT_SEATED) {
-     //  bci_set_state(barber->id,WAITING_ON_CLIENT_SIT);
-     //}
-
      bci_post_semWaitingOnClientSit(barber->id);
 
-     //while(bci_get_state(barber->id) < CLIENT_SEATED);
      bci_wait_semClientSeated(barber->id);
 
-     //bci_set_state(barber->id,PROCESSING);
      bci_post_semProcessing(barber->id);
 
      if(barber->reqToDo == 1) {
@@ -382,14 +365,14 @@ static void process_resquests_from_client(Barber* barber)
        bci_set_syncBBChair(*bbchairshave,barber->id);
      }
 
-     //bci_set_state(barber->id,WAITING_ON_CLIENT_RISE);
      bci_post_semWaitingOnRise(barber->id);
 
-     //while(bci_get_state(barber->id) < CLIENT_RISEN);
      bci_wait_semClientRisen(barber->id);
 	 
      bci_did_request(barber->clientID);
      barber->state = DONE;
+
+     bci_wait_semToolPot();
 
      if(barber->reqToDo == 1) {
        return_scissor(tools_pot(barber->shop));
@@ -415,6 +398,8 @@ static void process_resquests_from_client(Barber* barber)
        bci_set_syncBBChair(*bbchair6,barber->id);
      }
 
+     bci_post_semToolPot();
+
      if(barber->reqToDo == 1 or barber->reqToDo == 4) {
        bci_get_syncBBChair(barber_chair(barber->shop,barber->chairPosition),barber->id);
        release_barber_chair(barber_chair(barber->shop,barber->chairPosition), barber->id);
@@ -433,11 +418,7 @@ static void process_resquests_from_client(Barber* barber)
      log_barber(barber);
 
      if(bci_get_request(barber->id) == 0) {
-       //bci_set_state(barber->id,ALL_PROCESSES_DONE);
        bci_post_semAllProcessesDone(barber->id);
-     }
-     else {
-       //bci_set_state(barber->id,PROCESS_DONE);
      }
 
      bci_post_semProcessDone(barber->id);
@@ -455,7 +436,6 @@ static void release_client(Barber* barber)
    require (barber != NULL, "barber argument required");
 
    client_done(barber->shop,barber->clientID);
-   bci_set_state(barber->id,ALL_PROCESSES_DONE);
    barber->clientID = 0;
    
    bci_unset_clientID(barber->id);
@@ -469,8 +449,6 @@ static void done(Barber* barber)
     * 1: set the client state to DONE
     **/
    require (barber != NULL, "barber argument required");
-
-   bci_set_state(barber->id,ALL_PROCESSES_DONE);
 
    log_barber(barber);
 }

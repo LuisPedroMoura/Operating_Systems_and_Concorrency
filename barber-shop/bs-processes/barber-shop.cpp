@@ -21,21 +21,6 @@ static BCInterface * bcinterfaces;
 
 const long key = 0x213AL;
 
-enum BCState
-{
-   NO_BARBER_GREET,           //barber has yet to receive and greet the client
-   WAITING_ON_RESERVE,        //client waiting until the barber has reserved the seat for the process
-   RESERVED,                  //chair reserved
-   SERVICE_INFO_AVAILABLE,    //client has been informed
-   WAITING_ON_CLIENT_SIT,     //barber waiting on client to sit
-   CLIENT_SEATED,	      //client has sat down
-   PROCESSING,		      //process started
-   WAITING_ON_CLIENT_RISE,    //barber waiting for client to leave the spot
-   CLIENT_RISEN,              //client left the spot
-   PROCESS_DONE,              //process has finished
-   ALL_PROCESSES_DONE         //all processes done   
-};
-
 static const int skel_length = 10000;
 static char skel[skel_length];
 
@@ -109,7 +94,6 @@ void init_barber_shop(BarberShop* shop, int num_barbers, int num_chairs,
       init_washbasin(shop->washbasin+i, i+1, 1+3+num_lines_barber_chair(), num_columns_tools_pot()+3+11+1+i*(num_columns_washbasin()+2));
    init_client_benches(&shop->clientBenches, num_client_benches_seats, num_client_benches, 1+3+num_lines_barber_chair()+num_lines_tools_pot(), 16);
 
-
    /* create the shared memory */
    shmid = shmget(key, sizeof(BCInterface), 0600 | IPC_CREAT | IPC_EXCL);
    if (shmid == -1)
@@ -155,6 +139,14 @@ void init_barber_shop(BarberShop* shop, int num_barbers, int num_chairs,
      psem_init(&bcinterfaces->semProcessDone[initsem],1,0);
      psem_init(&bcinterfaces->semAllProcessesDone[initsem],1,0);
    }
+
+   psem_init(&bcinterfaces->semBarberBench,1,1);  
+   psem_init(&bcinterfaces->semClientBench,1,0);
+   psem_init(&bcinterfaces->semEnterClientBench,1,1);
+   psem_init(&bcinterfaces->semChairBasin,1,1);
+   psem_init(&bcinterfaces->semToolPot,1,1);
+
+   bci_set_syncBenches(*client_benches(shop));
 }
 
 void term_barber_shop(BarberShop* shop)
@@ -367,10 +359,6 @@ void client_done(BarberShop* shop, int clientID)
 
    Service tmp_service;
    bci_get_service_by_clientID(clientID,&tmp_service);
-
-   //Service* tmp_servicek = &tmp_service;
-
-   //bci_set_state(tmp_servicek->barberID,ALL_PROCESSES_DONE);
 }
 
 int enter_barber_shop(BarberShop* shop, int clientID, int request)
@@ -422,36 +410,11 @@ void receive_and_greet_client(BarberShop* shop, int barberID, int clientID)
    require (shop != NULL, "shop argument required");
    require (barberID > 0, concat_3str("invalid barber id (", int2str(barberID), ")"));
    require (clientID > 0, concat_3str("invalid client id (", int2str(clientID), ")"));
-   
-   //WARNING
-   //if(get_interface_service(shop,barberID)->barberChair == 1) {
-    // set_barber_chair_service(get_interface_service(shop,barberID),barberID,clientID,get_interface_service(shop,barberID)->pos,get_interface_service(shop,barberID)->request);
-   //}
-   //else if(get_interface_service(shop,barberID)->washbasin == 1) {
-   //  set_washbasin_service(get_interface_service(shop,barberID),barberID,clientID,get_interface_service(shop,barberID)->pos);
-   //}
-   //set_interface_state(shop,barberID,GREET_AVAILABLE);
 
    bci_get_syncBenches(&(shop->clientBenches));
 
    bci_set_clientID(barberID,clientID);
    bci_set_barberID(barberID,clientID);
-
-   //Service nService;
-   //Service* tmp_nService = &(nService);
-
-   //if(tmp_serv->barberChair == 1) {
-   //  set_barber_chair_service(tmp_nService,barberID,clientID,0,0);
-   //}
-   //else if(tmp_serv->washbasin == 1) {
-   //  set_washbasin_service(tmp_nService,barberID,clientID,0);
-   //}
-
-   //printf("\n\n\n BARBER: receive_and_greet_client in barber-shop.cpp -> barberID2 = %d \n\n\n",tmp_nService->barberID);
-   //printf("\n\n\n BARBER: receive_and_greet_client in barber-shop.cpp -> clientID2 = %d \n\n\n",tmp_nService->clientID);
-
-   //bci_set_service(barberID,*tmp_nService);
-   
 }
 
 int greet_barber(BarberShop* shop, int clientID)
@@ -462,16 +425,6 @@ int greet_barber(BarberShop* shop, int clientID)
 
    require (shop != NULL, "shop argument required");
    require (clientID > 0, concat_3str("invalid client id (", int2str(clientID), ")"));
-
-   //WARNING
-   //int res = bc_interface_by_clientID(shop,clientID)->service->barberID;
-   //set_interface_state(shop,res,WAITING_ON_RESERVE);
-   //return res;
-
-   //Service tmp_srv = bci_get_service_by_clientID(clientID);
-   //Service* tmp_serv = &tmp_srv;
-   //int res = tmp_serv->barberID;
-   //return res;
 
    return bci_get_barberID(clientID);
 }
@@ -487,8 +440,6 @@ void close_shop(BarberShop* shop)
 {
    require (shop != NULL, "shop argument required");
    require (bci_get_shop_status(), "barber shop already closed");
- 
-   //while(1) printf("\n\n\n\n HELLO \n\n\n\n");
 
    bci_close_shop();
 
@@ -554,7 +505,6 @@ void bci_destroy()
     shmid = -1;
 }
 
-/* set shared data with new values */
 void bci_set_service(int barberID, Service service)
 {
     lock();
@@ -564,17 +514,6 @@ void bci_set_service(int barberID, Service service)
     unlock();
 }
 
-/* set shared data with new values */
-void bci_set_state(int barberID, int state)
-{
-    lock();
-
-	bcinterfaces->currentState[barberID-1] = state;
-    
-    unlock();
-}
-
-/* set shared data with new values */
 void bci_set_clientID(int barberID, int clientID)
 {
     lock();
@@ -584,7 +523,6 @@ void bci_set_clientID(int barberID, int clientID)
     unlock();
 }
 
-/* set shared data with new values */
 void bci_set_barberID(int barberID, int clientID)
 {
     lock();
@@ -671,7 +609,6 @@ void bci_did_request(int clientID)
     unlock();
 }
 
-/* set shared data with new values */
 void bci_unset_clientID(int barberID)
 {
     lock();
@@ -684,7 +621,6 @@ void bci_unset_clientID(int barberID)
     unlock();
 }
 
-/* set shared data with new values */
 void bci_unset_barberID(int clientID)
 {
     lock();
@@ -697,7 +633,6 @@ void bci_unset_barberID(int clientID)
     unlock();
 }
 
-/* increment shared data */
 void bci_client_in()
 {
     lock();
@@ -707,7 +642,6 @@ void bci_client_in()
     unlock();
 }
 
-/* decrement shared data */
 void bci_client_out()
 {
     lock();
@@ -717,7 +651,6 @@ void bci_client_out()
     unlock();
 }
 
-/* get current values of shared data */
 void bci_get_service_by_barberID(int barberID,Service* service)
 {
     lock();
@@ -740,18 +673,6 @@ void bci_get_service_by_clientID(int clientID,Service* service)
     unlock();
 }
 
-/* get current values of shared data */
-int bci_get_state(int barberID)
-{
-    lock();
-
-	int tmp_state = bcinterfaces->currentState[barberID-1];
-
-    unlock();
-    return tmp_state;
-}
-
-/* get current values of shared data */
 int bci_get_client_access(int clientID)
 {
     lock();
@@ -762,7 +683,6 @@ int bci_get_client_access(int clientID)
     return tmp_access;
 }
 
-/* get current values of shared data */
 int bci_get_barberID(int clientID)
 {
     lock();
@@ -777,7 +697,6 @@ int bci_get_barberID(int clientID)
     return tmp_bid;
 }
 
-/* get current values of shared data */
 int bci_get_clientID(int barberID)
 {
     lock();
@@ -792,7 +711,6 @@ int bci_get_clientID(int barberID)
     return tmp_cid;
 }
 
-/* get current values of shared data */
 int bci_get_num_clients_in_bench()
 {
     lock();
@@ -875,80 +793,6 @@ int bci_get_numClientsThatLeft()
     unlock();
     return numC;
 }
-
-/*
-void bci_get_semReserved(sem_t* tmp_sem, int barberID)
-{
-    lock();
-
-        tmp_sem = &(bcinterfaces->semReserved[barberID-1]);
-
-    unlock();
-}
-
-void bci_get_semServiceInfoAvailable(sem_t* tmp_sem, int barberID)
-{
-    lock();
-
-        tmp_sem = &(bcinterfaces->semServiceInfoAvailable[barberID-1]);
-
-    unlock();
-}
-
-void bci_get_semWaitingOnClientSit(sem_t* tmp_sem, int barberID)
-{
-    lock();
-
-        tmp_sem = &(bcinterfaces->semWaitingOnClientSit[barberID-1]);
-
-    unlock();
-}
-
-void bci_get_semClientSeated(sem_t* tmp_sem, int barberID)
-{
-    lock();
-
-        tmp_sem = &(bcinterfaces->semClientSeated[barberID-1]);
-
-    unlock();
-}
-
-void bci_get_semProcessing(sem_t* tmp_sem, int barberID)
-{
-    lock();
-
-        tmp_sem = &(bcinterfaces->semProcessing[barberID-1]);
-
-    unlock();
-}
-
-void bci_get_semWaitingOnRise(sem_t* tmp_sem, int barberID)
-{
-    lock();
-
-        tmp_sem = &(bcinterfaces->semWaitingOnRise[barberID-1]);
-
-    unlock();
-}
-
-void bci_get_semClientRisen(sem_t* tmp_sem, int barberID)
-{
-    lock();
-
-        tmp_sem = &(bcinterfaces->semClientRisen[barberID-1]);
-
-    unlock();
-}
-
-void bci_get_semProcessDone(sem_t* tmp_sem, int barberID)
-{
-    lock();
-
-        tmp_sem = &(bcinterfaces->semProcessDone[barberID-1]);
-
-    unlock();
-}
-*/
 
 void bci_grant_client_access(int clientID) 
 {
@@ -1192,3 +1036,149 @@ int bci_get_semAllProcessesDoneValue(int barberID)
     unlock();
     return *pval;
 }
+
+void bci_wait_semBarberBench()
+{
+        sem_t* tmp_r = &(bcinterfaces->semBarberBench);
+        psem_wait(tmp_r);
+}
+
+void bci_wait_semClientBench()
+{
+        sem_t* tmp_r = &(bcinterfaces->semClientBench);
+        psem_wait(tmp_r);	
+}
+
+void bci_wait_semEnterClientBench()
+{
+        sem_t* tmp_r = &(bcinterfaces->semEnterClientBench);
+        psem_wait(tmp_r);	
+}
+
+void bci_wait_semChairBasin()
+{
+        sem_t* tmp_r = &(bcinterfaces->semChairBasin);
+        psem_wait(tmp_r);	
+}
+
+void bci_wait_semToolPot()
+{
+        sem_t* tmp_r = &(bcinterfaces->semToolPot);
+        psem_wait(tmp_r);	
+}
+
+void bci_post_semBarberBench()
+{        
+    lock();
+
+        sem_t* tmp_r = &(bcinterfaces->semBarberBench);
+        psem_post(tmp_r);
+    
+    unlock();	
+}
+
+void bci_post_semClientBench()
+{
+    lock();
+
+        sem_t* tmp_r = &(bcinterfaces->semClientBench);
+        psem_post(tmp_r);
+
+    unlock();	
+}
+
+void bci_post_semEnterClientBench()
+{
+    lock();
+
+        sem_t* tmp_r = &(bcinterfaces->semEnterClientBench);
+        psem_post(tmp_r);
+
+    unlock();	
+}
+
+void bci_post_semChairBasin()
+{
+    lock();
+
+        sem_t* tmp_r = &(bcinterfaces->semChairBasin);
+        psem_post(tmp_r);
+
+    unlock();	
+}
+
+void bci_post_semToolPot()
+{
+    lock();
+
+        sem_t* tmp_r = &(bcinterfaces->semToolPot);
+        psem_post(tmp_r);	
+
+    unlock();
+}
+
+int bci_get_semBarberBenchValue()
+{
+    lock();
+
+        sem_t* tmp_r = &(bcinterfaces->semBarberBench);
+        int val; 
+        int* pval = &val;
+        sem_getvalue(tmp_r,pval);
+        
+    unlock();
+    return *pval;	
+}
+
+int bci_get_semClientBenchValue()
+{
+    lock();
+
+        sem_t* tmp_r = &(bcinterfaces->semClientBench);
+        int val; 
+        int* pval = &val;
+        sem_getvalue(tmp_r,pval);
+        
+    unlock();
+    return *pval;	
+}
+
+int bci_get_semEnterClientBenchValue()
+{
+    lock();
+
+        sem_t* tmp_r = &(bcinterfaces->semEnterClientBench);
+        int val; 
+        int* pval = &val;
+        sem_getvalue(tmp_r,pval);
+        
+    unlock();
+    return *pval;	
+}
+
+int bci_get_semChairBasinValue()
+{
+    lock();
+
+        sem_t* tmp_r = &(bcinterfaces->semChairBasin);
+        int val; 
+        int* pval = &val;
+        sem_getvalue(tmp_r,pval);
+        
+    unlock();
+    return *pval;	
+}
+
+int bci_get_semToolPotValue()
+{
+    lock();
+
+        sem_t* tmp_r = &(bcinterfaces->semToolPot);
+        int val; 
+        int* pval = &val;
+        sem_getvalue(tmp_r,pval);
+        
+    unlock();
+    return *pval;	
+}
+

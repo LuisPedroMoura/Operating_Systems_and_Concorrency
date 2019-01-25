@@ -32,7 +32,6 @@ typedef struct _BCInterface_
    int numClientsInBench;
 
    Service service[MAX_BARBERS];
-   int currentState[MAX_BARBERS];
    int clientRequests[MAX_CLIENTS]; 
 
    int numClientsThatLeft;  
@@ -46,6 +45,12 @@ typedef struct _BCInterface_
    sem_t semClientRisen[MAX_BARBERS];
    sem_t semProcessDone[MAX_BARBERS];
    sem_t semAllProcessesDone[MAX_BARBERS];
+
+   sem_t semBarberBench;
+   sem_t semClientBench;
+   sem_t semEnterClientBench;
+   sem_t semChairBasin;
+   sem_t semToolPot;
 
 } BCInterface;
 
@@ -117,14 +122,15 @@ void close_shop(BarberShop* shop); // no more outside clients accepted
 
 void bci_connect();
 void bci_destroy();
+
 void bci_set_service(int barberID, Service service);
-void bci_set_state(int barberID, int state);
 void bci_set_clientID(int barberID, int clientID);
 void bci_set_barberID(int barberID, int clientID);
 void bci_set_syncBenches(ClientBenches clientBenches);
 void bci_set_syncBBChair(BarberChair bbChair,int barberID);
 void bci_set_syncWashbasin(Washbasin basin, int barberID);
 void bci_set_request(int clientID,int request);
+
 void bci_client_left();
 void bci_open_shop();
 void bci_close_shop();
@@ -133,9 +139,9 @@ void bci_unset_clientID(int barberID);
 void bci_unset_barberID(int clientID);
 void bci_client_in();
 void bci_client_out();
+
 void bci_get_service_by_barberID(int barberID,Service* service);
 void bci_get_service_by_clientID(int clientID,Service* service);
-int bci_get_state(int barberID);
 int bci_get_client_access(int clientID);
 int bci_get_num_clients_in_bench();
 int bci_get_barberID(int clientID);
@@ -147,6 +153,7 @@ int bci_get_request(int clientID);
 int bci_get_next_request(int clientID);
 int bci_get_shop_status();
 int bci_get_numClientsThatLeft();
+
 void bci_grant_client_access(int clientID);
 void bci_revoke_client_access(int clientID);
 
@@ -179,4 +186,23 @@ int bci_get_semWaitingOnRiseValue(int barberID);
 int bci_get_semClientRisenValue(int barberID);
 int bci_get_semProcessDoneValue(int barberID);
 int bci_get_semAllProcessesDoneValue(int barberID);
+
+void bci_wait_semBarberBench();
+void bci_wait_semClientBench();
+void bci_wait_semEnterClientBench();
+void bci_wait_semChairBasin();
+void bci_wait_semToolPot();
+
+void bci_post_semBarberBench();
+void bci_post_semClientBench();
+void bci_post_semEnterClientBench();
+void bci_post_semChairBasin();
+void bci_post_semToolPot();
+
+int bci_get_semBarberBenchValue();
+int bci_get_semClientBenchValue();
+int bci_get_semEnterClientBenchValue();
+int bci_get_semChairBasinValue();
+int bci_get_semToolPotValue();
+
 #endif
