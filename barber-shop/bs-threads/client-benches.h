@@ -22,7 +22,6 @@ typedef struct _ClientBenches_
 	char* internal;
 
 	pthread_mutex_t clientBenchMutex;
-
 	pthread_cond_t clientWaiting;
 	pthread_cond_t clientReady;
 	pthread_cond_t clientSeatAvailable;
@@ -37,7 +36,7 @@ int num_available_benches_seats(ClientBenches* benches);
 int occupied_by_id_client_benches(ClientBenches* benches, int pos, int id);
 
 // to use directly by clients:
-int wait_for_available_seat(ClientBenches* benches);
+void wait_for_available_seat(ClientBenches* benches);
 int random_sit_in_client_benches(ClientBenches* benches, int id, int request);
 void rise_client_benches(ClientBenches* benches, int pos, int id);
 int seated_in_client_benches(ClientBenches* benches, int id);

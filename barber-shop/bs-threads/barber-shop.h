@@ -18,83 +18,61 @@
 
 typedef struct _BarberShop_
 {
-   int numBarbers;
+	int numBarbers;
 
-   int numChairs;                         // num barber chairs
-   BarberChair barberChair[MAX_BARBERS]; // index related with position
+	int numChairs;                         // num barber chairs
+	BarberChair barberChair[MAX_BARBERS]; // index related with position
 
-   int numScissors;
-   int numCombs;
-   int numRazors;
-   ToolsPot toolsPot;
+	int numScissors;
+	int numCombs;
+	int numRazors;
+	ToolsPot toolsPot;
 
-   int numWashbasins;
-   Washbasin washbasin[MAX_WASHBASINS];  // index related with position
+	int numWashbasins;
+	Washbasin washbasin[MAX_WASHBASINS];  // index related with position
 
-   BarberBench barberBench;
+	BarberBench barberBench;
 
-   int numClientBenchesSeats;
-   int numClientBenches;
-   ClientBenches clientBenches;
+	int numClientBenchesSeats;
+	int numClientBenches;
+	ClientBenches clientBenches;
 
-   int numClientsInside;
-   int clientsInside[MAX_CLIENTS];
+	int numClientsInside;
+	int clientsInside[MAX_CLIENTS];
 
-   CommunicationLine commLine;
+	CommunicationLine commLine;
 
-   int opened;
+	int opened;
 
-   int logId;
-   char* internal;
+	int logId;
+	char* internal;
 
 
-   // Barber Shop Mutex and cond
-   pthread_mutex_t shopFloorMutex = PTHREAD_MUTEX_INITIALIZER;
-   pthread_cond_t clientLeft = PTHREAD_COND_INITIALIZER;
-   pthread_cond_t closeShop = PTHREAD_COND_INITIALIZER;
+	// Barber Shop Mutex and cond
+	pthread_mutex_t shopFloorMutex = PTHREAD_MUTEX_INITIALIZER;
+	pthread_cond_t clientLeft = PTHREAD_COND_INITIALIZER;
+	pthread_cond_t closeShop = PTHREAD_COND_INITIALIZER;
 
-   // Communications Line mutex and cond
-   pthread_mutex_t messagesMutex[MAX_CLIENTS];
-   pthread_cond_t messageAvailable[MAX_CLIENTS];
+	// Communications Line mutex and cond
+	pthread_mutex_t messagesMutex[MAX_CLIENTS];
+	pthread_cond_t messageAvailable[MAX_CLIENTS];
 
-   // barber Bench mutex and cond
-   pthread_mutex_t barberBenchMutex = PTHREAD_MUTEX_INITIALIZER;
+	// barber Bench mutex and cond
+	pthread_mutex_t barberBenchMutex = PTHREAD_MUTEX_INITIALIZER;
 
-   pthread_cond_t barberBenchNotFull = PTHREAD_COND_INITIALIZER;
-   pthread_cond_t barberBenchNotEmpty = PTHREAD_COND_INITIALIZER;
+	pthread_cond_t barberBenchNotFull = PTHREAD_COND_INITIALIZER;
+	pthread_cond_t barberBenchNotEmpty = PTHREAD_COND_INITIALIZER;
 
-//   // client Bench mutex and cond
-//   pthread_mutex_t clientBenchMutex = PTHREAD_MUTEX_INITIALIZER;
-//
-//   pthread_cond_t clientWaiting = PTHREAD_COND_INITIALIZER;
-//   pthread_cond_t clientReady = PTHREAD_COND_INITIALIZER;
-//   pthread_cond_t clientSeatAvailable = PTHREAD_COND_INITIALIZER;
+	// BarberChair mutex and cond
+	sem_t accessBarberChair;
 
-   // BarberChair mutex and cond
-   pthread_mutex_t barberChairMutex = PTHREAD_MUTEX_INITIALIZER;
+	// Washbasin mutex and cond
+	sem_t accessWashbasin;
 
-   pthread_cond_t barberChairAvailable = PTHREAD_COND_INITIALIZER;
-   pthread_cond_t barberChairServiceFinished = PTHREAD_COND_INITIALIZER;
-   pthread_cond_t clientRoseFromBarberChair = PTHREAD_COND_INITIALIZER;
-   pthread_cond_t clientSatInBarberChair = PTHREAD_COND_INITIALIZER;
-   pthread_cond_t clientReadyForShave = PTHREAD_COND_INITIALIZER;
+	// ToolsPot mutex and cond
 
-   // Washbasin mutex and cond
-   pthread_mutex_t washbasinMutex = PTHREAD_MUTEX_INITIALIZER;
-
-   pthread_cond_t washbasinAvailable = PTHREAD_COND_INITIALIZER;
-   pthread_cond_t washbasinServiceFinished = PTHREAD_COND_INITIALIZER;
-   pthread_cond_t clientRoseFromWashbasin = PTHREAD_COND_INITIALIZER;
-   pthread_cond_t clientSatInWashbasin = PTHREAD_COND_INITIALIZER;
-
-   // ToolsPot mutex and cond
-   pthread_mutex_t toolsPotMutex = PTHREAD_MUTEX_INITIALIZER;
-   pthread_cond_t availableScissor = PTHREAD_COND_INITIALIZER;
-   pthread_cond_t availableComb = PTHREAD_COND_INITIALIZER;
-   pthread_cond_t availableRazor = PTHREAD_COND_INITIALIZER;
-
-   // Logger mutex and cond
-   pthread_mutex_t loggerMutex = PTHREAD_MUTEX_INITIALIZER;
+	// Logger mutex and cond
+	pthread_mutex_t loggerMutex = PTHREAD_MUTEX_INITIALIZER;
 
 } BarberShop;
 
@@ -105,8 +83,8 @@ typedef struct _BarberShop_
 int num_lines_barber_shop(BarberShop* shop);
 int num_columns_barber_shop(BarberShop* shop);
 void init_barber_shop(BarberShop* shop, int num_barbers, int num_chairs,
-                      int num_scissors, int num_combs, int num_razors, int num_basins, 
-                      int num_client_benches_seats, int num_client_benches);
+		int num_scissors, int num_combs, int num_razors, int num_basins,
+		int num_client_benches_seats, int num_client_benches);
 void term_barber_shop(BarberShop* shop);
 void show_barber_shop(BarberShop* shop);
 void log_barber_shop(BarberShop* shop);
@@ -119,11 +97,17 @@ BarberBench* barber_bench(BarberShop* shop);
 ClientBenches* client_benches(BarberShop* shop);
 
 void wait_for_available_seat_in_client_bench(BarberShop* shop);
+void wait_for_client_to_sit_in_washbasin(BarberShop* shop, int basinPos);
 
 int num_available_barber_chairs(BarberShop* shop);
+int reserve_empty_barber_chair(BarberShop* shop, int barberID);
 int reserve_random_empty_barber_chair(BarberShop* shop, int barberID);
+void release_barber_barberchair(BarberShop* shop, int barberID, int barberPos);
+
 int num_available_washbasin(BarberShop* shop);
+int reserve_empty_washbasin(BarberShop* shop, int barberID);
 int reserve_random_empty_washbasin(BarberShop* shop, int barberID);
+void release_barber_washbasin(BarberShop* shop, int barberID, int barberPos);
 
 int is_client_inside(BarberShop* shop, int clientID);
 
@@ -139,5 +123,7 @@ int greet_barber(BarberShop* shop, int clientID); // returns barberID
 
 int shop_opened(BarberShop* shop);
 void close_shop(BarberShop* shop); // no more outside clients accepted
+void sem_up(sem_t* semaphore);
+void sem_down(sem_t* semaphore);
 
 #endif

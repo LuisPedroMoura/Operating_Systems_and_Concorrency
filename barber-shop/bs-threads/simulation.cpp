@@ -129,13 +129,13 @@ static void go()
 		}
 	}
 
-	mutex_lock(&shop->shopFloorMutex);
+	mutex_lock(&shop->clientBenches.clientBenchMutex);
 	close_shop(shop);
-//	while(num_seats_available_barber_bench(&shop->barberBench) != 0){
-//		cond_wait(&shop->closeShop, &shop->shopFloorMutex);
-//	}
-	mutex_unlock(&shop->shopFloorMutex);
-	cond_broadcast(&shop->clientWaiting);
+	if (num_seats_available_barber_bench(&shop->barberBench) == 0){
+		cond_broadcast(&shop->clientBenches.clientWaiting);
+	}
+	mutex_unlock(&shop->clientBenches.clientBenchMutex);
+
 
 //	printf("--------------------------------------------SIMULATION - CLOSED THE SHOP\n");
 

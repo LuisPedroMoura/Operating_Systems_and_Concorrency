@@ -98,6 +98,12 @@ void init_barber_shop(BarberShop* shop, int num_barbers, int num_chairs,
 	for(int i=0; i<MAX_CLIENTS; i++){
 		shop->messagesMutex[i] = PTHREAD_MUTEX_INITIALIZER;
 	}
+
+	/* Barber chair semaphore init */
+	require(sem_init(&shop->accessBarberChair, 0, global->NUM_BARBER_CHAIRS) == 0, "Barber Chair semaphore init error");
+
+	/* Washbasin semaphore init */
+	require (sem_init(&shop->accessWashbasin, 0, global->NUM_WASHBASINS) == 0, "Washbasin semaphore error");
 }
 
 void term_barber_shop(BarberShop* shop)
@@ -189,6 +195,17 @@ ClientBenches* client_benches(BarberShop* shop)
 	return &shop->clientBenches;
 }
 
+int reserve_empty_barber_chair(BarberShop* shop, int barberID)
+{
+	require (shop != NULL, "shop argument required");
+	require (barberID > 0, concat_3str("invalid barber id (", int2str(barberID), ")"));
+
+	sem_down(&shop->accessBarberChair);
+	int chairPos = reserve_random_empty_barber_chair(shop, barberID);
+
+	return chairPos;
+}
+
 int num_available_barber_chairs(BarberShop* shop)
 {
 	require (shop != NULL, "shop argument required");
@@ -212,6 +229,11 @@ int reserve_random_empty_barber_chair(BarberShop* shop, int barberID)
 	require (barberID > 0, concat_3str("invalid barber id (", int2str(barberID), ")"));
 	require (num_available_barber_chairs(shop) > 0, "barber chair not available");
 
+	// TODO COMO FAZER LOCK A ISTO??
+	while(num_available_barber_chairs(shop) == 0){
+		cond_wait(&shop->barberChair->barberChairAvailable, &shop->barberChair->barberChairMutex);
+	}
+
 	int r = random_int(1, num_available_barber_chairs(shop));
 	int res;
 	for(res = 0; r > 0 && res < shop->numChairs ; res++)
@@ -223,6 +245,26 @@ int reserve_random_empty_barber_chair(BarberShop* shop, int barberID)
 	ensure (res >= 0 && res < shop->numChairs, "");
 
 	return res;
+}
+
+void release_barber_barberchair(BarberShop* shop, int barberID, int barberPos)
+{
+	require (shop != NULL, "shop argument required");
+	require (barberID > 0, concat_3str("invalid barber id (", int2str(barberID), ")"));
+
+	release_barber_chair(&shop->barberChair[barberPos], barberID);
+	sem_up(&shop->accessBarberChair);
+}
+
+int reserve_empty_washbasin(BarberShop* shop, int barberID)
+{
+	require (shop != NULL, "shop argument required");
+	require (barberID > 0, concat_3str("invalid barber id (", int2str(barberID), ")"));
+
+	sem_down(&shop->accessWashbasin);
+	int chairPos = reserve_random_empty_washbasin(shop, barberID);
+
+	return chairPos;
 }
 
 int num_available_washbasin(BarberShop* shop)
@@ -259,6 +301,15 @@ int reserve_random_empty_washbasin(BarberShop* shop, int barberID)
 	ensure (res >= 0 && res < shop->numWashbasins, "");
 
 	return res;
+}
+
+void release_barber_washbasin(BarberShop* shop, int barberID, int barberPos)
+{
+	require (shop != NULL, "shop argument required");
+	require (barberID > 0, concat_3str("invalid barber id (", int2str(barberID), ")"));
+
+	release_washbasin(&shop->washbasin[barberPos], barberID);
+	sem_up(&shop->accessWashbasin);
 }
 
 int is_client_inside(BarberShop* shop, int clientID)
@@ -321,6 +372,14 @@ void wait_for_available_seat_in_client_bench(BarberShop* shop)
 	require (shop != NULL, "shop argument required");
 
 	wait_for_available_seat(&shop->clientBenches);
+}
+
+void wait_for_client_to_sit_in_washbasin(BarberShop* shop, int basinPos)
+{
+	require (shop != NULL, "shop argument required");
+
+	wait_client_to_sit_in_washbasin(&shop->washbasin[basinPos]);
+
 }
 
 int enter_barber_shop(BarberShop* shop, int clientID, int request)
@@ -419,6 +478,13 @@ void close_shop(BarberShop* shop)
 	require (shop_opened(shop), "barber shop already closed");
 
 	shop->opened = 0;
+}
+
+void sem_up(sem_t* semaphore){
+	sem_post(semaphore);
+}
+void sem_down(sem_t* semaphore){
+	sem_wait(semaphore);
 }
 
 static char* to_string_barber_shop(BarberShop* shop)

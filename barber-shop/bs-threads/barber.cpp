@@ -186,24 +186,10 @@ static void wait_for_client(Barber* barber)
 	require (barber != NULL, "barber argument required");
 
 	barber->state = WAITING_CLIENTS;
-
-
-
-
-	mutex_lock(&barber->shop->clientBenchMutex);
-	while (no_more_clients(&(barber->shop->clientBenches))){
-		//printf("+++++++++++++++++++++++ barber %d is waiting\n", barber->id);
-		cond_wait(&barber->shop->clientWaiting, &barber->shop->clientBenchMutex);
-	}
+	// TODO: problema do fecho da loja
 	RQItem requests = next_client_in_benches(&(barber->shop->clientBenches));
-	mutex_unlock(&barber->shop->clientBenchMutex);
-
-
-
-
 
 	mutex_lock(&barber->shop->shopFloorMutex);
-	//printf("****************************************** barber %d - shop open %d\n", barber->id, barber->shop->opened);
 	if (!barber->shop->opened){
 		mutex_unlock(&barber->shop->shopFloorMutex);
 		log_barber(barber);
@@ -211,13 +197,11 @@ static void wait_for_client(Barber* barber)
 	}
 	mutex_unlock(&barber->shop->shopFloorMutex);
 
-
-
 	barber->reqToDo = requests.request;
 	barber->clientID = requests.clientID;
 
 	receive_and_greet_client(barber->shop, barber->id, barber->clientID);
-	//printf("--------------------------------------------BARBER LIFE - WAIT FOR CLIENT\n");
+
 	log_barber(barber);
 }
 
@@ -294,12 +278,7 @@ static void process_resquests_from_client(Barber* barber)
 
 		//reserve a random empty chair
 		barber->state = WAITING_BARBER_SEAT;
-		mutex_lock(&barber->shop->barberChairMutex);
-		while(num_available_barber_chairs(barber->shop) == 0){
-			cond_wait(&barber->shop->barberChairAvailable, &barber->shop->barberChairMutex);
-		}
-		int chairPos = reserve_random_empty_barber_chair(barber->shop, barber->id);
-		mutex_unlock(&barber->shop->barberChairMutex);
+		int chairPos = reserve_empty_barber_chair(barber->shop, barber->id);
 		barber->chairPosition = chairPos;
 
 		if (barber->reqToDo & HAIRCUT_REQ){
@@ -322,12 +301,9 @@ static void process_resquests_from_client(Barber* barber)
 	if (barber->reqToDo & WASH_HAIR_REQ) {
 
 		barber->state = WAITING_WASHBASIN;
-		mutex_lock(&barber->shop->washbasinMutex);
-		while(num_available_washbasin(barber->shop) == 0){
-			cond_wait(&barber->shop->washbasinAvailable, &barber->shop->washbasinMutex);
-		}
-		int basinPos = reserve_random_empty_washbasin(barber->shop, barber->id);
-		mutex_unlock(&barber->shop->washbasinMutex);
+
+		//TODO: QUAL BLOQUEAR? SEMAFORO COMO?
+		int basinPos = reserve_empty_washbasin(barber->shop, barber->id);
 		barber->basinPosition = basinPos;
 
 		set_washbasin_service(&service, barber->id, barber->clientID, basinPos);
@@ -392,13 +368,8 @@ static void process_haircut_request(Barber* barber, int shaveReq)
 	pick_haircut_tools(barber);
 
 	//wait for client to sit
-	mutex_lock(&barber->shop->barberChairMutex);
 	BarberChair* chair = barber->shop->barberChair+barber->chairPosition;
-	while(!barber_chair_with_a_client(chair)){
-		cond_wait(&barber->shop->clientSatInBarberChair, &barber->shop->barberChairMutex);
-	}
 	set_tools_barber_chair(chair, barber->tools);
-	mutex_unlock(&barber->shop->barberChairMutex);
 
 	//process the service
 	barber->state = CUTTING;
@@ -412,26 +383,14 @@ static void process_haircut_request(Barber* barber, int shaveReq)
 		complete += 100/steps;
 		if (complete > 100)
 			complete = 100;
-
-		mutex_lock(&barber->shop->barberChairMutex);
 		set_completion_barber_chair(barber_chair(barber->shop, barber->chairPosition), complete);
-		mutex_unlock(&barber->shop->barberChairMutex);
 	}
-	cond_broadcast(&barber->shop->barberChairServiceFinished);
 
 	if(!shaveReq){
-		//release barber chair
-		mutex_lock(&barber->shop->barberChairMutex);
-		while (barber_chair_with_a_client(chair)){
-			cond_wait(&barber->shop->clientRoseFromBarberChair, &barber->shop->barberChairMutex);
-		}
-		release_barber_chair(chair,barber->id);
-		mutex_unlock(&barber->shop->barberChairMutex);
+		release_barber_barberchair(barber->shop, barber->id, barber->chairPosition);
 		barber->chairPosition = -1;
-		cond_broadcast(&barber->shop->barberChairAvailable);
 	}
 
-	//return tools to the pot
 	return_haircut_tools(barber);
 
 	log_barber(barber);  // (if necessary) more than one in proper places!!!
@@ -443,21 +402,11 @@ static void pick_haircut_tools(Barber* barber)
 	require (barber != NULL, "barber argument required");
 
 	barber->state = REQ_SCISSOR;
-	mutex_lock(&barber->shop->toolsPotMutex);
-	while(!barber->shop->toolsPot.availScissors){
-		cond_wait(&barber->shop->availableScissor, &barber->shop->toolsPotMutex);
-	}
 	pick_scissor(&barber->shop->toolsPot);
-	mutex_unlock(&barber->shop->toolsPotMutex);
 	barber->tools += SCISSOR_TOOL;
 
 	barber->state = REQ_COMB;
-	mutex_lock(&barber->shop->toolsPotMutex);
-	while(!barber->shop->toolsPot.availScissors){
-		cond_wait(&barber->shop->availableComb, &barber->shop->toolsPotMutex);
-	}
 	pick_comb(&barber->shop->toolsPot);
-	mutex_unlock(&barber->shop->toolsPotMutex);
 	barber->tools += COMB_TOOL;
 }
 
@@ -466,10 +415,8 @@ static void return_haircut_tools(Barber* barber)
 {
 	require (barber != NULL, "barber argument required");
 
-	mutex_lock(&barber->shop->toolsPotMutex);
 	return_scissor(&barber->shop->toolsPot);
 	return_comb(&barber->shop->toolsPot);
-	mutex_unlock(&barber->shop->toolsPotMutex);
 	barber->tools = NO_TOOLS;
 }
 
@@ -486,14 +433,8 @@ static void process_shave_request(Barber* barber)
 	pick_shave_tools(barber);
 
 	//wait for client to sit, or to signal ready
-	mutex_lock(&barber->shop->barberChairMutex);
 	BarberChair* chair = &barber->shop->barberChair[barber->chairPosition];
-
-	while(!barber_chair_with_a_client(chair)){
-		cond_wait(&barber->shop->clientSatInBarberChair, &barber->shop->barberChairMutex);
-	}
 	set_tools_barber_chair(chair, barber->tools);
-	mutex_unlock(&barber->shop->barberChairMutex);
 
 	//process the service
 	barber->state = SHAVING;
@@ -507,25 +448,12 @@ static void process_shave_request(Barber* barber)
 		complete += 100/steps;
 		if (complete > 100)
 			complete = 100;
-
-		mutex_lock(&barber->shop->barberChairMutex);
 		set_completion_barber_chair(barber_chair(barber->shop, barber->chairPosition), complete);
-		mutex_unlock(&barber->shop->barberChairMutex);
 	}
 
-	cond_broadcast(&barber->shop->barberChairServiceFinished);
-
-	//release barber chair
-	mutex_lock(&barber->shop->barberChairMutex);
-	while (barber_chair_with_a_client(chair)){
-		cond_wait(&barber->shop->clientRoseFromBarberChair, &barber->shop->barberChairMutex);
-	}
-	release_barber_chair(chair,barber->id);
-	mutex_unlock(&barber->shop->barberChairMutex);
+	release_barber_barberchair(barber->shop, barber->id, barber->chairPosition);
 	barber->chairPosition = -1;
-	cond_broadcast(&barber->shop->barberChairAvailable);
 
-	//return tools to the pot
 	return_shave_tools(barber);
 
 	log_barber(barber);
@@ -537,23 +465,16 @@ static void pick_shave_tools(Barber* barber)
 	require (barber != NULL, "barber argument required");
 
 	barber->state = REQ_RAZOR;
-	mutex_lock(&barber->shop->toolsPotMutex);
-	while(!barber->shop->toolsPot.availRazors){
-		cond_wait(&barber->shop->availableRazor, &barber->shop->toolsPotMutex);
-	}
 	pick_razor(&barber->shop->toolsPot);
-	mutex_unlock(&barber->shop->toolsPotMutex);
 	barber->tools = RAZOR_TOOL;
 }
 
 
 static void return_shave_tools(Barber* barber)
 {
+	require (barber != NULL, "barber argument required");
 
-	mutex_lock(&barber->shop->toolsPotMutex);
 	return_razor(&barber->shop->toolsPot);
-	mutex_unlock(&barber->shop->toolsPotMutex);
-
 	barber->tools = NO_TOOLS;
 }
 
@@ -567,12 +488,7 @@ static void process_wash_hair_request(Barber* barber)
 	require (barber != NULL, "barber argument required");
 
 	//wait for client to sit
-	mutex_lock(&barber->shop->washbasinMutex);
-	Washbasin* basin = barber->shop->washbasin+barber->basinPosition;
-	while(!washbasin_with_a_client(basin)){
-		cond_wait(&barber->shop->clientSatInWashbasin, &barber->shop->washbasinMutex);
-	}
-	mutex_unlock(&barber->shop->washbasinMutex);
+	wait_for_client_to_sit_in_washbasin(barber->shop, barber->basinPosition);
 
 	//process the service
 	barber->state = WASHING;
@@ -586,22 +502,12 @@ static void process_wash_hair_request(Barber* barber)
 		complete += 100/steps;
 		if (complete > 100)
 			complete = 100;
-
-		mutex_lock(&barber->shop->washbasinMutex);
 		set_completion_washbasin(washbasin(barber->shop, barber->basinPosition), complete);
-		mutex_unlock(&barber->shop->washbasinMutex);
 	}
-
-	cond_broadcast(&barber->shop->washbasinServiceFinished);
 
 	//release washbasin
-	mutex_lock(&barber->shop->washbasinMutex);
-	while (washbasin_with_a_client(basin)){
-		cond_wait(&barber->shop->clientRoseFromWashbasin, &barber->shop->washbasinMutex);
-	}
-	release_washbasin(basin, barber->id);
-	mutex_unlock(&barber->shop->washbasinMutex);
-	cond_broadcast(&barber->shop->washbasinAvailable);
+	release_barber_washbasin(barber->shop, barber->id, barber->basinPosition);
+	barber->basinPosition = -1;
 
 	log_barber(barber);  // (if necessary) more than one in proper places!!!
 }

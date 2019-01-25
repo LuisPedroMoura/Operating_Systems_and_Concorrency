@@ -17,21 +17,11 @@ typedef struct _Washbasin_
    char* internal;
 
    pthread_mutex_t washbasinMutex;
-
    pthread_cond_t washbasinAvailable;
    pthread_cond_t washbasinServiceFinished;
    pthread_cond_t clientRoseFromWashbasin;
    pthread_cond_t clientSatInWashbasin;
    
-   /* cond variables */
-   pthread_cond_t availableWashbasin[MAX_WASHBASINS];
-
-   /* mutex to cond variables */
-   pthread_mutex_t washbasinMutex[MAX_WASHBASINS];
-
-   /* Semaphore washbasin*/
-   sem_t accessWashbasin;
-
 } Washbasin;
 
 int num_lines_washbasin();
@@ -57,7 +47,7 @@ int washbasin_service_finished(Washbasin* basin);
 
 void set_completion_washbasin(Washbasin* basin, int completionPercentage);
 
-void wait_for_client_to_sit_in_washbasin(Washbasin* basin);
-void release_washbasin_from_barber(Washbasin* basin, int barberID);
+void wait_client_to_sit_in_washbasin(Washbasin* basin);
+void wait_for_washbasin_service_completion(Washbasin* basin);
 
 #endif

@@ -9,11 +9,17 @@
 
 typedef struct _ToolsPot_
 {
-   int availScissors;
-   int availCombs;
-   int availRazors;
-   int logId;
-   char* internal;
+	int availScissors;
+	int availCombs;
+	int availRazors;
+	int logId;
+	char* internal;
+
+	pthread_mutex_t toolsPotMutex;
+	pthread_cond_t availableScissor;
+	pthread_cond_t availableComb;
+	pthread_cond_t availableRazor;
+
 } ToolsPot;
 
 int num_lines_tools_pot();

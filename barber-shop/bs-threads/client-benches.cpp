@@ -33,7 +33,7 @@ void init_client_benches(ClientBenches* benches, int num_seats, int num_benches,
 	benches->internal = (char*)mem_alloc(skel_length + 1);
 	benches->logId = register_logger((char*)"Client benches:", line, column, 7 ,num_seats*4+1 ,NULL);
 
-	benches->clientBenchMutex = PTHREAD_MUTEX_ERRORCHECK;
+	benches->clientBenchMutex = PTHREAD_MUTEX_INITIALIZER;
 
 	benches->clientWaiting = PTHREAD_COND_INITIALIZER;
 	benches->clientReady = PTHREAD_COND_INITIALIZER;
@@ -123,9 +123,7 @@ int no_more_clients(ClientBenches* benches)
 {
 	require (benches != NULL, "benches argument required");
 
-	mutex_lock(&benches->clientBenchMutex);
 	int res = empty_client_queue(&benches->queue);
-	mutex_unlock(&benches->clientBenchMutex);
 
 	return res;
 }
@@ -136,6 +134,11 @@ RQItem next_client_in_benches(ClientBenches* benches)
 
 	RQItem res;
 	mutex_lock(&benches->clientBenchMutex);
+
+	while (no_more_clients(benches)){
+		cond_wait(&benches->clientWaiting, &benches->clientBenchMutex);
+	}
+
 	if (!empty_client_queue(&benches->queue))
 	{
 		res = out_client_queue(&benches->queue);

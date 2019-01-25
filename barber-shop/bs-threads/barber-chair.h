@@ -9,22 +9,20 @@
 
 typedef struct _BarberChair_
 {
-   int id; // 1, 2, ... (position in barber shop)
-   int clientID;
-   int barberID;
-   int toolsHolded;
-   int completionPercentage; // [0;100]
-   int logId;
-   char* internal;
+	int id; // 1, 2, ... (position in barber shop)
+	int clientID;
+	int barberID;
+	int toolsHolded;
+	int completionPercentage; // [0;100]
+	int logId;
+	char* internal;
 
-   /* condition variables */
-   pthread_cond_t availableBarberChair[MAX_BARBER_CHAIRS];
-
-   /* mutex in order to access cond var*/
-   pthread_mutex_t barberChairMutex[MAX_BARBER_CHAIRS];
-
-   /* Semaphore barber chair */
-   sem_t accessBarberChair;
+	pthread_mutex_t barberChairMutex;
+	pthread_cond_t barberChairAvailable;
+	pthread_cond_t barberChairServiceFinished;
+	pthread_cond_t clientRoseFromBarberChair;
+	pthread_cond_t clientSatInBarberChair;
+	pthread_cond_t clientReadyForShave;
 
 } BarberChair;
 
@@ -57,5 +55,7 @@ int barber_chair_service_finished(BarberChair* chair);
 
 void set_tools_barber_chair(BarberChair* chair, int tools);
 void set_completion_barber_chair(BarberChair* chair, int completionPercentage);
+
+void wait_for_barber_chair_service_completion(BarberChair* chair);
 
 #endif

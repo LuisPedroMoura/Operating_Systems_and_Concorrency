@@ -202,10 +202,9 @@ static int vacancy_in_barber_shop(Client* client)
 	require (client != NULL, "client argument required");
 
 	client->state = WAITING_BARBERSHOP_VACANCY;
+	log_client(client);
 
 	int numSeats = num_available_benches_seats(&(client->shop->clientBenches));
-
-	log_client(client);
 
 	return numSeats;
 }
@@ -307,23 +306,15 @@ static void wait_all_services_done(Client* client)
 		{
 			update_client_with_service(client, service);
 
-			mutex_lock(&client->shop->barberChairMutex);
 			BarberChair* chair = client->shop->barberChair+service.pos;
 			sit_in_barber_chair(chair, client->id);
-			cond_broadcast(&client->shop->clientSatInBarberChair);
 
-			while(!barber_chair_service_finished(chair)){
-				cond_wait(&client->shop->barberChairServiceFinished, &client->shop->barberChairMutex);
-			}
+			wait_for_barber_chair_service_completion(chair);
 
 			if (!(client->requests & SHAVE_REQ)){
 				rise_from_barber_chair(chair, client->id);
-				cond_broadcast(&client->shop->clientRoseFromBarberChair);
+				client->chairPosition = -1;
 			}
-
-			mutex_unlock(&client->shop->barberChairMutex);
-
-			client->shop->barberChair[client->chairPosition].completionPercentage = 0;
 
 			log_client(client);
 		}
@@ -332,20 +323,14 @@ static void wait_all_services_done(Client* client)
 
 			update_client_with_service(client, service);
 
-			mutex_lock(&client->shop->barberChairMutex);
 			BarberChair* chair = client->shop->barberChair+service.pos;
 			if (!(client->requests & HAIRCUT_REQ)){
 				sit_in_barber_chair(chair, client->id);
-				cond_broadcast(&client->shop->clientSatInBarberChair);
 			}
 
-			while(!barber_chair_service_finished(chair)){
-				cond_wait(&client->shop->barberChairServiceFinished, &client->shop->barberChairMutex);
-			}
+			wait_for_barber_chair_service_completion(chair);
+
 			rise_from_barber_chair(chair, client->id);
-			mutex_unlock(&client->shop->barberChairMutex);
-			cond_broadcast(&client->shop->clientRoseFromBarberChair);
-
 			client->chairPosition = -1;
 
 			log_client(client);
@@ -355,19 +340,12 @@ static void wait_all_services_done(Client* client)
 		{
 			update_client_with_service(client, service);
 
-			mutex_lock(&client->shop->washbasinMutex);
-
 			Washbasin* basin = client->shop->washbasin+service.pos;
 			sit_in_washbasin(basin, client->id);
-			cond_broadcast(&client->shop->clientSatInWashbasin);
 
-			while (!washbasin_service_finished(basin)){
-				cond_wait(&client->shop->washbasinServiceFinished, &client->shop->washbasinMutex);
-			}
+			wait_for_washbasin_service_completion(basin);
 
 			rise_from_washbasin(basin, client->id);
-			mutex_unlock(&client->shop->washbasinMutex);
-			cond_broadcast(&client->shop->clientRoseFromWashbasin);
 
 			log_client(client);
 		}
