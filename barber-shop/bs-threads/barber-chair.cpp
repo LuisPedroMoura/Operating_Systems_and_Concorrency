@@ -116,7 +116,9 @@ int empty_barber_chair(BarberChair* chair)
 {
 	require (chair != NULL, "chair argument required");
 
+	mutex_lock(&chair->barberChairMutex);
 	int res = chair->barberID == 0 && chair->clientID == 0;
+	mutex_unlock(&chair->barberChairMutex);
 	return res;
 }
 
@@ -168,9 +170,11 @@ void reserve_barber_chair(BarberChair* chair, int barberID)
 	require (barberID > 0, concat_3str("invalid barber id (", int2str(barberID), ")"));
 	require (empty_barber_chair(chair), "barber chair is already occupied");
 
+	mutex_lock(&chair->barberChairMutex);
 	chair->barberID = barberID;
 	chair->completionPercentage = 0;
 	log_barber_chair(chair);
+	mutex_unlock(&chair->barberChairMutex);
 }
 
 void release_barber_chair(BarberChair* chair, int barberID)
@@ -280,7 +284,6 @@ void wait_for_barber_chair_service_completion(BarberChair* chair)
 		cond_wait(&chair->barberChairServiceFinished, &chair->barberChairMutex);
 	}
 	mutex_unlock(&chair->barberChairMutex);
-
 }
 
 

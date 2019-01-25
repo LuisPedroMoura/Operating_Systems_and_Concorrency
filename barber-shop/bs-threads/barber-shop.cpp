@@ -199,18 +199,6 @@ int reserve_empty_barber_chair(BarberShop* shop, int barberID)
 	return chairPos;
 }
 
-int num_available_barber_chairs(BarberShop* shop)
-{
-	require (shop != NULL, "shop argument required");
-
-	int res = 0;
-	for(int pos = 0; pos < shop->numChairs ; pos++)
-		if (empty_barber_chair(shop->barberChair+pos))
-			res++;
-
-	return res;
-}
-
 int reserve_random_empty_barber_chair(BarberShop* shop, int barberID)
 {
 	/**
@@ -221,11 +209,6 @@ int reserve_random_empty_barber_chair(BarberShop* shop, int barberID)
 	require (shop != NULL, "shop argument required");
 	require (barberID > 0, concat_3str("invalid barber id (", int2str(barberID), ")"));
 	require (num_available_barber_chairs(shop) > 0, "barber chair not available");
-
-	// TODO COMO FAZER LOCK A ISTO??
-	while(num_available_barber_chairs(shop) == 0){
-		cond_wait(&shop->barberChair->barberChairAvailable, &shop->barberChair->barberChairMutex);
-	}
 
 	int r = random_int(1, num_available_barber_chairs(shop));
 	int res;
@@ -240,6 +223,18 @@ int reserve_random_empty_barber_chair(BarberShop* shop, int barberID)
 	return res;
 }
 
+int num_available_barber_chairs(BarberShop* shop)
+{
+	require (shop != NULL, "shop argument required");
+
+	int res = 0;
+	for(int pos = 0; pos < shop->numChairs ; pos++)
+		if (empty_barber_chair(shop->barberChair+pos))
+			res++;
+
+	return res;
+}
+
 void release_barber_barberchair(BarberShop* shop, int barberID, int barberPos)
 {
 	require (shop != NULL, "shop argument required");
@@ -248,6 +243,8 @@ void release_barber_barberchair(BarberShop* shop, int barberID, int barberPos)
 	release_barber_chair(&shop->barberChair[barberPos], barberID);
 	sem_up(&shop->accessBarberChair);
 }
+
+
 
 int reserve_empty_washbasin(BarberShop* shop, int barberID)
 {
