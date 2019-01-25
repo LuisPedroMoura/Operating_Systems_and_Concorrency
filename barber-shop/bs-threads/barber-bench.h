@@ -11,11 +11,16 @@
 
 typedef struct _BarberBench_
 {
-   int numSeats;
-   int id[MAX_BARBERS];
-   int verticalOrientation;
-   int logId;
-   char* internal;
+	int numSeats;
+	int id[MAX_BARBERS];
+	int verticalOrientation;
+	int logId;
+	char* internal;
+
+	pthread_mutex_t barberBenchMutex = PTHREAD_MUTEX_INITIALIZER;
+	pthread_cond_t barberBenchNotFull = PTHREAD_COND_INITIALIZER;
+	pthread_cond_t barberBenchNotEmpty = PTHREAD_COND_INITIALIZER;
+
 } BarberBench;
 
 void init_barber_bench(BarberBench* bench, int num_seats, int vertical_orientation, int line, int column);

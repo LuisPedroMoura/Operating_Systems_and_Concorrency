@@ -58,10 +58,7 @@ typedef struct _BarberShop_
 	pthread_cond_t messageAvailable[MAX_CLIENTS];
 
 	// barber Bench mutex and cond
-	pthread_mutex_t barberBenchMutex = PTHREAD_MUTEX_INITIALIZER;
 
-	pthread_cond_t barberBenchNotFull = PTHREAD_COND_INITIALIZER;
-	pthread_cond_t barberBenchNotEmpty = PTHREAD_COND_INITIALIZER;
 
 	// BarberChair mutex and cond
 	sem_t accessBarberChair;

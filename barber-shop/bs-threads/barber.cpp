@@ -167,6 +167,7 @@ static void sit_in_barber_bench(Barber* barber)
 	require (!seated_in_barber_bench(barber_bench(barber->shop), barber->id), "barber already seated in barber shop");
 
 	int seatPos = random_sit_in_barber_bench(barber_bench(barber->shop), barber->id);
+
 	mutex_unlock(&barber->shop->barberBenchMutex);
 	barber->benchPosition = seatPos;
 

@@ -188,7 +188,7 @@ static void wandering_outside(Client* client)
 
 	spend(random_int(global->MIN_OUTSIDE_TIME_UNITS, global->MAX_OUTSIDE_TIME_UNITS));
 
-	log_client(client);
+log_client(client);
 }
 
 static int vacancy_in_barber_shop(Client* client)

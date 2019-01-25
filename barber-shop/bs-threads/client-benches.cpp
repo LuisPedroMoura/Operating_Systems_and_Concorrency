@@ -107,6 +107,7 @@ int random_sit_in_client_benches(ClientBenches* benches, int id, int request)
 
 	int res;
 	mutex_lock(&benches->clientBenchMutex);
+
 	res = random_empty_seat_position_client_benches(benches);
 	RQItem item = {id, res, request, 0};
 	benches->id[res] = id;
