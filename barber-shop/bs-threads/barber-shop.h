@@ -54,8 +54,8 @@ typedef struct _BarberShop_
 	pthread_cond_t closeShop = PTHREAD_COND_INITIALIZER;
 
 	// Communications Line mutex and cond
-	pthread_mutex_t messagesMutex[MAX_CLIENTS];
-	pthread_cond_t messageAvailable[MAX_CLIENTS];
+	// pthread_mutex_t messagesMutex[MAX_CLIENTS];
+	// pthread_cond_t messageAvailable[MAX_CLIENTS];
 
 	// barber Bench mutex and cond
 	pthread_mutex_t barberBenchMutex = PTHREAD_MUTEX_INITIALIZER;
@@ -83,8 +83,8 @@ typedef struct _BarberShop_
 int num_lines_barber_shop(BarberShop* shop);
 int num_columns_barber_shop(BarberShop* shop);
 void init_barber_shop(BarberShop* shop, int num_barbers, int num_chairs,
-		int num_scissors, int num_combs, int num_razors, int num_basins,
-		int num_client_benches_seats, int num_client_benches);
+						int num_scissors, int num_combs, int num_razors, int num_basins,
+						int num_client_benches_seats, int num_client_benches);
 void term_barber_shop(BarberShop* shop);
 void show_barber_shop(BarberShop* shop);
 void log_barber_shop(BarberShop* shop);

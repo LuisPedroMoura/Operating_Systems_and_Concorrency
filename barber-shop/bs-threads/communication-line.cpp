@@ -28,8 +28,11 @@ void init_communication_line(CommunicationLine* commLine)
 	require (commLine != NULL , "commLine argument required");
 	for (int i = 0; i < MAX_CLIENTS; i++){
 		commLine->commArray[i] = nullMessage;
+		commLine->messageMutex[i] = PTHREAD_MUTEX_INITIALIZER;
+		commLine->messageAvailable[i] = PTHREAD_COND_INITIALIZER;
 	}
 }
+
 
 Message write_message(Service service)
 {
@@ -42,52 +45,44 @@ Message write_message(Service service)
 	return message;
 }
 
-Message read_message(CommunicationLine* commLine, int clientID, pthread_mutex_t* mutex, pthread_cond_t* messageAvailable)
+Message read_message(CommunicationLine* commLine, int clientID)
 {
 	require (commLine != NULL , "commLine argument required");
 	require (clientID > 0, concat_3str("invalid client id (", int2str(clientID), ")"));
-	require (mutex != NULL, "mutex argument required");
-	require (messageAvailable != NULL, "vcond argument required");
-
-	mutex_lock(mutex);
 	
+	mutex_lock(&commLine->messageMutex[clientID]);
 	while(no_message_available(commLine, clientID)){
-		cond_wait(messageAvailable, mutex);
+		cond_wait(&commLine->messageAvailable[clientID], &commLine->messageMutex[clientID]);
 	}
 
-	commLine->commArray[clientID].newMessage = 0;
+	commLine->commArray[clientID].newMessage = 0;	
 	
-	mutex_unlock(mutex);
+	Message* message = &commLine->commArray[clientID];
+	mutex_unlock(&commLine->messageMutex[clientID]);
 	
-	return commLine->commArray[clientID];
+	return *message;
 }
 
-void send_message(CommunicationLine* commLine, Message message, pthread_mutex_t* mutex, pthread_cond_t* messageAvailable)
+void send_message(CommunicationLine* commLine, Message message)
 {
 	require (commLine != NULL , "commLine argument required");
-//	require (message != NULL , "message argument required");
 	require (message.service.clientID > 0, "Invalid clientID in message argument");
-	require (mutex != NULL, "mutex argument required");
 
-	mutex_lock(mutex);
-	
-	commLine->commArray[message.service.clientID] = message;
-	cond_broadcast(messageAvailable);
-
-	mutex_unlock(mutex);
+	int clientID = message.service.clientID;
+	mutex_lock(&commLine->messageMutex[clientID]);
+	commLine->commArray[clientID] = message;
+	cond_broadcast(&commLine->messageAvailable[clientID]);
+	mutex_unlock(&commLine->messageMutex[clientID]);	
 }
 
-void delete_message(CommunicationLine* commLine, int clientID, pthread_mutex_t* mutex)
+void delete_message(CommunicationLine* commLine, int clientID)
 {
 	require (commLine != NULL , "commLine argument required");
 	require (clientID > 0, concat_3str("invalid client id (", int2str(clientID), ")"));
-	require (mutex != NULL, "mutex argument required");
 
-	mutex_lock(mutex);
-	
+	mutex_lock(&commLine->messageMutex[clientID]);
 	commLine->commArray[clientID] = nullMessage;
-	
-	mutex_unlock(mutex);
+	mutex_unlock(&commLine->messageMutex[clientID]);
 }
 
 int no_message_available(CommunicationLine* commLine, int clientID)

@@ -334,7 +334,7 @@ Service wait_service_from_barber(BarberShop* shop, int clientID)
 	require (shop != NULL, "shop argument required");
 	require (clientID > 0, concat_3str("invalid barber id (", int2str(clientID), ")"));
 
-	Message message = read_message(&shop->commLine, clientID, &shop->messagesMutex[clientID], &shop->messageAvailable[clientID]);
+	Message message = read_message(&shop->commLine, clientID);
 	Service service = message.service;
 
 	return service;
@@ -351,7 +351,7 @@ void inform_client_on_service(BarberShop* shop, Service service)
 	require (service.barberChair || service.washbasin, "only one request per service can be active");
 
 	Message message = write_message(service);
-	send_message(&(shop->commLine), message, &shop->messagesMutex[service.clientID], &shop->messageAvailable[service.clientID]);
+	send_message(&(shop->commLine), message);
 }
 
 void client_done(BarberShop* shop, int clientID)
@@ -364,7 +364,7 @@ void client_done(BarberShop* shop, int clientID)
 	require (clientID > 0, concat_3str("invalid client id (", int2str(clientID), ")"));
 
 	Message message = empty_message(clientID);
-	send_message(&(shop->commLine), message, &shop->messagesMutex[clientID], &shop->messageAvailable[clientID]);
+	send_message(&(shop->commLine), message);
 }
 
 void wait_for_available_seat_in_client_bench(BarberShop* shop)
@@ -446,7 +446,7 @@ void receive_and_greet_client(BarberShop* shop, int barberID, int clientID)
 	service.barberID = barberID;
 	service.clientID = clientID;
 	Message message = write_message(service);
-	send_message(&(shop->commLine), message, &shop->messagesMutex[clientID], &shop->messageAvailable[clientID]);
+	send_message(&(shop->commLine), message);
 }
 
 int greet_barber(BarberShop* shop, int clientID)
@@ -459,7 +459,7 @@ int greet_barber(BarberShop* shop, int clientID)
 	require (shop != NULL, "shop argument required");
 	require (clientID > 0, concat_3str("invalid client id (", int2str(clientID), ")"));
 
-	Message message = read_message(&(shop->commLine), clientID, &shop->messagesMutex[clientID], &shop->messageAvailable[clientID]);
+	Message message = read_message(&(shop->commLine), clientID);
 	int barberID = message.service.barberID;
 
 	return barberID;
