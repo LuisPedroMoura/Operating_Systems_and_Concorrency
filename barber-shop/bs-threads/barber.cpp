@@ -332,7 +332,6 @@ static void process_haircut_request(Barber* barber, int shaveReq)
 	process_barber_chair_service(barber);
 
 	if(!shaveReq){
-		printf("QWERTY   barber %d releases chair %d after haircut\n", barber->id, barber->chairPosition);
 		release_barber_barberchair(barber->shop, barber->id, barber->chairPosition);
 		barber->chairPosition = -1;
 	}
@@ -377,7 +376,6 @@ static void process_shave_request(Barber* barber)
 	barber->state = SHAVING;
 	process_barber_chair_service(barber);
 
-	printf("QWERTY   barber %d releases chair %d after shave\n", barber->id, barber->chairPosition);
 	release_barber_barberchair(barber->shop, barber->id, barber->chairPosition);
 	barber->chairPosition = -1;
 

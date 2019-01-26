@@ -196,14 +196,9 @@ int reserve_empty_barber_chair(BarberShop* shop, int barberID)
 	require (shop != NULL, "shop argument required");
 	require (barberID > 0, concat_3str("invalid barber id (", int2str(barberID), ")"));
 
-	int* val = NULL;
-	//sem_getvalue(&shop->accessBarberChair, val);
-
-	//printf("QWERTY   %d\n", *val);
 	sem_down(&shop->accessBarberChair);
-	printf("QWERTY   barber %d DOWN\n", barberID);
 	int chairPos = reserve_random_empty_barber_chair(shop, barberID);
-	printf("QWERTY   barber %d reserved chair %d\n", barberID, chairPos);
+
 	return chairPos;
 }
 
@@ -217,15 +212,23 @@ int reserve_random_empty_barber_chair(BarberShop* shop, int barberID)
 	require (barberID > 0, concat_3str("invalid barber id (", int2str(barberID), ")"));
 
 	// the semaphore guarantees this requirement
-	//require (num_available_barber_chairs(shop) > 0, "barber chair not available");
+	require (num_available_barber_chairs(shop) > 0, "barber chair not available");
 
 	int r = random_int(1, num_available_barber_chairs(shop));
 	int res;
-	for(res = 0; r > 0 && res < shop->numChairs ; res++)
-		if (empty_barber_chair(shop->barberChair+res))
+	for(res = 0; r > 0 && res < shop->numChairs ; res++){
+		mutex_lock(&shop->barberChair[res].barberChairMutex);
+		if (_empty_barber_chair_(shop->barberChair+res)){
 			r--;
+			if (r == 0){
+				reserve_barber_chair(shop->barberChair+res, barberID);
+			}
+		}
+		mutex_unlock(&shop->barberChair[res].barberChairMutex);
+	}
 	res--;
-	reserve_barber_chair(shop->barberChair+res, barberID);
+	//require (num_available_barber_chairs(shop) > 0, "barber chair not available");
+	//reserve_barber_chair(shop->barberChair+res, barberID);
 
 	ensure (res >= 0 && res < shop->numChairs, "");
 
@@ -252,7 +255,6 @@ void release_barber_barberchair(BarberShop* shop, int barberID, int barberPos)
 	release_barber_chair(&shop->barberChair[barberPos], barberID);
 	require ( num_available_barber_chairs(shop) >= 0, "available barber chairs went down to zero");
 	sem_up(&shop->accessBarberChair);
-	printf("QWERTY   barber %d UP\n", barberID);
 }
 
 int reserve_empty_washbasin(BarberShop* shop, int barberID)
