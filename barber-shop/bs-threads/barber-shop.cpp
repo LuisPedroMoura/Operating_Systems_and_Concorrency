@@ -213,25 +213,17 @@ int reserve_random_empty_barber_chair(BarberShop* shop, int barberID)
 
 	require (shop != NULL, "shop argument required");
 	require (barberID > 0, concat_3str("invalid barber id (", int2str(barberID), ")"));
-
-	// the semaphore guarantees this requirement
 	require (num_available_barber_chairs(shop) > 0, "barber chair not available");
 
 	int r = random_int(1, num_available_barber_chairs(shop));
 	int res;
 	for(res = 0; r > 0 && res < shop->numChairs ; res++){
-//		mutex_lock(&shop->barberChair[res].barberChairMutex);
 		if (empty_barber_chair(shop->barberChair+res)){
 			r--;
-//				reserve_barber_chair(shop->barberChair+res, barberID);
-//				mutex_unlock(&shop->barberChair[res].barberChairMutex);
-//				break;
-//			}
 		}
-//		mutex_unlock(&shop->barberChair[res].barberChairMutex);
 	}
 	res--;
-	//require (num_available_barber_chairs(shop) > 0, "barber chair not available");
+
 	reserve_barber_chair(shop->barberChair+res, barberID);
 	sem_up(&shop->accessBarberChair);
 	ensure (res >= 0 && res < shop->numChairs, "");
@@ -389,9 +381,7 @@ int enter_barber_shop(BarberShop* shop, int clientID, int request)
 	require (shop != NULL, "shop argument required");
 	require (clientID > 0, concat_3str("invalid client id (", int2str(clientID), ")"));
 	require (request > 0 && request < 8, concat_3str("invalid request (", int2str(request), ")"));
-
-	// available benches seats is verified in random_sit_in_client_benches() in the code below
-	//require (num_available_benches_seats(client_benches(shop)) > 0, "empty seat not available in client benches");
+	require (num_available_benches_seats(client_benches(shop)) > 0, "empty seat not available in client benches");
 
 	mutex_lock(&shop->shopFloorMutex);
 	require (!is_client_inside(shop, clientID), concat_3str("client ", int2str(clientID), " already inside barber shop"));
