@@ -480,4 +480,3 @@ static char* to_string_barber_shop(BarberShop* shop)
 {
 	return gen_boxes(shop->internal, skel_length, skel);
 }
-
