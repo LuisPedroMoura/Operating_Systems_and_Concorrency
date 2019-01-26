@@ -215,12 +215,14 @@ static void select_requests(Client* client)
 	client->state = SELECTING_REQUESTS;
 
 	int res = 0;
-	while (res == 0) {
-		int h = ( (int)((double)rand() / (double)RAND_MAX *100) <= global->PROB_REQUEST_HAIRCUT) * HAIRCUT_REQ;
-		int w = ( (int)((double)rand() / (double)RAND_MAX *100) <= global->PROB_REQUEST_WASHHAIR) * HAIRCUT_REQ;
-		int s = ( (int)((double)rand() / (double)RAND_MAX *100) <= global->PROB_REQUEST_SHAVE) * HAIRCUT_REQ;
+
+	while (res == 0){
+		int h = ( (int)((double)rand() / (double)RAND_MAX *100) < global->PROB_REQUEST_HAIRCUT) * HAIRCUT_REQ;
+		int w = ( (int)((double)rand() / (double)RAND_MAX *100) < global->PROB_REQUEST_WASHHAIR) * WASH_HAIR_REQ;
+		int s = ( (int)((double)rand() / (double)RAND_MAX *100) < global->PROB_REQUEST_SHAVE) * SHAVE_REQ;
 		res = h+w+s;
 	}
+
 	client->requests = res;
 
 	log_client(client);
