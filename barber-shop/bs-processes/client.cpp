@@ -236,9 +236,6 @@ static void wait_its_turn(Client* client)
 
    require (client != NULL, "client argument required");
 
-   client->state = WAITING_ITS_TURN;
-   log_client(client);
-
    bci_wait_semEnterClientBench();
 
    bci_get_syncBenches(client_benches(client->shop));
@@ -248,13 +245,15 @@ static void wait_its_turn(Client* client)
    bci_set_syncBenches(*client_benches(client->shop));
    bci_client_in();
 
+   client->state = WAITING_ITS_TURN;
+   log_client(client);
+
    bci_post_semClientBench();
 
    bci_post_semEnterClientBench();
-   
-   log_client(client);
-   
-   while(bci_get_client_access(client->id) == 0);
+
+   //while(bci_get_client_access(client->id) == 0);
+   bci_wait_semClientAccess(client->id);
    
    client->barberID = greet_barber(client->shop,client->id);
    log_client(client);

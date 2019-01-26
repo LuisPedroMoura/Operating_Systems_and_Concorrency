@@ -23,6 +23,11 @@ typedef struct _BCInterface_
    int clientAccess[MAX_CLIENTS];
 
    ClientBenches syncBenches;
+   BarberBench syncBBBench;
+   ToolsPot syncToolPot;
+   BarberChair* syncBBChairAll;
+   Washbasin* syncWashbasinAll;  
+
    BarberChair syncBBChairs[MAX_BARBERS];
    Washbasin syncWashbasins[MAX_BARBERS];
 
@@ -35,6 +40,8 @@ typedef struct _BCInterface_
    int clientRequests[MAX_CLIENTS]; 
 
    int numClientsThatLeft;  
+
+   sem_t semClientAccess[MAX_CLIENTS];
 
    sem_t semReserved[MAX_BARBERS];
    sem_t semServiceInfoAvailable[MAX_BARBERS];
@@ -51,6 +58,10 @@ typedef struct _BCInterface_
    sem_t semEnterClientBench;
    sem_t semChairBasin;
    sem_t semToolPot;
+
+   sem_t semScissors;
+   sem_t semCombs;
+   sem_t semRazors;
 
 } BCInterface;
 
@@ -127,6 +138,10 @@ void bci_set_service(int barberID, Service service);
 void bci_set_clientID(int barberID, int clientID);
 void bci_set_barberID(int barberID, int clientID);
 void bci_set_syncBenches(ClientBenches clientBenches);
+void bci_set_syncBBBench(BarberBench bbbench);
+void bci_set_syncToolsPot(ToolsPot toolsp);
+void bci_set_syncBBChairAll(BarberChair* bbchairs);
+void bci_set_syncWashbasinAll(Washbasin* washbasins);
 void bci_set_syncBBChair(BarberChair bbChair,int barberID);
 void bci_set_syncWashbasin(Washbasin basin, int barberID);
 void bci_set_request(int clientID,int request);
@@ -147,6 +162,10 @@ int bci_get_num_clients_in_bench();
 int bci_get_barberID(int clientID);
 int bci_get_clientID(int barberID);
 void bci_get_syncBenches(ClientBenches* clientBenches);
+void bci_get_syncBBBench(BarberBench* bbbench);
+void bci_get_syncToolsPot(ToolsPot* toolsp);
+void bci_get_syncBBChairAll(BarberChair* bbchairs);
+void bci_get_syncWashbasinAll(Washbasin* washbasins);
 void bci_get_syncBBChair(BarberChair* bbChair, int barberID);
 void bci_get_syncWashbasin(Washbasin* basin, int barberID);
 int bci_get_request(int clientID);
@@ -157,6 +176,7 @@ int bci_get_numClientsThatLeft();
 void bci_grant_client_access(int clientID);
 void bci_revoke_client_access(int clientID);
 
+void bci_wait_semClientAccess(int clientID);
 void bci_wait_semReserved(int barberID);
 void bci_wait_semServiceInfoAvailable(int barberID);
 void bci_wait_semWaitingOnClientSit(int barberID);
@@ -167,6 +187,7 @@ void bci_wait_semClientRisen(int barberID);
 void bci_wait_semProcessDone(int barberID);
 void bci_wait_semAllProcessesDone(int barberID);
 
+void bci_post_semClientAccess(int clientID);
 void bci_post_semReserved(int barberID);
 void bci_post_semServiceInfoAvailable(int barberID);
 void bci_post_semWaitingOnClientSit(int barberID);
@@ -177,6 +198,7 @@ void bci_post_semClientRisen(int barberID);
 void bci_post_semProcessDone(int barberID);
 void bci_post_semAllProcessesDone(int barberID);
 
+int bci_get_semClientAccessValue(int clientID);
 int bci_get_semReservedValue(int barberID);
 int bci_get_semServiceInfoAvailableValue(int barberID);
 int bci_get_semWaitingOnClientSitValue(int barberID);
@@ -192,17 +214,26 @@ void bci_wait_semClientBench();
 void bci_wait_semEnterClientBench();
 void bci_wait_semChairBasin();
 void bci_wait_semToolPot();
+void bci_wait_semScissor();
+void bci_wait_semComb();
+void bci_wait_semRazor();
 
 void bci_post_semBarberBench();
 void bci_post_semClientBench();
 void bci_post_semEnterClientBench();
 void bci_post_semChairBasin();
 void bci_post_semToolPot();
+void bci_post_semScissor();
+void bci_post_semComb();
+void bci_post_semRazor();
 
 int bci_get_semBarberBenchValue();
 int bci_get_semClientBenchValue();
 int bci_get_semEnterClientBenchValue();
 int bci_get_semChairBasinValue();
 int bci_get_semToolPotValue();
+int bci_get_semScissorValue();
+int bci_get_semCombValue();
+int bci_get_semRazorValue();
 
 #endif

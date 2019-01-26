@@ -54,6 +54,8 @@ int num_available_benches_seats(ClientBenches* benches)
 {
    require (benches != NULL, "benches argument required");
 
+   bci_get_syncBenches(benches);
+
    int res;
    res = _num_available_benches_seats_(benches);
 
@@ -117,7 +119,10 @@ RQItem next_client_in_benches(ClientBenches* benches)
 
    if (!empty_client_queue(&benches->queue))
    {
-      res = out_client_queue(&benches->queue);
+      RQItem tmp_item = out_client_queue(&benches->queue);
+      //RQItem* tmp_point = &tmp_item;
+      //printf("\n\n\n\n CLIENTID IN OUT QUEUE: %d \n\n\n\n",tmp_point->clientID);
+      res = tmp_item;
    }
    else
       res = empty_item();
