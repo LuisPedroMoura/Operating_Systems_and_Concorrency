@@ -381,7 +381,9 @@ int enter_barber_shop(BarberShop* shop, int clientID, int request)
 	require (shop != NULL, "shop argument required");
 	require (clientID > 0, concat_3str("invalid client id (", int2str(clientID), ")"));
 	require (request > 0 && request < 8, concat_3str("invalid request (", int2str(request), ")"));
-	require (num_available_benches_seats(client_benches(shop)) > 0, "empty seat not available in client benches");
+
+	// client inside the shop, seat might not be available, but random_sit_in_client_benches assures the client waits
+	//require (num_available_benches_seats(client_benches(shop)) > 0, "empty seat not available in client benches");
 
 	mutex_lock(&shop->shopFloorMutex);
 	require (!is_client_inside(shop, clientID), concat_3str("client ", int2str(clientID), " already inside barber shop"));
