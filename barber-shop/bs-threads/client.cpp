@@ -198,7 +198,7 @@ static int vacancy_in_barber_shop(Client* client)
 	client->state = WAITING_BARBERSHOP_VACANCY;
 	log_client(client);
 
-	int numSeats = num_available_benches_seats(&(client->shop->clientBenches));
+	int numSeats = num_available_benches_seats(client_benches(client->shop));
 
 	return numSeats;
 }
@@ -256,7 +256,7 @@ static void rise_from_client_benches(Client* client)
 	require (client != NULL, "client argument required");
 	require (seated_in_client_benches(client_benches(client->shop), client->id), concat_3str("client ",int2str(client->id)," not seated in benches"));
 
-	rise_client_benches(&(client->shop->clientBenches) , client->benchesPosition, client->id);
+	rise_client_benches(client_benches(client->shop) , client->benchesPosition, client->id);
 
 	client->benchesPosition = -1;
 
@@ -291,7 +291,7 @@ static void wait_all_services_done(Client* client)
 		{
 			update_client_with_service(client, service);
 
-			BarberChair* chair = client->shop->barberChair+service.pos;
+			BarberChair* chair = barber_chair(client->shop, service.pos);
 			sit_in_barber_chair(chair, client->id);
 
 			wait_for_barber_chair_service_completion(chair);
@@ -308,7 +308,7 @@ static void wait_all_services_done(Client* client)
 
 			update_client_with_service(client, service);
 
-			BarberChair* chair = client->shop->barberChair+service.pos;
+			BarberChair* chair =  barber_chair(client->shop, service.pos);
 			if (!(client->requests & HAIRCUT_REQ)){
 				sit_in_barber_chair(chair, client->id);
 			}
@@ -325,7 +325,7 @@ static void wait_all_services_done(Client* client)
 		{
 			update_client_with_service(client, service);
 
-			Washbasin* basin = client->shop->washbasin+service.pos;
+			Washbasin* basin =  washbasin(client->shop, service.pos);
 			sit_in_washbasin(basin, client->id);
 
 			wait_for_washbasin_service_completion(basin);

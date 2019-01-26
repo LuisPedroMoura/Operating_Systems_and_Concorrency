@@ -181,7 +181,7 @@ static void wait_for_client(Barber* barber)
 	require (barber != NULL, "barber argument required");
 
 	barber->state = WAITING_CLIENTS;
-	RQItem requests = next_client_in_benches(&(barber->shop->clientBenches));
+	RQItem requests = next_client_in_benches(client_benches(barber->shop));
 
 	if (requests.benchPos == -1){
 		barber->clientID = -1;
@@ -221,7 +221,7 @@ static void rise_from_barber_bench(Barber* barber)
 	require (barber != NULL, "barber argument required");
 	require (seated_in_barber_bench(barber_bench(barber->shop), barber->id), "barber not seated in barber shop");
 
-	rise_barber_bench(&(barber->shop->barberBench), barber->benchPosition);
+	rise_barber_bench(barber_bench(barber->shop), barber->benchPosition);
 	barber->benchPosition = -1;
 	log_barber(barber);
 }
@@ -325,7 +325,8 @@ static void process_haircut_request(Barber* barber, int shaveReq)
 	require (barber->tools & SCISSOR_TOOL, "barber not holding a scissor");
 	require (barber->tools & COMB_TOOL, "barber not holding a comb");
 
-	BarberChair* chair = barber->shop->barberChair+barber->chairPosition;
+	
+	BarberChair* chair = barber_chair(barber->shop, barber->chairPosition);
 	set_tools_barber_chair(chair, barber->tools);
 
 	barber->state = CUTTING;
@@ -346,11 +347,12 @@ static void pick_haircut_tools(Barber* barber)
 	require (barber != NULL, "barber argument required");
 
 	barber->state = REQ_SCISSOR;
-	pick_scissor(&barber->shop->toolsPot);
+	
+	pick_scissor(tools_pot(barber->shop));
 	barber->tools += SCISSOR_TOOL;
 
 	barber->state = REQ_COMB;
-	pick_comb(&barber->shop->toolsPot);
+	pick_comb(tools_pot(barber->shop));
 	barber->tools += COMB_TOOL;
 }
 
@@ -358,8 +360,8 @@ static void return_haircut_tools(Barber* barber)
 {
 	require (barber != NULL, "barber argument required");
 
-	return_scissor(&barber->shop->toolsPot);
-	return_comb(&barber->shop->toolsPot);
+	return_scissor(tools_pot(barber->shop));
+	return_comb(tools_pot(barber->shop));
 	barber->tools = NO_TOOLS;
 }
 
@@ -370,7 +372,7 @@ static void process_shave_request(Barber* barber)
 	pick_shave_tools(barber);
 	require (barber->tools & RAZOR_TOOL, "barber not holding a razor");
 
-	BarberChair* chair = &barber->shop->barberChair[barber->chairPosition];
+	BarberChair* chair = barber_chair(barber->shop, barber->chairPosition);
 	set_tools_barber_chair(chair, barber->tools);
 
 	barber->state = SHAVING;
@@ -390,7 +392,7 @@ static void pick_shave_tools(Barber* barber)
 	require (barber != NULL, "barber argument required");
 
 	barber->state = REQ_RAZOR;
-	pick_razor(&barber->shop->toolsPot);
+	pick_razor(tools_pot(barber->shop));
 	barber->tools = RAZOR_TOOL;
 }
 
@@ -398,7 +400,7 @@ static void return_shave_tools(Barber* barber)
 {
 	require (barber != NULL, "barber argument required");
 
-	return_razor(&barber->shop->toolsPot);
+	return_razor(tools_pot(barber->shop));
 	barber->tools = NO_TOOLS;
 }
 
