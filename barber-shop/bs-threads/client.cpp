@@ -146,6 +146,22 @@ static void life(Client* client)
 		}
 	}
 	notify_client_death(client);
+
+	// ALTERNATIVE LIFE -> check justification in select_requests() method
+//	notify_client_birth(client);
+//	while(i < client->num_trips_to_barber)
+//	{
+//		wandering_outside(client);
+//		select_requests(client);
+//		if (vacancy_in_barber_shop(client))
+//		{
+//			wait_its_turn(client);
+//			rise_from_client_benches(client);
+//			wait_all_services_done(client);
+//		}
+//		i++;
+//	}
+//	notify_client_death(client);
 }
 
 static void notify_client_birth(Client* client)
@@ -222,6 +238,19 @@ static void select_requests(Client* client)
 		int s = ( (int)((double)rand() / (double)RAND_MAX *100) < global->PROB_REQUEST_SHAVE) * SHAVE_REQ;
 		res = h+w+s;
 	}
+
+	// the client is forced to choose a service.
+	// should he leave if no requests are selected? if so, this method should be
+	// called immediately after wandering_outside(), and the count of
+	// num_trips_to_barber after if statement, also the while statement above
+	// would not be necessary.
+	// This way, if the probability of all requests is set to zero in ./simulation
+	// clients don't ever choose a request, but they will eventually die and the
+	// program will terminate.
+	// Without this, if probability 0 is selected when running ./simulation,
+	// will result in all clients waiting forever.
+	// - check Alternative Client Life above
+	// *** Thanks to Filipe Vale (NMEC 85055) for the insight ***
 
 	client->requests = res;
 
