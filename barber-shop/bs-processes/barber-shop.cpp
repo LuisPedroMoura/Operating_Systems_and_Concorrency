@@ -128,6 +128,10 @@ void init_barber_shop(BarberShop* shop, int num_barbers, int num_chairs,
    bci_connect();
    bci_open_shop();
 
+   for(int initsemc = 0; initsemc < MAX_CLIENTS; initsemc++){
+     psem_init(&bcinterfaces->semClientAccess[initsemc],1,0);
+   }
+
    for(int initsem = 0; initsem < MAX_BARBERS; initsem++){
      psem_init(&bcinterfaces->semReserved[initsem],1,0);
      psem_init(&bcinterfaces->semServiceInfoAvailable[initsem],1,0);
@@ -146,7 +150,16 @@ void init_barber_shop(BarberShop* shop, int num_barbers, int num_chairs,
    psem_init(&bcinterfaces->semChairBasin,1,1);
    psem_init(&bcinterfaces->semToolPot,1,1);
 
+   psem_init(&bcinterfaces->semScissors,1,num_scissors);
+   psem_init(&bcinterfaces->semCombs,1,num_combs);
+   psem_init(&bcinterfaces->semRazors,1,num_razors);
+
    bci_set_syncBenches(*client_benches(shop));
+   bci_set_syncBBBench(*barber_bench(shop));
+   bci_set_syncToolsPot(*tools_pot(shop));
+
+   bci_set_syncBBChairAll(shop->barberChair);
+   bci_set_syncWashbasinAll(shop->washbasin);
 }
 
 void term_barber_shop(BarberShop* shop)
@@ -541,6 +554,42 @@ void bci_set_syncBenches(ClientBenches clientBenches)
     unlock();
 }
 
+void bci_set_syncBBBench(BarberBench bbbench)
+{
+    lock();
+
+        bcinterfaces->syncBBBench = bbbench;
+
+    unlock();
+}
+
+void bci_set_syncToolsPot(ToolsPot toolsp)
+{
+    lock();
+
+        bcinterfaces->syncToolPot = toolsp;
+
+    unlock();
+}
+
+void bci_set_syncBBChairAll(BarberChair* bbchairs)
+{
+    lock();
+
+        bcinterfaces->syncBBChairAll = bbchairs;
+
+    unlock();
+}
+
+void bci_set_syncWashbasinAll(Washbasin* washbasins)
+{
+    lock();
+  
+        bcinterfaces->syncWashbasinAll = washbasins;
+
+    unlock();
+}
+
 void bci_set_syncBBChair(BarberChair bbChair, int barberID)
 {
     lock();
@@ -591,8 +640,6 @@ void bci_close_shop()
     lock();
 
 	bcinterfaces->shopOpen = 0;
-
-    unlock();
 }
 
 void bci_did_request(int clientID)
@@ -730,6 +777,42 @@ void bci_get_syncBenches(ClientBenches* clientBenches)
     unlock();
 }
 
+void bci_get_syncBBBench(BarberBench* bbbench)
+{
+    lock();
+
+        *bbbench = bcinterfaces->syncBBBench;
+
+    unlock();
+}
+
+void bci_get_syncToolsPot(ToolsPot* toolsp)
+{
+    lock();
+
+        *toolsp = bcinterfaces->syncToolPot;
+
+    unlock();
+}
+
+void bci_get_syncBBChairAll(BarberChair* bbchairs)
+{
+    lock();
+
+        bbchairs = bcinterfaces->syncBBChairAll;
+
+    unlock(); 
+}
+
+void bci_get_syncWashbasinAll(Washbasin* washbasins)
+{
+    lock();
+
+        washbasins = bcinterfaces->syncWashbasinAll;
+
+    unlock(); 
+}
+
 void bci_get_syncBBChair(BarberChair* bbChair, int barberID)
 {
     lock();
@@ -767,8 +850,10 @@ int bci_get_next_request(int clientID)
 	   tmp_nreq = 4;
 	else if(bcinterfaces->clientRequests[clientID-1] >= 2)
 	   tmp_nreq = 2;
-	else
+	else if(bcinterfaces->clientRequests[clientID-1] >= 1)
 	   tmp_nreq = 1;
+        else
+           tmp_nreq = 0;
 
     unlock();
     return tmp_nreq;
@@ -810,6 +895,12 @@ void bci_revoke_client_access(int clientID)
 	bcinterfaces->clientAccess[clientID-1] = 0;
 
     unlock();
+}
+
+void bci_wait_semClientAccess(int clientID)
+{
+        sem_t* tmp_r = &(bcinterfaces->semClientAccess[clientID-1]);
+        psem_wait(tmp_r);
 }
 
 void bci_wait_semReserved(int barberID)
@@ -866,6 +957,12 @@ void bci_wait_semAllProcessesDone(int barberID)
         psem_wait(tmp_r);
 }
 
+void bci_post_semClientAccess(int clientID)
+{
+        sem_t* tmp_r = &(bcinterfaces->semClientAccess[clientID-1]);
+        psem_post(tmp_r);
+}
+
 void bci_post_semReserved(int barberID)
 {
         sem_t* tmp_r = &(bcinterfaces->semReserved[barberID-1]);
@@ -918,6 +1015,19 @@ void bci_post_semAllProcessesDone(int barberID)
 {
         sem_t* tmp_r = &(bcinterfaces->semAllProcessesDone[barberID-1]);
         psem_post(tmp_r);
+}
+
+int bci_get_semClientAccessValue(int clientID)
+{
+    lock();
+
+        sem_t* tmp_r = &(bcinterfaces->semClientAccess[clientID-1]);
+        int val; 
+        int* pval = &val;
+        sem_getvalue(tmp_r,pval);
+        
+    unlock();
+    return *pval;
 }
 
 int bci_get_semReservedValue(int barberID)
@@ -1067,6 +1177,24 @@ void bci_wait_semToolPot()
         psem_wait(tmp_r);	
 }
 
+void bci_wait_semScissor()
+{
+        sem_t* tmp_r = &(bcinterfaces->semScissors);
+        psem_wait(tmp_r);	
+}
+
+void bci_wait_semComb()
+{
+        sem_t* tmp_r = &(bcinterfaces->semCombs);
+        psem_wait(tmp_r);	
+}
+
+void bci_wait_semRazor()
+{
+        sem_t* tmp_r = &(bcinterfaces->semRazors);
+        psem_wait(tmp_r);	
+}
+
 void bci_post_semBarberBench()
 {        
     lock();
@@ -1112,6 +1240,36 @@ void bci_post_semToolPot()
     lock();
 
         sem_t* tmp_r = &(bcinterfaces->semToolPot);
+        psem_post(tmp_r);	
+
+    unlock();
+}
+
+void bci_post_semScissor()
+{
+    lock();
+
+        sem_t* tmp_r = &(bcinterfaces->semScissors);
+        psem_post(tmp_r);	
+
+    unlock();
+}
+
+void bci_post_semComb()
+{
+    lock();
+
+        sem_t* tmp_r = &(bcinterfaces->semCombs);
+        psem_post(tmp_r);	
+
+    unlock();
+}
+
+void bci_post_semRazor()
+{
+    lock();
+
+        sem_t* tmp_r = &(bcinterfaces->semRazors);
         psem_post(tmp_r);	
 
     unlock();
@@ -1174,6 +1332,45 @@ int bci_get_semToolPotValue()
     lock();
 
         sem_t* tmp_r = &(bcinterfaces->semToolPot);
+        int val; 
+        int* pval = &val;
+        sem_getvalue(tmp_r,pval);
+        
+    unlock();
+    return *pval;	
+}
+
+int bci_get_semScissorValue()
+{
+    lock();
+
+        sem_t* tmp_r = &(bcinterfaces->semScissors);
+        int val; 
+        int* pval = &val;
+        sem_getvalue(tmp_r,pval);
+        
+    unlock();
+    return *pval;	
+}
+
+int bci_get_semCombValue()
+{
+    lock();
+
+        sem_t* tmp_r = &(bcinterfaces->semCombs);
+        int val; 
+        int* pval = &val;
+        sem_getvalue(tmp_r,pval);
+        
+    unlock();
+    return *pval;	
+}
+
+int bci_get_semRazorValue()
+{
+    lock();
+
+        sem_t* tmp_r = &(bcinterfaces->semRazors);
         int val; 
         int* pval = &val;
         sem_getvalue(tmp_r,pval);

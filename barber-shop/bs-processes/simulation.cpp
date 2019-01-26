@@ -87,7 +87,7 @@ static void go()
    send_log(logIdClientsDesc, (char*)descText);
    show_barber_shop(shop);
 
-   
+   if(global->NUM_CLIENTS != 1 || global->NUM_BARBERS != 1) {
    pid_t pdi = 0;
    pid_t x = pfork();
    int i;
@@ -107,7 +107,13 @@ static void go()
      }
      main_barber(allBarbers+i);
    }  
- 
+   } 
+   else {
+     pid_t pdi = pfork();
+     if(pdi == 0) main_client(allClients);
+     else main_barber(allBarbers);
+   }  
+
    if(bci_get_numClientsThatLeft() == global->NUM_CLIENTS) close_shop(shop);
 }
 
@@ -118,6 +124,7 @@ static void finish()
 {
    /* TODO: change this function to your needs */
 
+   //pwait(NULL);
    term_logger();
 }
 
