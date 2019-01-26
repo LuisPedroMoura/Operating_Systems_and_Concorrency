@@ -52,9 +52,11 @@ typedef struct _BarberShop_
 	pthread_mutex_t shopFloorMutex;
 
 	// BarberChair mutex and cond
+	sem_t availableBarberChair;
 	sem_t accessBarberChair;
 
 	// Washbasin mutex and cond
+	sem_t availableWashbasin;
 	sem_t accessWashbasin;
 
 } BarberShop;

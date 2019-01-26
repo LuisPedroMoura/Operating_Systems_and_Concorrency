@@ -94,10 +94,12 @@ void init_barber_shop(BarberShop* shop, int num_barbers, int num_chairs,
 	init_communication_line(&shop->commLine);
 
 	/* Barber chair semaphore init */
-	require(sem_init(&shop->accessBarberChair, 0, global->NUM_BARBER_CHAIRS) == 0, "Barber Chair semaphore init error");
+	require(sem_init(&shop->availableBarberChair, 0, global->NUM_BARBER_CHAIRS) == 0, "Barber Chair semaphore init error");
+	require(sem_init(&shop->accessBarberChair, 0, 1) == 0, "Barber Chair semaphore init error");
 
 	/* Washbasin semaphore init */
-	require (sem_init(&shop->accessWashbasin, 0, global->NUM_WASHBASINS) == 0, "Washbasin semaphore error");
+	require (sem_init(&shop->availableWashbasin, 0, global->NUM_WASHBASINS) == 0, "Washbasin semaphore error");
+	require (sem_init(&shop->accessWashbasin, 0, 1) == 0, "Washbasin semaphore error");
 
 	shop->shopFloorMutex = PTHREAD_MUTEX_INITIALIZER;
 }
@@ -196,6 +198,7 @@ int reserve_empty_barber_chair(BarberShop* shop, int barberID)
 	require (shop != NULL, "shop argument required");
 	require (barberID > 0, concat_3str("invalid barber id (", int2str(barberID), ")"));
 
+	sem_down(&shop->availableBarberChair);
 	sem_down(&shop->accessBarberChair);
 	int chairPos = reserve_random_empty_barber_chair(shop, barberID);
 
@@ -217,21 +220,20 @@ int reserve_random_empty_barber_chair(BarberShop* shop, int barberID)
 	int r = random_int(1, num_available_barber_chairs(shop));
 	int res;
 	for(res = 0; r > 0 && res < shop->numChairs ; res++){
-		mutex_lock(&shop->barberChair[res].barberChairMutex);
-		if (_empty_barber_chair_(shop->barberChair+res)){
-//			r--;
-//			if (r == 0){
-				reserve_barber_chair(shop->barberChair+res, barberID);
-				mutex_unlock(&shop->barberChair[res].barberChairMutex);
-				break;
+//		mutex_lock(&shop->barberChair[res].barberChairMutex);
+		if (empty_barber_chair(shop->barberChair+res)){
+			r--;
+//				reserve_barber_chair(shop->barberChair+res, barberID);
+//				mutex_unlock(&shop->barberChair[res].barberChairMutex);
+//				break;
 //			}
 		}
-		mutex_unlock(&shop->barberChair[res].barberChairMutex);
+//		mutex_unlock(&shop->barberChair[res].barberChairMutex);
 	}
-	//res--;
+	res--;
 	//require (num_available_barber_chairs(shop) > 0, "barber chair not available");
-	//reserve_barber_chair(shop->barberChair+res, barberID);
-
+	reserve_barber_chair(shop->barberChair+res, barberID);
+	sem_up(&shop->accessBarberChair);
 	ensure (res >= 0 && res < shop->numChairs, "");
 
 	return res;
@@ -256,7 +258,7 @@ void release_barber_barberchair(BarberShop* shop, int barberID, int barberPos)
 
 	release_barber_chair(&shop->barberChair[barberPos], barberID);
 	require ( num_available_barber_chairs(shop) >= 0, "available barber chairs went down to zero");
-	sem_up(&shop->accessBarberChair);
+	sem_up(&shop->availableBarberChair);
 }
 
 int reserve_empty_washbasin(BarberShop* shop, int barberID)
@@ -264,6 +266,7 @@ int reserve_empty_washbasin(BarberShop* shop, int barberID)
 	require (shop != NULL, "shop argument required");
 	require (barberID > 0, concat_3str("invalid barber id (", int2str(barberID), ")"));
 
+	sem_down(&shop->availableWashbasin);
 	sem_down(&shop->accessWashbasin);
 	int chairPos = reserve_random_empty_washbasin(shop, barberID);
 
@@ -295,19 +298,13 @@ int reserve_random_empty_washbasin(BarberShop* shop, int barberID)
 	int r = random_int(1, num_available_washbasin(shop));
 	int res;
 	for(res = 0; r > 0 && res < shop->numWashbasins ; res++){
-		mutex_lock(&shop->washbasin[res].washbasinMutex);
-		if (_empty_washbasin_(shop->washbasin+res)){
-//			r--;
-//			if (r == 0){
-			reserve_washbasin(&shop->washbasin[res], barberID);
-			mutex_unlock(&shop->washbasin[res].washbasinMutex);
-			break;
+		if (empty_washbasin(shop->washbasin+res)){
+			r--;
 		}
-		mutex_unlock(&shop->washbasin[res].washbasinMutex);
 	}
-//	res--;
-//	reserve_washbasin(shop->washbasin+res, barberID);
-
+	res--;
+	reserve_washbasin(shop->washbasin+res, barberID);
+	sem_up(&shop->accessWashbasin);
 	ensure (res >= 0 && res < shop->numWashbasins, "");
 
 	return res;
@@ -319,7 +316,7 @@ void release_barber_washbasin(BarberShop* shop, int barberID, int barberPos)
 	require (barberID > 0, concat_3str("invalid barber id (", int2str(barberID), ")"));
 
 	release_washbasin(&shop->washbasin[barberPos], barberID);
-	sem_up(&shop->accessWashbasin);
+	sem_up(&shop->availableWashbasin);
 }
 
 int is_client_inside(BarberShop* shop, int clientID)
