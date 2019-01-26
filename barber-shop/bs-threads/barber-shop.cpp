@@ -219,14 +219,16 @@ int reserve_random_empty_barber_chair(BarberShop* shop, int barberID)
 	for(res = 0; r > 0 && res < shop->numChairs ; res++){
 		mutex_lock(&shop->barberChair[res].barberChairMutex);
 		if (_empty_barber_chair_(shop->barberChair+res)){
-			r--;
-			if (r == 0){
+//			r--;
+//			if (r == 0){
 				reserve_barber_chair(shop->barberChair+res, barberID);
-			}
+				mutex_unlock(&shop->barberChair[res].barberChairMutex);
+				break;
+//			}
 		}
 		mutex_unlock(&shop->barberChair[res].barberChairMutex);
 	}
-	res--;
+	//res--;
 	//require (num_available_barber_chairs(shop) > 0, "barber chair not available");
 	//reserve_barber_chair(shop->barberChair+res, barberID);
 
@@ -292,11 +294,19 @@ int reserve_random_empty_washbasin(BarberShop* shop, int barberID)
 
 	int r = random_int(1, num_available_washbasin(shop));
 	int res;
-	for(res = 0; r > 0 && res < shop->numWashbasins ; res++)
-		if (empty_washbasin(shop->washbasin+res))
-			r--;
-	res--;
-	reserve_washbasin(shop->washbasin+res, barberID);
+	for(res = 0; r > 0 && res < shop->numWashbasins ; res++){
+		mutex_lock(&shop->washbasin[res].washbasinMutex);
+		if (_empty_washbasin_(shop->washbasin+res)){
+//			r--;
+//			if (r == 0){
+			reserve_washbasin(&shop->washbasin[res], barberID);
+			mutex_unlock(&shop->washbasin[res].washbasinMutex);
+			break;
+		}
+		mutex_unlock(&shop->washbasin[res].washbasinMutex);
+	}
+//	res--;
+//	reserve_washbasin(shop->washbasin+res, barberID);
 
 	ensure (res >= 0 && res < shop->numWashbasins, "");
 

@@ -157,15 +157,12 @@ void reserve_washbasin(Washbasin* basin, int barberID)
 	require (basin != NULL, "basin argument required");
 	require (barberID > 0, concat_3str("invalid barber id (", int2str(barberID), ")"));
 
-	mutex_lock(&basin->washbasinMutex);
 	require (_empty_washbasin_(basin), "washbasin is already occupied");
 
 	basin->barberID = barberID;
 	basin->completionPercentage = 0;
 
 	log_washbasin(basin);
-
-	mutex_unlock(&basin->washbasinMutex);
 }
 
 void release_washbasin(Washbasin* basin, int barberID)
