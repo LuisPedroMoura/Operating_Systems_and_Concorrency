@@ -324,7 +324,6 @@ static void wait_all_services_done(Client* client)
 
 			BarberChair* chair = barber_chair(client->shop, service.pos);
 			sit_in_barber_chair(chair, client->id);
-
 			wait_for_barber_chair_service_completion(chair);
 
 			if (!(client->requests & SHAVE_REQ)){
@@ -344,6 +343,11 @@ static void wait_all_services_done(Client* client)
 				sit_in_barber_chair(chair, client->id);
 			}
 
+			// wait_for_service_start() is only used in this shave requests,
+			// because barber needs to reset barberChair completion. Before starting
+			// shaving, otherwise client will verify completion twice and rise
+			// immediately
+			wait_for_service_start(client->shop, client->id);
 			wait_for_barber_chair_service_completion(chair);
 
 			rise_from_barber_chair(chair, client->id);
@@ -385,7 +389,7 @@ static void update_client_with_service(Client* client, Service service)
 
 	client->chairPosition = -1;
 	client->basinPosition = -1;
-	client->state = -1;
+	client->state = NONE;
 
 	if (service.barberChair){
 		client->chairPosition = service.pos;
@@ -401,8 +405,8 @@ static void update_client_with_service(Client* client, Service service)
 		client->state = HAVING_A_HAIR_WASH;
 	}
 	else{
-		client->barberID = -1;
-		client->requests = -1;
+		client->barberID = 0;
+		client->requests = 0;
 		client->state = DONE;
 	}
 }

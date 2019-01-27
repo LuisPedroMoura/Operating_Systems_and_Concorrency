@@ -92,7 +92,7 @@ void pick_scissor(ToolsPot* pot)
 
 	mutex_lock(&pot->toolsPotMutex);
 
-	while(!pot->availScissors){
+	while(pot->availScissors == 0){
 		cond_wait(&pot->availableScissor, &pot->toolsPotMutex);
 	}
 	require (pot->availScissors > 0, pot->availScissors == 0 ? "scissor not available" : concat_3str("invalid number of scissors (", int2str(pot->availScissors), ")"));
@@ -110,7 +110,7 @@ void pick_comb(ToolsPot* pot)
 
 	mutex_lock(&pot->toolsPotMutex);
 
-	while(!pot->availCombs){
+	while(pot->availCombs == 0){
 		cond_wait(&pot->availableComb, &pot->toolsPotMutex);
 	}
 	require (pot->availCombs > 0, pot->availCombs == 0 ? "comb not available" : concat_3str("invalid number of combs (", int2str(pot->availCombs), ")"));
@@ -128,7 +128,7 @@ void pick_razor(ToolsPot* pot)
 
 	mutex_lock(&pot->toolsPotMutex);
 
-	while(!pot->availRazors){
+	while(pot->availRazors == 0){
 		cond_wait(&pot->availableRazor, &pot->toolsPotMutex);
 	}
 	require (pot->availRazors > 0, pot->availRazors == 0 ? "razor not available" : concat_3str("invalid number of razors (", int2str(pot->availRazors), ")"));

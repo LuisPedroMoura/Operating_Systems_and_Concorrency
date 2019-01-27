@@ -98,6 +98,8 @@ int is_client_inside(BarberShop* shop, int clientID);
 
 Service wait_service_from_barber(BarberShop* shop, int barberID);
 void inform_client_on_service(BarberShop* shop, Service service);
+void inform_client_on_service_start(BarberShop* shop, Service service);
+void wait_for_service_start(BarberShop* shop, int clientID);
 
 void client_was_born(BarberShop* shop);
 void client_done(BarberShop* shop, int clientID);

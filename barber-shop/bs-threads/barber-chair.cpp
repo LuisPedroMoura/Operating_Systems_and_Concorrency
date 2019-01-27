@@ -221,10 +221,16 @@ void sit_in_barber_chair(BarberChair* chair, int clientID)
 	require (clientID > 0, concat_3str("invalid client id (", int2str(clientID), ")"));
 
 	mutex_lock(&chair->barberChairMutex);
-	require (!barber_chair_with_a_client(chair), "chair occupied with a client");
 
-	chair->clientID = clientID;
-	cond_broadcast(&chair->clientSatInBarberChair);
+	if (client_seated_in_barber_chair(chair, clientID)){
+		cond_broadcast(&chair->clientSatInBarberChair);
+	}
+	else{
+		require (!barber_chair_with_a_client(chair), "chair occupied with a client");
+
+		chair->clientID = clientID;
+		cond_broadcast(&chair->clientSatInBarberChair);
+	}
 
 	log_barber_chair(chair);
 
@@ -238,7 +244,7 @@ void rise_from_barber_chair(BarberChair* chair, int clientID)
 
 	mutex_lock(&chair->barberChairMutex);
 	require (client_seated_in_barber_chair(chair, clientID), concat_3str("client ", int2str(clientID), " not seated in barber chair"));
-	require (barber_chair_service_finished(chair), "barber chair service not complete");
+	//require (barber_chair_service_finished(chair), "barber chair service not complete");
 
 	chair->clientID = 0;
 	chair->completionPercentage = 0;
@@ -261,6 +267,7 @@ void set_tools_barber_chair(BarberChair* chair, int tools)
 	}
 	require (complete_barber_chair(chair), "barber chair is not complete");
 	chair->toolsHolded = tools;
+	chair->completionPercentage = 0;
 
 	log_barber_chair(chair);
 

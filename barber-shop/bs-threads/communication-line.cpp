@@ -57,10 +57,10 @@ Message read_message(CommunicationLine* commLine, int clientID)
 
 	commLine->commArray[clientID].newMessage = 0;	
 	
-	Message* message = &commLine->commArray[clientID];
+	Message message = commLine->commArray[clientID];
 	mutex_unlock(&commLine->messageMutex[clientID]);
 	
-	return *message;
+	return message;
 }
 
 void send_message(CommunicationLine* commLine, Message message)

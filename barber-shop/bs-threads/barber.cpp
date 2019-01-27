@@ -62,7 +62,7 @@ static void done(Barber* barber);
 static void process_haircut_request(Barber* barber, int shaveReq);
 static void pick_haircut_tools(Barber* barber);
 static void return_haircut_tools(Barber* barber);
-static void process_shave_request(Barber* barber);
+static void process_shave_request(Barber* barber, Service service);
 static void pick_shave_tools(Barber* barber);
 static void return_shave_tools(Barber* barber);
 static void process_wash_hair_request(Barber* barber);
@@ -266,7 +266,7 @@ static void process_resquests_from_client(Barber* barber)
 			set_barber_chair_service(&service, barber->id, barber->clientID, chairPos, SHAVE_REQ);
 			inform_client_on_service(barber->shop, service);
 
-			process_shave_request(barber);
+			process_shave_request(barber, service);
 		}
 	}
 
@@ -365,7 +365,7 @@ static void return_haircut_tools(Barber* barber)
 	barber->tools = NO_TOOLS;
 }
 
-static void process_shave_request(Barber* barber)
+static void process_shave_request(Barber* barber, Service service)
 {
 	require (barber != NULL, "barber argument required");
 
@@ -376,12 +376,13 @@ static void process_shave_request(Barber* barber)
 	set_tools_barber_chair(chair, barber->tools);
 
 	barber->state = SHAVING;
+	inform_client_on_service_start(barber->shop, service);
 	process_barber_chair_service(barber);
+
+	return_shave_tools(barber);
 
 	release_barber_barberchair(barber->shop, barber->id, barber->chairPosition);
 	barber->chairPosition = -1;
-
-	return_shave_tools(barber);
 
 	log_barber(barber);
 }

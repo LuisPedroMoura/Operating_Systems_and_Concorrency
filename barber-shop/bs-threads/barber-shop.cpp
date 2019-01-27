@@ -349,7 +349,32 @@ void inform_client_on_service(BarberShop* shop, Service service)
 	require (service.barberChair || service.washbasin, "only one request per service can be active");
 
 	Message message = write_message(service);
-	send_message(&(shop->commLine), message);
+	message.newMessage = 1;
+	send_message(&shop->commLine, message);
+}
+
+void inform_client_on_service_start(BarberShop* shop, Service service)
+{
+	/**
+	 * function called from a barber, expecting to inform a client of its next service
+	 **/
+
+	require (shop != NULL, "shop argument required");
+	require (service.barberChair || service.washbasin, "only one request per service can be active");
+
+	inform_client_on_service(shop,service);
+}
+
+void wait_for_service_start(BarberShop* shop, int clientID)
+{
+	/**
+	 * function called from a client, expecting to receive its barber's ID
+	 **/
+
+	require (shop != NULL, "shop argument required");
+	require (clientID > 0, concat_3str("invalid client id (", int2str(clientID), ")"));
+
+	read_message(&(shop->commLine), clientID);
 }
 
 void client_done(BarberShop* shop, int clientID)
@@ -362,7 +387,7 @@ void client_done(BarberShop* shop, int clientID)
 	require (clientID > 0, concat_3str("invalid client id (", int2str(clientID), ")"));
 
 	Message message = empty_message(clientID);
-	send_message(&(shop->commLine), message);
+	send_message(&shop->commLine, message);
 }
 
 void wait_for_client_to_sit_in_washbasin(BarberShop* shop, int basinPos)
