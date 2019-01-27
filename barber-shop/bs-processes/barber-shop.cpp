@@ -129,7 +129,7 @@ void init_barber_shop(BarberShop* shop, int num_barbers, int num_chairs,
    bci_open_shop();
 
    for(int initsemc = 0; initsemc < MAX_CLIENTS; initsemc++){
-     psem_init(&bcinterfaces->semClientAccess[initsemc],1,0);
+     psem_init(&bcinterfaces->semClientAccess[initsemc++],1,0);
    }
 
    for(int initsem = 0; initsem < MAX_BARBERS; initsem++){
@@ -160,6 +160,10 @@ void init_barber_shop(BarberShop* shop, int num_barbers, int num_chairs,
 
    bci_set_syncBBChairAll(shop->barberChair);
    bci_set_syncWashbasinAll(shop->washbasin);
+
+   for(int bb = 0; bb < MAX_BARBERS; bb++) {
+     bci_set_barberFirstTrip(bb+1);
+   }
 }
 
 void term_barber_shop(BarberShop* shop)
@@ -1377,5 +1381,33 @@ int bci_get_semRazorValue()
         
     unlock();
     return *pval;	
+}
+
+void bci_set_barberFirstTrip(int barberID)
+{
+    lock();
+
+        bcinterfaces->barberFirstTrip[barberID-1] = 1;
+
+    unlock();
+}
+
+void bci_unset_barberFirstTrip(int barberID)
+{
+    lock();
+
+        bcinterfaces->barberFirstTrip[barberID-1] = 0;
+
+    unlock();
+}
+
+int bci_get_barberFirstTrip(int barberID)
+{
+    lock();
+
+        int tmp_resp = bcinterfaces->barberFirstTrip[barberID-1];
+
+    unlock();
+    return tmp_resp;
 }
 

@@ -29,6 +29,9 @@ static Client* allClients = NULL;
 static int logIdBarbersDesc;
 static int logIdClientsDesc;
 
+static pid_t pid_barbers[MAX_BARBERS];
+static pid_t pid_clients[MAX_CLIENTS];
+
 /* internal functions */
 static void help(char* prog, Parameters *params);
 static void processArgs(Parameters *params, int argc, char* argv[]);
@@ -36,6 +39,8 @@ static void showParams(Parameters *params);
 static void go();
 static void finish();
 static void initSimulation();
+void create_process_for_barber(pid_t * pidp, Barber* barber);
+void create_process_for_client(pid_t * pidp, Client* client);
 
 int main(int argc, char* argv[])
 {
@@ -87,34 +92,15 @@ static void go()
    send_log(logIdClientsDesc, (char*)descText);
    show_barber_shop(shop);
 
-   if(global->NUM_CLIENTS != 1 || global->NUM_BARBERS != 1) {
-   pid_t pdi = 0;
-   pid_t x = pfork();
-   int i;
-   if(x == 0) {
-     for(i=0;i<global->NUM_CLIENTS-1;) {
-       pdi = pfork();
-       if(pdi!=0) break;
-       i++;
-     }
-     main_client(allClients+i);
-   }
-   else {
-     for(i=0;i<global->NUM_BARBERS-1;){
-       pdi = pfork();
-       if(pdi!=0) break;
-       i++;
-     }
-     main_barber(allBarbers+i);
-   }  
-   } 
-   else {
-     pid_t pdi = pfork();
-     if(pdi == 0) main_client(allClients);
-     else main_barber(allBarbers);
-   }  
+  for(int i = 0; i < global->NUM_BARBERS; i++){
+      log_barber(allBarbers+i);
+      create_process_for_barber(&pid_barbers[i],allBarbers+i);
+  }
 
-   if(bci_get_numClientsThatLeft() == global->NUM_CLIENTS) close_shop(shop);
+  for(int i = 0; i < global->NUM_CLIENTS; i++){
+      log_client(allClients+i);
+      create_process_for_client(&pid_clients[i],allClients+i);
+  }
 }
 
 /**
@@ -123,6 +109,19 @@ static void go()
 static void finish()
 {
    /* TODO: change this function to your needs */
+
+   pid_t status_clients[global->NUM_CLIENTS];
+   pid_t status_barbers[global->NUM_BARBERS];
+
+   for (int i = 0; i < global->NUM_CLIENTS; i++){
+     pwaitpid(pid_clients[i],&status_clients[i],0);
+   }
+
+   for (int i = 0; i < global->NUM_BARBERS; i++){
+     pwaitpid(pid_barbers[i],&status_barbers[i],0);
+   }
+
+   bci_destroy();
 
    //pwait(NULL);
    term_logger();
@@ -422,3 +421,35 @@ static void showParams(Parameters *params)
    printf("\n");
 }
 
+void create_process_for_barber(pid_t * pidp, Barber* barber){
+
+     pid_t pid = pfork();
+     switch (pid){
+         case 0:
+             break;
+         default:
+             *pidp = pid;
+             return;
+     }
+     bci_connect();
+     main_barber(barber);
+     exit(EXIT_SUCCESS);
+}
+
+void create_process_for_client(pid_t * pidp, Client* client){
+
+    pid_t pid = pfork();
+    switch (pid)
+    {
+      case 0:
+        break;
+      default:
+        *pidp = pid;
+        return;
+    }
+
+    bci_connect();
+    main_client(client);
+    if(bci_get_numClientsThatLeft() == global->NUM_CLIENTS) close_shop(shop);
+    exit (EXIT_SUCCESS);
+}

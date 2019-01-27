@@ -39,6 +39,8 @@ typedef struct _BCInterface_
    Service service[MAX_BARBERS];
    int clientRequests[MAX_CLIENTS]; 
 
+   int barberFirstTrip[MAX_BARBERS];
+
    int numClientsThatLeft;  
 
    sem_t semClientAccess[MAX_CLIENTS];
@@ -235,5 +237,9 @@ int bci_get_semToolPotValue();
 int bci_get_semScissorValue();
 int bci_get_semCombValue();
 int bci_get_semRazorValue();
+
+void bci_set_barberFirstTrip(int barberID);
+void bci_unset_barberFirstTrip(int barberID);
+int bci_get_barberFirstTrip(int barberID);
 
 #endif

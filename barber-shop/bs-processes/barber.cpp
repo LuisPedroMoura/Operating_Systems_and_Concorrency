@@ -138,6 +138,7 @@ static void life(Barber* barber)
    {
       rise_from_barber_bench(barber);
       process_resquests_from_client(barber);
+      bci_set_barberFirstTrip(barber->id);
       //release_client(barber);
       sit_in_barber_bench(barber);
       wait_for_client(barber);
@@ -180,12 +181,21 @@ static void wait_for_client(Barber* barber)
 
    require (barber != NULL, "barber argument required");
 
+   //if(bci_get_barberFirstTrip(barber->id) == 0) {
+   //  return;
+   //}
+
+   if(bci_get_shop_status() == 0) {
+     barber->state = DONE;
+     log_barber(barber);
+     return;
+   }
+
    barber->state = WAITING_CLIENTS;
    log_barber(barber);
 
-   log_barber(barber);  
-
    bci_get_syncBenches(client_benches(barber->shop));
+
    while(bci_get_num_clients_in_bench() == 0);
 
    bci_wait_semClientBench();
@@ -225,11 +235,10 @@ static int work_available(Barber* barber)
 
    log_barber(barber);
 
-   if(bci_get_num_clients_in_bench() != 0) {
+   //if(bci_get_num_clients_in_bench() != 0) {
+   if(bci_get_barberFirstTrip(barber->id) == 1 or barber->clientID > 0) {
      return 1;
    }
-
-   bci_set_syncBenches(*client_benches(barber->shop));
 
    return 0;
 }
@@ -280,7 +289,7 @@ static void process_resquests_from_client(Barber* barber)
 
    //printf("\n\n\n\n BEFORE EVEN STARTING: %d \n\n\n\n",bci_get_request(barber->clientID));
 
-   while(bci_get_request(barber->clientID) > 0 and barber->clientID > 0) {
+   while(bci_get_request(barber->clientID) > 0) {
 
      //printf("\n\n\n\n THIS ITERATION: %d \n\n\n\n",bci_get_request(barber->clientID));
 
@@ -538,6 +547,7 @@ static void process_resquests_from_client(Barber* barber)
      log_barber(barber);
 
      if(bci_get_request(barber->clientID) == 0) {
+       barber->state = DONE;
        bci_post_semAllProcessesDone(barber->id);
        release_client(barber);
      }
@@ -548,6 +558,8 @@ static void process_resquests_from_client(Barber* barber)
 
    }
 
+   bci_unset_barberFirstTrip(barber->id);
+ 
    log_barber(barber);
 }
 
@@ -572,6 +584,8 @@ static void done(Barber* barber)
     * 1: set the client state to DONE
     **/
    require (barber != NULL, "barber argument required");
+
+   barber->state = DONE;
 
    log_barber(barber);
 }

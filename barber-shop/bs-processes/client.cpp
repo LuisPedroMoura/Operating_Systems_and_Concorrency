@@ -368,10 +368,15 @@ static void wait_all_services_done(Client* client)
    
      log_client(client);   
 
-     if(bci_get_semAllProcessesDoneValue(client->barberID) > 0) {
+     if(bci_get_request(client->id) == 0) {
        client->state = DONE;
        bci_wait_semAllProcessesDone(client->barberID);
      }
+
+     //if(bci_get_semAllProcessesDoneValue(client->barberID) > 0) {
+     //  client->state = DONE;
+     //  bci_wait_semAllProcessesDone(client->barberID);
+     //}
 
      log_client(client);   
    }
